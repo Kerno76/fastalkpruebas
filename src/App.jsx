@@ -1,19 +1,28 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import {entries} from './data'
+import {navItems} from './data/navItems'
+import {entries} from './data/data'
 import {Card} from './components/Cards'
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div className='dashboard'>   
-         <h1 id='dashTitle'>Dashboard</h1>
+    <div className="dashboard">
 
-          <div className='cardsContainer'>
+      <div className="sidebar">
+        <h2>English Tutoring Platform</h2> 
+        <ul>
+          {navItems.map((item, i) => (
+            <li key={i}>
+              <img src={item.icon} />
+              {item.label}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="mainContent">
+        <h2 id='Title'>Dashboard</h2> 
+
+        <div className="cardsContainer">
           {entries.map((entry, index) => (
             <Card
               key={index}
@@ -21,11 +30,24 @@ function App() {
               title={entry.title}
               amount={entry.amount}
             />
-            ))}
+          ))}
+        </div>
+
+        <div className="bottomSection">
+
+          <div className="recentActivity">
+            <h2>Recent Activity</h2>
           </div>
 
+          <div className="calendar">
+            <h2>Calendar</h2>
+          </div>
+
+        </div>
+
       </div>
-    </>
+
+    </div>
   )
 }
 

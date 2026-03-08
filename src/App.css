@@ -1,23 +1,42 @@
+*{
+  box-sizing: border-box;
+}
+
+
 #root {
-  max-width: 1280px;
+  max-width: 1950px;
   margin: 0 auto;
   padding: 2rem;
 }
 
+/* Estilo del contenedor principál, donde se concentran todos los recursos*/
+
 .dashboard {
   background-color: #E2ECF6;
   width: 100%;
-  height: auto;
-  align-items: center;
-  align-content: center;
+  min-height: 600px;
+
+  display: flex;
+  gap: 25px;
+
   border-radius: 30px;
 }
 
-#dashTitle{
-  text-align: left;
-  margin-left: 20px;
-  font-size: 30px;
+/*Ocupamos todo el espacio restante en cuanto a distribución*/
+
+.mainContent{
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
 }
+
+.mainContent h2{
+  padding-top: 20px;
+}
+
+/*Estilo de las tarjetas donde mostramos la información más relevante del sistema*/
 
 .cardsContainer{
   display: flex;
@@ -40,7 +59,7 @@
 
   transform: scale(0.95);
   border: 1px solid rgba(253, 249, 249, 0.521);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  /*box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);*/
 }
 
 .card img{
@@ -59,4 +78,92 @@
 .card h2{
   font-size: 30px;
   color: #929292;
+}
+
+/*Sección de navegación principal entre los sistemas*/
+
+.sidebar{
+  width: 200px;
+  background-color: #FEFFFD;
+  border-radius: 20px;
+  padding: 20px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.sidebar ul{
+  list-style: none;
+  padding: 0;
+}
+
+.sidebar li{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  margin: 10px 0;
+  padding: 8px 10px;
+
+  color: #555;
+  cursor: pointer;
+  border-radius: 10px;
+  font-size: 18px;
+}
+
+.sidebar li img{
+  border-radius: 15px;
+  width: auto;
+  height: 45px;
+}
+
+.sidebar li:hover{
+  background-color: #0B141B;
+  color: white;
+}
+
+.sidebar li:hover img{
+  filter: brightness(0) invert(1);
+}
+
+/*Estilo de la sección inferior donde mezclamos secciones para un mejor resultado visual*/
+
+.bottomSection{
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 5px;
+}
+
+.recentActivity,
+.calendar{
+  background-color: #FEFFFD;
+  border-radius: 15px;
+  padding-left: 20px;
+  margin-bottom: 25px;
+  margin-right: 20px;
+
+  min-height: 250px;
+}
+
+/*Reponsividad*/
+
+@media (max-width: 900px){
+
+  .dashboard{
+    flex-direction: column;
+  }
+  #Title{
+    padding-left: 20px;
+  }
+
+  .sidebar{
+    width: 100%;
+  }
+
+  .bottomSection{
+    grid-template-columns: 1fr;
+    padding-left: 20px;
+  }
+
 }
