@@ -1,4 +1,5 @@
 import { navItems } from "../data/navItems"
+import { Link } from "react-router-dom"
 
 export default function Sidebar() {
   return (
@@ -8,8 +9,10 @@ export default function Sidebar() {
       <ul>
         {navItems.map((item, i) => (
           <li key={i}>
-            <img src={item.icon} />
-            {item.label}
+            <Link to={item.path} className="navItem">
+              <img src={item.icon} />
+              {item.label}
+            </Link>
           </li>
         ))}
       </ul>

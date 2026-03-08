@@ -172,3 +172,13 @@
   }
 
 }
+
+/*Estilo del link para el SPA*/
+
+.navItem{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+}

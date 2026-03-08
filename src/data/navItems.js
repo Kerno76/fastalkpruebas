@@ -5,7 +5,7 @@ import session_history from '../assets/history.png'
 import students from '../assets/people.png'
 
 export const navItems = [
-  { icon: dashboard, label: "Dashboard" },
+  { icon: dashboard, label: "Dashboard", path:"/" },
   { icon: register_session, label: "Registro de Sesiones" },
   { icon: session_history, label: "Historial de sesiones" },
   { icon: students, label: "Estudiantes" },
