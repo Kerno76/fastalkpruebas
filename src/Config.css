@@ -1,0 +1,188 @@
+.settingsPanel{
+  display:grid;
+  grid-template-columns: 240px minmax(0,1fr);
+
+  background: var(--bg-section);
+  border-radius:15px;
+  overflow:hidden;
+  margin-right: 30px;
+}
+
+.settingsMenu{
+  border-right: 1px solid var(--border-settingsMenu);
+  padding:10px;
+}
+
+.settingsMenu ul{
+  list-style:none;
+  padding:0;
+}
+
+.settingsMenu li{
+  display:flex;
+  align-items:center;
+  gap:10px;
+
+  padding:10px 14px;
+  border-radius:10px;
+  cursor:pointer;
+  margin-bottom: 5px;
+}
+
+.settingsMenu img{
+  border-radius: 15px;
+  width: auto;
+  height: 45px;
+}
+
+.settingsMenu li:hover{
+  background:var(--settings-color);
+  color:var(--settings-text);
+}
+
+.settingsBody{
+    padding-left: 30px;
+}
+
+.settingsMenu li.active{
+  background: var(--settings-color);
+  color: var(--settings-text);
+}
+
+#ProEdit{
+    font-size: 24px;
+}
+
+.settingsMenuP{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+#userP{
+  border-radius: 15px;
+  width: auto;
+  height: 150px;
+  margin-bottom: 20px;
+}
+
+/* Estilo para los botones */
+
+.button{
+  padding:12px 22px;
+  border-radius:10px;
+  border:none;
+
+  font-size:14px;
+  font-weight:600;
+
+  cursor:pointer;
+
+  transition: all 0.25s ease;
+
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+
+  box-shadow:0 4px 10px rgba(0,0,0,0.15);
+}
+
+.button:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 18px rgba(0,0,0,0.25);
+}
+
+.button:active{
+  transform:translateY(0);
+  box-shadow:0 3px 8px rgba(0,0,0,0.2);
+}
+
+/* Boton para cambiar foto */
+
+.button-secondary{
+  color:var(--text-main);
+
+  background:linear-gradient(
+    135deg,
+    var(--btn-secondary-start),
+    var(--btn-secondary-end)
+  );
+
+  border:1px solid rgba(0,0,0,0.05);
+}
+
+/* Estilos para los campos dentro de Mi Perfil*/
+
+.settingsThings{
+  padding:30px;
+  width:100%;
+  min-width:0;
+}
+
+.formGrid{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+  gap:20px 30px;
+}
+
+.formField{
+  display:flex;
+  flex-direction:column;
+}
+
+.formField label{
+  font-size:18px;
+  margin-bottom:6px;
+  color: var(--label-profile);
+}
+
+.formField input{
+  padding:10px 14px;
+  border-radius:10px;
+  border:1px solid #d6dbe1;
+  background:linear-gradient(145deg,#E3E9F5,#E1EBF7);
+  outline:none;
+  box-sizing:border-box;
+
+  transition: all 0.2s ease;
+}
+
+.formField input:focus{
+  border-color:#6b8cff;
+  box-shadow:0 0 0 2px rgba(107,140,255,0.2);
+}
+
+/* Boton para guardar */
+
+.button-primary{
+  color:white;
+
+  margin-top: 20px;
+
+  background:linear-gradient(
+    135deg,
+    var(--btn-save-start),
+    var(--btn-save-end)
+  );
+}
+/*Reponsividad*/
+
+@media (max-width:900px){
+
+  .settingsPanel{
+    grid-template-columns:1fr;
+    margin-left:20px;
+  }
+
+  .settingsMenu{
+    border-right:none;
+    border-bottom:1px solid var(--border-settingsMenu);
+  }
+
+  .settingsThings{
+    padding:20px;
+  }
+
+}

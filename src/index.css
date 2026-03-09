@@ -3,6 +3,102 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color: rgba(0, 0, 0, 0.87);
-  background-color: #DCE0E5;
+  /* Texto */
+  --text-main: #000000;
+
+  /* Fondos principales */
+  --bg-body: #DCE0E5;
+  --bg-dashboard: #E2ECF6;
+
+  /* Sidebar */
+  --bg-sidebar: #FEFFFD;
+
+  /* Cards */
+  --bg-card: #FEFFFD;
+  --bg-card-icon: #DFEBF5;
+
+  /* Secciones */
+  --bg-section: #FEFFFD;
+
+  /* Hover sidebar */
+  --sidebar-hover: #0B141B;
+
+  /* Color letra en sidebar */
+  --sidebar-btn: #555;
+
+  /* Color para titulos de las cards */
+  --card-h1: black;
+  --card-h2: #929292;
+  
+  /* Color para el texto de toggle configuración */
+  --togle-dark: #000000;
+
+  /* Color hover profile settings*/
+  --settings-color: #DFEBFB;
+  --settings-text: #364961;
+
+  --border-settingsMenu: rgba(0,0,0,0.08);
+
+  --label-profile: black;
+
+  --btn-save-start:#415A77;
+  --btn-save-end:#1B263B;
+
+  --btn-secondary-start:#E3E9F5;
+  --btn-secondary-end:#C7D3E6;
+}
+
+/* Tema oscuro */
+
+.dark{
+  --text-main: #f1f1f1;
+
+  --bg-body: #121212;
+  --bg-dashboard: #1b1f24;
+
+  --bg-sidebar: #1e1e1e;
+
+  --bg-card: #252525;
+  --bg-card-icon: #eae7e7;
+
+  --bg-section: #252525;
+
+  --sidebar-hover: #2d3b47;
+
+  --sidebar-btn: white;
+
+  --card-h1: white;
+  --card-h2: #dcdcdc;
+
+  --togle-dark: #fffdfd;
+
+  --settings-color: #9099A8;
+  --settings-text: white;
+
+  --border-settingsMenu: rgb(255, 255, 255);
+
+  --label-profile: white;
+
+  --btn-save-start:#6B8CFF;
+  --btn-save-end:#415A77;
+
+  --btn-secondary-start:#3A4454;
+  --btn-secondary-end:#2A3443;
+}
+
+body{
+  color: var(--text-main);
+  background-color: var(--bg-body);
+}
+
+body.dark .sidebar img {
+  filter: brightness(0) invert(1);
+}
+
+body.dark .settingsMenu img {
+  filter: brightness(0) invert(1);
+}
+
+body.dark .settingsMenuP img {
+  filter: brightness(0) invert(1);
 }
