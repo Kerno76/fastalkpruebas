@@ -9,14 +9,12 @@ import students from '../assets/people.png'
 import user from '../assets/user.png'
 import bell from '../assets/bell.png'
 
-
-
 export const navItems = [
-  { icon: dashboard, label: "Dashboard", path:"/" },
-  { icon: register_session, label: "Registro de Sesiones" },
-  { icon: session_history, label: "Historial de sesiones" },
-  { icon: students, label: "Estudiantes" },
-  { icon: config, label: "Configuracion", path:"/settings" }
+  { icon: dashboard, label: "Dashboard", path: "/" },
+  { icon: register_session, label: "Registro de Sesiones", path: "/registro" }, // <--- ¡AQUÍ FALTABA!
+  { icon: session_history, label: "Historial de sesiones", path: "/historial" }, // <--- FALTABA
+  { icon: students, label: "Estudiantes", path: "/estudiantes" }, // <--- FALTABA
+  { icon: config, label: "Configuracion", path: "/settings" }
 ]
 
 export const profileItems = [

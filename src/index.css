@@ -46,6 +46,9 @@
 
   --btn-secondary-start:#E3E9F5;
   --btn-secondary-end:#C7D3E6;
+
+  --settings-desc: #666;
+  --settings-label-desc: #666;
 }
 
 /* Tema oscuro */
@@ -84,6 +87,9 @@
 
   --btn-secondary-start:#3A4454;
   --btn-secondary-end:#2A3443;
+
+  --settings-desc: #d4d4d4;
+  --settings-label-desc: #c1c1c1ca;
 }
 
 body{
