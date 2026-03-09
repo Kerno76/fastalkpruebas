@@ -1,4 +1,4 @@
-import "../Config.css"
+import "../styles/Config.css"
 
 export function ProfileEditor() {
   return (
