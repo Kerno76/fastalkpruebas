@@ -2,8 +2,8 @@ import { ProfileEditor, Preferences, Notifications } from "../components/Setting
 
 import { useState, useEffect } from "react"
 import { profileItems } from "../data/navItems"
-import "../App.css"
-import "../Config.css"
+import "../styles/App.css"
+import "../styles/Config.css"
 
 export default function Settings() {
 
