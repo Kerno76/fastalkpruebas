@@ -70,7 +70,6 @@ export function Preferences({ darkMode, toggleTheme }) {
         </div>
       </div>
 
-      {/* Fila del Modo Oscuro con tu diseño ORIGINAL (switch clásico) */}
       <div className="settings-row border-top">
         <label id="darkmode" htmlFor="theme-toggle" className="settings-label-title">
             Modo Oscuro

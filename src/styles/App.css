@@ -131,6 +131,15 @@
   filter: brightness(0) invert(1);
 }
 
+.sidebar li.active{
+  background-color: var(--sidebar-li-active);
+  color: var(--sidebar-li-active-text);
+}
+
+.sidebar li.active img {
+  filter: brightness(0) invert(1);
+}
+
 /*Estilo de la sección inferior donde mezclamos secciones para un mejor resultado visual*/
 
 .bottomSection{

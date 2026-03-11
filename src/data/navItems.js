@@ -11,9 +11,10 @@ import bell from '../assets/bell.png'
 
 export const navItems = [
   { icon: dashboard, label: "Dashboard", path: "/" },
-  { icon: register_session, label: "Registro de Sesiones", path: "/registro" }, // <--- ¡AQUÍ FALTABA!
-  { icon: session_history, label: "Historial de sesiones", path: "/historial" }, // <--- FALTABA
-  { icon: students, label: "Estudiantes", path: "/estudiantes" }, // <--- FALTABA
+  { icon: dashboard, label: "Dashboard tutores", path: "/tutor" }, 
+  { icon: register_session, label: "Registro de Sesiones", path: "/registro" }, 
+  { icon: session_history, label: "Historial de sesiones", path: "/historial" }, 
+  { icon: students, label: "Estudiantes", path: "/estudiantes" }, 
   { icon: config, label: "Configuracion", path: "/settings" }
 ]
 

@@ -1,0 +1,184 @@
+/* Contenedor principal */
+.tutor-dashboard-container {
+  padding: 20px;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: 'Arial', sans-serif;
+}
+
+.dashboard-title {
+  margin: 0 0 5px 0;
+  color: #1a1f36;
+  font-size: 24px;
+}
+
+.dashboard-subtitle {
+  color: #697386;
+  margin-top: 0;
+  margin-bottom: 30px;
+  font-size: 15px;
+}
+
+/* Grid de las tarjetas */
+.dashboard-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 25px;
+}
+
+/* Estilo individual de cada tarjeta */
+.dash-card {
+  background: var(--bg-card);
+  border-radius: 15px;
+  padding: 24px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dash-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+}
+
+.dash-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.dash-card-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--color-card-dash);
+  font-weight: 600;
+}
+
+/* Iconos circulares suaves */
+.icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  font-size: 18px;
+}
+
+.blue-icon { background: #e3e9f5; color: #6b8cff; }
+.green-icon { background: #e1f5e8; color: #2ecc71; }
+.purple-icon { background: #f0e6ff; color: #9b59b6; }
+
+/* --- Círculo de Progreso SVG --- */
+.progress-container {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.progress-circle {
+  transform: rotate(-90deg); /* Para que empiece arriba */
+}
+
+.circle-bg {
+  fill: none;
+  stroke: #f0f2f5;
+  stroke-width: 8;
+}
+
+.circle-progress {
+  fill: none;
+  stroke: #6b8cff;
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1s ease-out; /* Animación suave al cargar */
+}
+
+.progress-text {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.progress-current {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-progress-sesdate-dash);
+  line-height: 1;
+}
+
+.progress-total {
+  font-size: 12px;
+  color: var(--color-progresstotal-dash);
+}
+
+/* --- Estadísticas (Beneficiarios) --- */
+.stat-container {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 15px;
+}
+
+.stat-number {
+  font-size: 42px;
+  font-weight: 700;
+  color: var(--color-progress-sesdate-dash);
+  line-height: 1;
+  margin-bottom: 5px;
+}
+
+.stat-label {
+  font-size: 15px;
+  color: var(--color-progress-sesdate-dash);
+}
+
+/* --- Detalles Próxima Sesión --- */
+.session-details {
+  margin-bottom: 20px;
+}
+
+.session-date {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--color-progress-sesdate-dash);
+  margin: 0 0 4px 0;
+}
+
+.session-student {
+  font-size: 14px;
+  color: #697386;
+  margin: 0;
+}
+
+/* Textos inferiores de ayuda */
+.card-footer-text {
+  margin: 0;
+  font-size: 13px;
+  color: #8792a2;
+}
+
+/* Botón (Asegúrate de tener tu clase .button-primary base o usa esta) */
+.start-session-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #6b8cff, #4a6cf7);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.start-session-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(107, 140, 255, 0.3);
+}

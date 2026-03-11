@@ -37,6 +37,7 @@
   --settings-color: #DFEBFB;
   --settings-text: #364961;
 
+  /* Estilos varios para cambios de color en la pestaña de configuraciones */
   --border-settingsMenu: rgba(0,0,0,0.08);
 
   --label-profile: black;
@@ -49,6 +50,15 @@
 
   --settings-desc: #666;
   --settings-label-desc: #666;
+
+  /* Estilos para mantener retroalimentación visual del side bar */
+  --sidebar-li-active: #232526d1;
+  --sidebar-li-active-text: rgb(255, 255, 255);
+
+  /* Estilos para cambio de color de texto en dashboard tutores */
+  --color-progress-sesdate-dash: #1a1f36;
+  --color-card-dash: #3c4257;
+  --color-progresstotal-dash: #697386;
 }
 
 /* Tema oscuro */
@@ -90,6 +100,13 @@
 
   --settings-desc: #d4d4d4;
   --settings-label-desc: #c1c1c1ca;
+
+  --sidebar-li-active: #ced5d992;
+  --sidebar-li-active-text: rgb(255, 255, 255);
+
+  --color-progress-sesdate-dash: white;
+  --color-card-dash: #dbdce0;
+  --color-progresstotal-dash: #c9ced6;
 }
 
 body{

@@ -45,7 +45,6 @@ export default function Settings() {
                         onClick={() => setActiveSection(item.section)}
                         className={activeSection === item.section ? "active" : ""}
                     >
-
                     <img src={item.icon} />
                     {item.label}
                     </li>
