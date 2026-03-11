@@ -1,5 +1,7 @@
 import React from 'react';
 import '../styles/TutorDashboard.css';
+import '../styles/App.css';
+import { CalendarWidget } from "../components/CalendarWidget"
 
 export function TutorDashboard() {
   // Datos hardcodeados de ejemplo
@@ -20,7 +22,7 @@ export function TutorDashboard() {
         
         <div className="dash-card">
           <div className="dash-card-header">
-            <h3>Horas Acreditadas</h3>
+            <h1>Horas Acreditadas</h1>
             <span className="icon-wrapper blue-icon">⏱️</span>
           </div>
           <div className="progress-container">
@@ -50,7 +52,7 @@ export function TutorDashboard() {
         {/* Tarjeta 2: Mis Beneficiarios */}
         <div className="dash-card">
           <div className="dash-card-header">
-            <h3>Mis Beneficiarios</h3>
+            <h1>Mis Beneficiarios</h1>
             <span className="icon-wrapper green-icon">👥</span>
           </div>
           <div className="stat-container">
@@ -63,7 +65,7 @@ export function TutorDashboard() {
         {/* Tarjeta 3: Próxima Sesión */}
         <div className="dash-card">
           <div className="dash-card-header">
-            <h3>Próxima Sesión</h3>
+            <h1>Próxima Sesión</h1>
             <span className="icon-wrapper purple-icon">🗓️</span>
           </div>
           <div className="session-details">
@@ -74,8 +76,19 @@ export function TutorDashboard() {
             Unirse a Sesión
           </button>
         </div>
-
       </div>
+
+      <div className="bottomSection">
+        <div className="recentActivity">
+          <h2>Recent Activity</h2>
+        </div>
+      
+        <div className="calendar">
+          <h2>Calendario</h2>
+          <CalendarWidget></CalendarWidget>
+        </div>
+      </div>
+
     </div>
   );
 }
