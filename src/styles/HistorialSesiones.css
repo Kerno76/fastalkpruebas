@@ -1,0 +1,59 @@
+.histo{
+  padding: 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+#Title {
+  margin: 0 0 5px 0;
+  color: #1a1f36;
+  font-size: 24px;
+  margin-top: 30px;
+}
+
+.dashboard-subtitle {
+  color: #697386;
+  margin-top: 0;
+  margin-bottom: 30px;
+  font-size: 15px;
+}
+
+/*Estilo de la tabla*/
+
+/* Estilo de la tabla */
+
+.headerText {
+  color: #FFFFFF !important; /* Forzamos el blanco */
+  font-weight: bold !important;
+  border-bottom: none !important;
+}
+
+/* Estilos para la cabecera */
+.cabecera {
+  background-color: #212B36 !important; /* El color oscuro que querías */
+  border-top: 4px solid #212B36 !important;
+}
+
+/* Para que las celdas de la cabecera hereden el color */
+.cabecera .MuiTableCell-root {
+  color: white !important;
+}
+
+/* Estilo para las filas del cuerpo (Minimalista) */
+.fila-cuerpo:hover {
+  background-color: #F9FAFB !important; /* El rowHover que tenías */
+  transition: 0.3s;
+}
+
+.tema-destacado {
+  color: #212B36;
+  font-weight: 500;
+}
+
+/*Reponsividad*/
+
+@media (max-width: 900px){
+  #Title{
+    padding-left: 0px;
+  }
+}
