@@ -4,7 +4,7 @@ import '../../styles/Config.css';
 
 export default function AsignarTareas() {
   const [tarea, setTarea] = useState({
-    curso: '', titulo: '', descripcion: '', fechaLimite: '', linkMaterial: ''
+    alumno: '', titulo: '', descripcion: '', fecha: '', hora: '', linkMaterial: ''
   });
 
   const handleChange = (e) => {
@@ -13,26 +13,28 @@ export default function AsignarTareas() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    alert('¡Tarea asignada correctamente a los alumnos!');
-    console.log("Datos de la tarea:", tarea);
+    alert('¡Tarea asignada correctamente a tu alumno!');
+    console.log("Datos a enviar a Node.js:", tarea);
   };
 
   return (
     <div className="mainContent">
       <h2 id="Title">Asignar Tareas</h2>
-      <p className="dashboard-subtitle">Envía ejercicios y establece fechas límite para tus grupos.</p>
+      <p className="dashboard-subtitle">Envía ejercicios y establece fechas límite para tus alumnos.</p>
 
-      <div className="settingsPanel" style={{ display: 'block', padding: '20px', marginTop: '10px' }}>
-        <div className="settingsThings">
+      {/* Contenedor central tipo tarjeta */}
+      <div className="settingsPanel" style={{ maxWidth: '850px', padding: '35px', display: 'block', marginTop: '20px' }}>
+        <div className="settingsThings" style={{ padding: '0' }}>
           <form onSubmit={handleSubmit}>
-            <div className="formGrid">
-              
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '25px', marginBottom: '25px' }}>
               <div className="formField">
-                <label>Curso destino</label>
-                <select className="select-field" name="curso" onChange={handleChange} required>
-                  <option value="">Selecciona a qué grupo asignar...</option>
-                  <option value="1">English - Beginner</option>
-                  <option value="2">French - Advanced</option>
+                <label>Alumno</label>
+                <select className="select-field" name="alumno" onChange={handleChange} required>
+                  <option value="">Selecciona a tu alumno...</option>
+                  <option value="ID_1">David Pérez (A2)</option>
+                  <option value="ID_2">Sofía Gómez (A1)</option>
+                  <option value="ID_3">Luis Eduardo (B1)</option>
                 </select>
               </div>
 
@@ -40,20 +42,26 @@ export default function AsignarTareas() {
                 <label>Título de la tarea</label>
                 <input type="text" name="titulo" placeholder="Ej. Workbook Page 12" onChange={handleChange} required />
               </div>
-
-              <div className="formField">
-                <label>Fecha y Hora Límite (Deadline)</label>
-                <input type="datetime-local" name="fechaLimite" onChange={handleChange} required />
-              </div>
-
-              <div className="formField">
-                <label>Link de Material (Drive / PDF)</label>
-                <input type="url" name="linkMaterial" placeholder="Enlace de apoyo (Opcional)" onChange={handleChange} />
-              </div>
-
             </div>
 
-            <div className="formField" style={{ marginTop: '25px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '25px', marginBottom: '25px' }}>
+              <div className="formField">
+                <label>Fecha Límite</label>
+                <input type="date" name="fecha" onChange={handleChange} required />
+              </div>
+
+              <div className="formField">
+                <label>Hora Límite</label>
+                <input type="time" name="hora" onChange={handleChange} required />
+              </div>
+
+              <div className="formField">
+                <label>Link de Material (Opcional)</label>
+                <input type="text" name="linkMaterial" placeholder="https://..." onChange={handleChange} />
+              </div>
+            </div>
+
+            <div className="formField" style={{ marginBottom: '35px' }}>
               <label>Instrucciones detalladas</label>
               <textarea 
                 name="descripcion" 
@@ -65,9 +73,13 @@ export default function AsignarTareas() {
               ></textarea>
             </div>
 
-            <button type="submit" className="button button-primary" style={{ marginTop: '25px' }}>
-              Publicar Tarea
-            </button>
+            {/* Botón alineado a la derecha */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button type="submit" className="button button-primary">
+                Publicar Tarea
+              </button>
+            </div>
+
           </form>
         </div>
       </div>
