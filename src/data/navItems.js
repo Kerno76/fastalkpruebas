@@ -6,6 +6,8 @@ import session_history from '../assets/history.png'
 import students from '../assets/people.png'
 import calendar_icon from '../assets/calendar.png'
 import task_icon from '../assets/session.png'
+import agenda from '../assets/agenda.png'
+import tasks from '../assets/clipboard.png'
 
 /* Profile Settings Items */
 import user from '../assets/user.png'
@@ -14,12 +16,13 @@ import bell from '../assets/bell.png'
 export const navItems = [
   { icon: dashboard, label: "Dashboard", path: "/" },
   { icon: dashboard, label: "Dashboard tutores", path: "/tutor" }, 
-  { icon: calendar_icon, label: "Agendar Sesión", path: "/agendar" }, 
-  { icon: task_icon, label: "Asignar Tareas", path: "/tareas" },
+  { icon: agenda, label: "Agendar Sesión", path: "/agendar" },
+  { icon: tasks, label: "Asignar Tareas", path: "/tareas" },
   { icon: register_session, label: "Registro de Sesiones", path: "/registro" }, 
   { icon: session_history, label: "Historial de sesiones", path: "/historial" }, 
   { icon: students, label: "Estudiantes", path: "/estudiantes" }, 
-  { icon: config, label: "Configuracion", path: "/settings" }
+  { icon: config, label: "Configuracion", path: "/settings" },
+
 ]
 
 export const profileItems = [
