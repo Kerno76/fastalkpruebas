@@ -14,7 +14,8 @@ import bell from '../assets/bell.png'
 export const navItems = [
   { icon: dashboard, label: "Dashboard", path: "/" },
   { icon: dashboard, label: "Dashboard tutores", path: "/tutor" }, 
-  { icon: calendar_icon, label: "Agendar Clase", path: "/agendar" }, 
+  { icon: calendar_icon, label: "Agendar Sesión", path: "/agendar" }, 
+  { icon: task_icon, label: "Asignar Tareas", path: "/tareas" },
   { icon: register_session, label: "Registro de Sesiones", path: "/registro" }, 
   { icon: session_history, label: "Historial de sesiones", path: "/historial" }, 
   { icon: students, label: "Estudiantes", path: "/estudiantes" }, 
