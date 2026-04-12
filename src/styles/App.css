@@ -23,6 +23,7 @@
 }
 
 #Title{
+  margin-top: -20px;
   color: var(--text-main) !important;
 }
 

@@ -10,12 +10,11 @@
   color: var(--text-main);
   font-size: 24px;
   margin-top: 30px;
-  margin-bottom: -10px;
 }
 
-.dashboard-subtitle {
+#dashboard-subtitle {
   color: #697386;
-  margin-top: 0;
+  margin-top: -18px;
   margin-bottom: 30px;
   font-size: 15px;
 }

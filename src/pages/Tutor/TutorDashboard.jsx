@@ -24,7 +24,7 @@ export default function TutorDashboard() {
   return (
     <div className="mainContent">
       <h2 className="dashboard-title">Panel de TutorTEC</h2>
-      <p className="dashboard-subtitle">Bienvenido de vuelta. Aquí está tu resumen de actividades.</p>
+      <p id = "dashboard-subtitle">Bienvenido de vuelta. Aquí está tu resumen de actividades.</p>
 
       <div className="dashboard-cards-grid">
         {tutorStats.map((stat) => (

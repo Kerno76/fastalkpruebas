@@ -6,6 +6,7 @@ import RegistroSesiones from "./pages/Tutor/RegistroSesiones"
 import HistorialSesiones from "./pages/Tutor/HistorialSesiones"
 import AgendarSesion from "./pages/Tutor/AgendarSesion"
 import AsignarTareas from "./pages/Tutor/AsignarTareas"
+import ControlEstudiantes from "./pages/Organizador/Estudiantes"
 import {Routes, Route} from 'react-router-dom'
 import "./styles/App.css"
 
@@ -18,6 +19,7 @@ function App() {
         <Route path="/tutor" element={<TutorDashboard />} />
         <Route path="/registro" element={<RegistroSesiones />} />
         <Route path="/historial" element={<HistorialSesiones />} />
+        <Route path="/estudiantes" element={<ControlEstudiantes />} />
         <Route path="/settings" element={<Settings/>} />
         <Route path="/agendar" element={<AgendarSesion />} />
         <Route path="/tareas" element={<AsignarTareas />} />

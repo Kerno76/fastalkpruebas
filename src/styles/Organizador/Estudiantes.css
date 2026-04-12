@@ -1,0 +1,167 @@
+/* Estilo de la linea divisora entre la primera sección y la segunda */
+
+.divisor{
+    border: 0;
+    border-top: 1px solid #CCC;
+    margin: 1em 0;
+}
+
+/* Contenedor principal del encabezado */
+
+.dashboard-title {
+    margin: 0 !important; /* Quita el margen que viene por defecto */
+    display: flex;
+    align-items: center;  /* Asegura que el texto interno también se centre */
+}
+
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: -15px;
+    margin-top: 30px;
+    width: 100%;
+}
+
+/* El grupo de botones */
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Responsividad */
+
+@media (max-width: 900px) {
+  .header-container {
+    flex-direction: column;      /* Se hace el cambio de fila a columna */
+    align-items: flex-start;     /* Alinea todo a la izquierda*/
+    gap: 15px;                   /* Espacio entre título y botones al estar uno sobre otro */
+  }
+
+  .header-actions {
+    width: 100%;                 /* Los botones ocupan todo el ancho en móvil */
+    justify-content: flex-start;
+  }
+}
+
+/* Estilos de los botones */
+
+.btn-primary{
+    background-color: #68899D !important;
+    font-size: 15px !important;
+}
+
+.btn-secondary{
+    border-radius: 4px !important;
+}
+
+/* Estilos para las cards de cada estudiante */
+
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+/* La tarjeta individual */
+
+.student-card {
+    background: #ffffff !important;
+    border: 1px solid #e0e4e8 !important;
+    border-radius: 16px !important;
+    padding: 15px !important;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Parte de arriba: Avatar e Info */
+.card-top {
+    display: flex;
+    align-items: center; /* Centra el avatar verticalmente con el texto */
+    gap: 15px;          /* Espacio entre avatar e info */
+}
+
+.student-avatar {
+    width: 70px !important;
+    height: 70px !important;
+    background-color: #f0f2f5 !important;
+    flex-shrink: 0;
+}
+
+.student-name-title {
+    font-weight: 700 !important;
+    font-size: 1.1rem !important;
+    color: #1a1f36;
+    margin-bottom: 15px !important;
+}
+
+/* Filas de indicadores y tutor */
+.info-row, .tutor-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 5px;
+}
+
+.label {
+    font-size: 0.85rem;
+    color: #4f566b;
+}
+
+/* Estilo de los indicadores de curso y nivel */
+.cont-level, .cont-course {
+    padding: 2px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.cont-level{ 
+    background-color: #d1f2e1; 
+    color: #1a472a; 
+}
+
+.cont-course{ 
+    background-color: #dbeafe; 
+    color: #1e40af; 
+}
+
+/* Botones de abajo en fila */
+
+.bottom-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.details, .assign {
+    flex: 1; /* Que ambos midan lo mismo */
+    padding: 10px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid #e0e4e8;
+    transition: 0.2s;
+}
+
+.details {
+    background: #f9fafb;
+    color: #4f566b;
+}
+
+.assign {
+    background: #68899D; /* Tu color azul grisáceo */
+    color: white;
+    border: none;
+}
+
+.details:hover {
+    background: #d2d7db;
+}
+
+.assign:hover {
+    background: #567283;
+}
