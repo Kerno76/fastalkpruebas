@@ -7,9 +7,10 @@
 
 .dashboard-title {
   margin: 0 0 5px 0;
-  color: #1a1f36;
+  color: var(--text-main);
   font-size: 24px;
   margin-top: 30px;
+  margin-bottom: -10px;
 }
 
 .dashboard-subtitle {
@@ -72,7 +73,7 @@
 .green-icon { background: #e1f5e8; color: #2ecc71; }
 .purple-icon { background: #f0e6ff; color: #9b59b6; }
 
-/* --- Círculo de Progreso SVG --- */
+/* Círculo de Progreso SVG */
 .progress-container {
   position: relative;
   display: flex;
@@ -119,7 +120,7 @@
   color: var(--color-progresstotal-dash);
 }
 
-/* --- Estadísticas (Beneficiarios) --- */
+/* Estadísticas (Beneficiarios) */
 .stat-container {
   display: flex;
   flex-direction: column;
@@ -139,7 +140,7 @@
   color: var(--color-progress-sesdate-dash);
 }
 
-/* --- Detalles Próxima Sesión --- */
+/* Detalles Próxima Sesión */
 .session-details {
   margin-bottom: 20px;
 }
@@ -155,6 +156,7 @@
   font-size: 14px;
   color: #697386;
   margin: 0;
+  margin-bottom: 15px;
 }
 
 /* Textos inferiores de ayuda */
@@ -180,4 +182,15 @@
 .start-session-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 15px rgba(107, 140, 255, 0.3);
+}
+
+/* Recent activity */
+
+.activity-avatar svg {
+  font-size: 22px; /* Ajusta el tamaño del icono */
+}
+
+.activity-desc {
+  font-size: 0.85rem;
+  line-height: 1.4;
 }

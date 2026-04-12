@@ -1,9 +1,9 @@
 import Sidebar from "./components/Sidebar"
-import Dashboard from "./pages/Dashboard"
+import Dashboard from "./pages/Organizador/Dashboard"
 import Settings from "./pages/Config"
-import { TutorDashboard } from "./pages/TutorDashboard"
-import RegistroSesiones from "./pages/RegistroSesiones"
-import HistorialSesiones from "./pages/HistorialSesiones"
+import TutorDashboard from "./pages/Tutor/TutorDashboard"
+import RegistroSesiones from "./pages/Tutor/RegistroSesiones"
+import HistorialSesiones from "./pages/Tutor/HistorialSesiones"
 import {Routes, Route} from 'react-router-dom'
 import "./styles/App.css"
 

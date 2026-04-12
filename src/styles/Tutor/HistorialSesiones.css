@@ -19,9 +19,6 @@
 }
 
 /*Estilo de la tabla*/
-
-/* Estilo de la tabla */
-
 .headerText {
   color: #FFFFFF !important; /* Forzamos el blanco */
   font-weight: bold !important;
@@ -30,7 +27,7 @@
 
 /* Estilos para la cabecera */
 .cabecera {
-  background-color: #212B36 !important; /* El color oscuro que querías */
+  background-color: #212B36 !important; 
   border-top: 4px solid #212B36 !important;
 }
 
@@ -39,9 +36,8 @@
   color: white !important;
 }
 
-/* Estilo para las filas del cuerpo (Minimalista) */
 .fila-cuerpo:hover {
-  background-color: #F9FAFB !important; /* El rowHover que tenías */
+  background-color: #F9FAFB !important;
   transition: 0.3s;
 }
 

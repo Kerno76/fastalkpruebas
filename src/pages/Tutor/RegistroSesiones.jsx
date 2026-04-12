@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import '../styles/RegistroSesiones.css';
+import '../../styles/Tutor/RegistroSesiones.css';
 
 export default function RegistroSesiones() {
   const [step, setStep] = useState(1);

@@ -1,5 +1,5 @@
-import '../styles/HistorialSesiones.css';
-import '../styles/App.css';
+import '../../styles/Tutor/HistorialSesiones.css';
+import '../../styles/App.css';
 
 // Tabla
 import { 

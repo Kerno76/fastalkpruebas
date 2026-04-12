@@ -22,12 +22,16 @@
   border-radius: 30px;
 }
 
+#Title{
+  color: var(--text-main) !important;
+}
+
 /*Ocupamos todo el espacio restante en cuanto a distribución*/
 
 .mainContent{
   flex: 1;
-
   display: flex;
+  padding: 20px;
   flex-direction: column;
   gap: 25px;
 }
@@ -156,19 +160,17 @@
   padding-right: 5px;
   margin-bottom: 25px;
   margin-right: 20px;
+  color: var(--text-main);
 
   min-height: 250px;
 }
 
-/*Reponsividad*/
+/*Responsividad*/
 
 @media (max-width: 900px){
 
   .dashboard{
     flex-direction: column;
-  }
-  #Title{
-    padding-left: 20px;
   }
 
   .sidebar{
@@ -177,7 +179,6 @@
 
   .bottomSection{
     grid-template-columns: 1fr;
-    padding-left: 20px;
   }
 
   .settingRow{
@@ -264,10 +265,67 @@
   transform: translateX(34px);
 }
 
-/* ESCENA DE NOCHE (Cuando está activo - Modo Oscuro) */
+/* Escena de noche (Cuando está activo - Modo Oscuro) */
 .switch input:checked + .slider {
   background: 
     /* Luna y cielo nocturno */
     radial-gradient(circle at 75% 30%, #dfdcf1 0%, #afb8ea 30%, transparent 60%),
     linear-gradient(to top, #111 0%, #1a1c38 40%, #2f2a58 100%);
+}
+
+/* Recent Activity */
+.activity-card {
+  display: flex !important;
+  align-items: center;
+  padding: 12px 16px !important;
+  margin-right: 15px !important;
+  margin-bottom: 16px;
+  border-radius: 12px !important;
+  border: 1px solid var(--border) !important;
+  transition: all 0.3s ease !important;
+  background-color: var(--act-card) !important;
+}
+
+.activity-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+  transform: translateY(-2px);
+  border-color: #e0e0e0 !important;
+}
+
+/* El Avatar (Círculo del icono) */
+.activity-avatar {
+  margin-right: 16px !important;
+  width: 45px !important;
+  height: 45px !important;
+}
+
+/* Textos dentro de la actividad */
+.activity-info {
+  flex-grow: 1;
+}
+
+.activity-title {
+  font-weight: 700 !important;
+  color: var(--act-title) !important;
+  font-size: 0.9rem !important;
+}
+
+.activity-desc {
+  color: var(--act-desc) !important;
+  font-size: 0.85rem !important;
+}
+
+.activity-time {
+  margin-left: auto !important;
+  color: var(--act-time) !important;
+  font-size: 0.75rem !important;
+  white-space: nowrap;
+}
+
+/* Títulos de secciones */
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: #1a1f36;
 }

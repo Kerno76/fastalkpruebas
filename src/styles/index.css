@@ -59,6 +59,14 @@
   --color-progress-sesdate-dash: #1a1f36;
   --color-card-dash: #090909;
   --color-progresstotal-dash: #697386;
+
+  /* Card de actividad */
+  --act-card: #f6f7f9;
+  --border: #cacaca;
+
+  --act-title: #1a1f36;
+  --act-desc: #697386;
+  --act-time: #a3acb9;
 }
 
 /* Tema oscuro */
@@ -107,6 +115,14 @@
   --color-progress-sesdate-dash: white;
   --color-card-dash: #dbdce0;
   --color-progresstotal-dash: #c9ced6;
+
+  --act-card: #454646;
+  --border: #f0f0f0;
+  --text-color-act: #f0f0f0;
+
+  --act-title: #f0f0f0;
+  --act-desc: #f0f0f0;
+  --act-time: #f0f0f0;
 }
 
 body{
