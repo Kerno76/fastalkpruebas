@@ -27,6 +27,11 @@
   color: var(--text-main) !important;
 }
 
+.dashboard-subtitle {
+  color: var(--subtitle-main) !important;
+  margin-top: -20px !important;
+}
+
 /*Ocupamos todo el espacio restante en cuanto a distribución*/
 
 .mainContent{

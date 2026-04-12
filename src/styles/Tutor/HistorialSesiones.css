@@ -11,8 +11,8 @@
   margin-top: 30px;
 }
 
-.dashboard-subtitle {
-  color: #697386;
+#dashboard-subtitle {
+  color: var(--subtitle-main);
   margin-top: 0;
   margin-bottom: 30px;
   font-size: 15px;

@@ -21,6 +21,7 @@ export default function Dashboard() {
     <div className="mainContent">
 
       <h2 id="Title">Dashboard</h2>
+      <p className="dashboard-subtitle">Bienvenido de vuelta. Aquí está tu resumen de actividades.</p>
 
       <div className="cardsContainer">
         {entries.map((entry, index) => (

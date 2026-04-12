@@ -22,7 +22,7 @@ export default function HistorialSesiones() {
   return (
     <div className="histo">
       <h2 id="Title">Historial de Sesiones</h2>
-      <p className="dashboard-subtitle">Bienvenido, tus últimas sesiones desglosadas aquí mismo</p>
+      <p id="dashboard-subtitle">Bienvenido, tus últimas sesiones desglosadas aquí mismo</p>
 
       {/*Haremos los cambios dentro de los componentes usando el atajo sx para evitar conflictos de preferencias*/}
 

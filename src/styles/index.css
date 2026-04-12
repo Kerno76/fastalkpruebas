@@ -5,6 +5,7 @@
 
   /* Texto */
   --text-main: #000000;
+  --subtitle-main: #697386;
 
   /* Fondos principales */
   --bg-body: #DCE0E5;
@@ -67,12 +68,17 @@
   --act-title: #1a1f36;
   --act-desc: #697386;
   --act-time: #a3acb9;
+
+  /* Estilos variables para card de estudiante */
+  --student-card: #ffffff;
+  --student-label: #4f566b;
 }
 
 /* Tema oscuro */
 
 .dark{
   --text-main: #f1f1f1;
+  --subtitle-main: #f1f1f1e7;
 
   --bg-body: #121212;
   --bg-dashboard: #1b1f24;
@@ -123,6 +129,9 @@
   --act-title: #f0f0f0;
   --act-desc: #f0f0f0;
   --act-time: #f0f0f0;
+
+  --student-card: #3A4454;
+  --student-label: #f0f0f0;
 }
 
 body{
