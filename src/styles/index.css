@@ -72,6 +72,11 @@
   /* Estilos variables para card de estudiante */
   --student-card: #ffffff;
   --student-label: #4f566b;
+
+  /* Estilos para los modales */
+  --modal-text-color: #1a1f36;
+  --modal-background: #FFFFFF;
+  --modal-close-button: #697386;
 }
 
 /* Tema oscuro */
@@ -132,6 +137,10 @@
 
   --student-card: #3A4454;
   --student-label: #f0f0f0;
+
+  --modal-text-color: #ffffff;
+  --modal-background: #303030;
+  --modal-close-button: #FCFCFC;
 }
 
 body{

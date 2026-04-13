@@ -1,0 +1,87 @@
+/* El contenedor blanco del modal */
+.modal-container {
+    border-radius: 20px !important;
+    padding: 20px;
+    position: relative;
+    overflow: visible !important;
+    background-color: var(--modal-background) !important;
+}
+
+/* El fondo oscuro con desenfoque */
+.MuiBackdrop-root {
+    background-color: rgba(0, 0, 0, 0.2) !important;
+    backdrop-filter: blur(6px);
+}
+
+.modal-title {
+    font-weight: 800 !important;
+    font-size: 1.4rem !important;
+    color: var(--modal-text-color);
+    margin-bottom: 25px !important;
+}
+
+.modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Filas de dos columnas */
+.form-row {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+}
+
+.form-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--modal-text-color);
+}
+
+/* Personalización de los inputs para que se vean redonditos */
+.MuiOutlinedInput-root {
+    border-radius: 12px !important;
+    background-color: #fcfcfc;
+}
+
+/* Botón X de cerrar */
+.close-button {
+    position: absolute !important;
+    right: 15px;
+    top: 15px;
+    color: var(--modal-close-button) !important;
+}
+
+/* Botones de acción */
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.btn-cancel {
+    background-color: #e5e7eb !important;
+    color: #4b5563 !important;
+    text-transform: none !important;
+    font-weight: 700 !important;
+    border-radius: 10px !important;
+    padding: 8px 20px !important;
+}
+
+.btn-save {
+    background-color: #68899D !important;
+    color: white !important;
+    text-transform: none !important;
+    font-weight: 700 !important;
+    border-radius: 10px !important;
+    padding: 8px 25px !important;
+}

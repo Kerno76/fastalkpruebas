@@ -2,7 +2,10 @@ import '../../styles/App.css';
 import '../../styles/Organizador/Tutores.css';
 
 import { tutorsR } from "../../data/dataTutor.js";
-import { Box, Typography, Avatar, Paper, LinearProgress  } from '@mui/material';
+import { Typography, Avatar, Paper, LinearProgress  } from '@mui/material';
+
+import { useState } from 'react';
+import ModalTutor from '../../components/Modals/ModalTutor';
 
 /* Importamos iconos de ayuda */ 
 import { Button } from '@mui/material';
@@ -18,6 +21,9 @@ export default function ControlEstudiantes(){
 
     const progreso = (tutoresActivos / totalTutores) * 100;
 
+    /* Modal */
+    const [openModal, setOpenModal] = useState(false);
+
     /* Colores para diferenciación de cursos */
 
     const courseColors = {
@@ -32,8 +38,10 @@ export default function ControlEstudiantes(){
             <h2 className="dashboard-title">Gestión de Tutores</h2>
             
             <div className="header-actions">
-                <Button variant="contained" startIcon={<AddIcon />} className="btn-primary"> Registrar nuevo tutor </Button>
-                
+                <Button onClick={() => setOpenModal(true)} variant="contained" startIcon={<AddIcon />} className="btn-primary"> Registrar nuevo tutor </Button>
+
+                <ModalTutor open={openModal} onClose={() => setOpenModal(false)} />
+
                 <IconButton className="btn-secondary"> <UploadFileIcon  style={{ fontSize: '40px' }} /> </IconButton>
 
                 <div className='progress-stat'>
