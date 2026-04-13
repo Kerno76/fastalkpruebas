@@ -40,7 +40,15 @@
     gap: 8px;
 }
 
-.form-group label {
+.form-mini-group {
+    flex: 0.5;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+
+.form-group, .form-mini-group label {
     font-size: 0.9rem;
     font-weight: 700;
     color: var(--modal-text-color);

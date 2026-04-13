@@ -98,7 +98,9 @@ export default function ControlEstudiantes(){
 
                 <div className="bottom-actions">
                     <button className="details">Ver Detalles</button>
-                    <button className="assign">Asignar Tutor</button>
+                    <button className="assign">Asignar Revisor</button>
+                    <button className="assign">Asignar Estudiantes</button>
+                    <button className="assign">Revisar Bitacoras</button>
                 </div>
 
             </Paper>

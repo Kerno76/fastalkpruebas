@@ -4,6 +4,9 @@ import '../../styles/Organizador/Estudiantes.css';
 import { studentsR} from "../../data/dataEstudiantes.js";
 import { Box, Typography, Avatar, Paper } from '@mui/material';
 
+import { useState } from 'react';
+import ModalEstudiante from '../../components/Modals/ModalEstudiante';
+
 /* Importamos iconos de ayuda */ 
 import { Button } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
@@ -17,6 +20,9 @@ export default function ControlEstudiantes(){
         'Ingles': 'bg-ingles',
         'Frances': 'bg-frances'
     };
+
+    /* Modal */
+    const [openModal, setOpenModal] = useState(false);
     
     return(
     <div className='mainContent'>
@@ -25,7 +31,9 @@ export default function ControlEstudiantes(){
             <h2 className="dashboard-title">Gestión de Estudiantes</h2>
             
             <div className="header-actions">
-                <Button variant="contained" startIcon={<AddIcon />} className="btn-primary"> Registrar nuevo estudiante </Button>
+                <Button onClick={() => setOpenModal(true)} variant="contained" startIcon={<AddIcon />} className="btn-primary"> Registrar nuevo estudiante </Button>
+
+                <ModalEstudiante open={openModal} onClose={() => setOpenModal(false)} />
                 
                 <IconButton className="btn-secondary"> <UploadFileIcon  style={{ fontSize: '40px' }} /> </IconButton>
             </div>
@@ -65,6 +73,7 @@ export default function ControlEstudiantes(){
                 <div className="bottom-actions">
                     <button className="details">Ver Detalles</button>
                     <button className="assign">Asignar Tutor</button>
+                    <button className="assign">Asignar Calificación</button>
                 </div>
 
             </Paper>

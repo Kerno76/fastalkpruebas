@@ -1,7 +1,7 @@
 import { Dialog, IconButton, Typography, TextField, Button, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 
-import '../../styles/Modals/ModalTutor.css'; 
+import '../../styles/Modals/Modales.css'; 
 
 export default function ModalTutor({ open, onClose }) {
   return (
