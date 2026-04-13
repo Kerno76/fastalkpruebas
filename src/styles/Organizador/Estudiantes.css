@@ -42,7 +42,7 @@
 
   .header-actions {
     width: 100%;                 /* Los botones ocupan todo el ancho en móvil */
-    justify-content: flex-start;
+    justify-content: center;
   }
 }
 

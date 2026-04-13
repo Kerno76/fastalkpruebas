@@ -16,7 +16,7 @@ export default function ControlEstudiantes(){
     <div className='mainContent'>
         
         <div className="header-container">
-            <h2 className="dashboard-title">Gestión de estudiantes</h2>
+            <h2 className="dashboard-title">Gestión de Estudiantes</h2>
             
             <div className="header-actions">
                 <Button variant="contained" startIcon={<AddIcon />} className="btn-primary"> Registrar nuevo estudiante </Button>

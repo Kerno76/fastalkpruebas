@@ -150,3 +150,8 @@ body.dark .settingsMenu img {
 body.dark .settingsMenuP img {
   filter: brightness(0) invert(1);
 }
+
+/* Cambiamos el color de los iconos */
+body.dark .header-actions svg {
+  color: #ffffff !important;
+}

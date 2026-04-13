@@ -67,3 +67,69 @@ export const recentActTutor = [
     bgColor: '#fff3e0'
   }
 ];
+
+export const tutorsR = [
+  {
+    id: 1,
+    name: 'Alexa García',
+    status: 'Active',
+    course: 'Frances',
+    career: 'ITC',
+    horasV: '50 hrs',
+    studentsN: '2'
+  },
+  {
+    id: 2,
+    name: 'Carlos Ruiz',
+    status: 'Active',
+    course: 'Ingles',
+    career: 'IBM',
+    horasV: '45 hrs',
+    studentsN: '2'
+  },
+  {
+    id: 3,
+    name: 'Luis Medina',
+    status: 'Active',
+    course: 'Frances',
+    career: 'IM',
+    horasV: '20 hrs',
+    studentsN: '2'
+  },
+  {
+    id: 4,
+    name: 'María García',
+    status: 'Active',
+    course: 'Ingles',
+    career: 'IMT',
+    horasV: '120 hrs',
+    studentsN: '2'
+  },
+  {
+    id: 5,
+    name: 'Luna Manta',
+    status: 'Active',
+    course: 'Ingles',
+    career: 'IRS',
+    horasV: '90 hrs',
+    studentsN: '3'
+  },
+  {
+    id: 6,
+    name: 'Rosa Stringer',
+    status: 'Active',
+    course: 'Ingles',
+    career: 'LAC',
+    horasV: '50 hrs',
+    studentsN: '1'
+  },
+  {
+    id: 7,
+    name: 'Vanesa Colka',
+    status: 'Active',
+    course: 'Frances',
+    career: 'LTM',
+    horasV: '50 hrs',
+    studentsN: '4'
+  },
+];

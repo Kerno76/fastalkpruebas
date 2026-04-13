@@ -20,7 +20,8 @@ export const navItems = [
   { icon: tasks, label: "Asignar Tareas", path: "/tareas" },
   { icon: register_session, label: "Registro de Sesiones", path: "/registro" }, 
   { icon: session_history, label: "Historial de sesiones", path: "/historial" }, 
-  { icon: students, label: "Estudiantes", path: "/estudiantes" }, 
+  { icon: students, label: "Estudiantes", path: "/estudiantes" },
+  { icon: students, label: "Tutores", path: "/tutores" },  
   { icon: config, label: "Configuracion", path: "/settings" },
 
 ]
