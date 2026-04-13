@@ -12,6 +12,12 @@ import UploadFileIcon from '@mui/icons-material/UploadFile';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 
 export default function ControlEstudiantes(){
+
+    const courseColors = {
+        'Ingles': 'bg-ingles',
+        'Frances': 'bg-frances'
+    };
+    
     return(
     <div className='mainContent'>
         
@@ -45,7 +51,7 @@ export default function ControlEstudiantes(){
                             <span className="label">Nivel</span>
                             <span className="cont-level">{item.level}</span>
                             <span className="label">Curso</span>
-                            <span className="cont-course">{item.course}</span>
+                            <span className={`cont-course ${courseColors[item.course] || 'bg-default'}`}>{item.course}</span>
                         </div>
 
                         <div className="tutor-row">
