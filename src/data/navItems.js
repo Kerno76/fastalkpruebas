@@ -21,7 +21,8 @@ export const navItems = [
   { icon: register_session, label: "Registro de Sesiones", path: "/registro" }, 
   { icon: session_history, label: "Historial de sesiones", path: "/historial" }, 
   { icon: students, label: "Estudiantes", path: "/estudiantes" },
-  { icon: students, label: "Tutores", path: "/tutores" },  
+  { icon: students, label: "Tutores", path: "/tutores" },
+  { icon: students, label: "Revisores", path: "/revisores" },    
   { icon: config, label: "Configuracion", path: "/settings" },
 
 ]

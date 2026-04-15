@@ -1,0 +1,227 @@
+/* Estilo para el grupo de los botones*/
+
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: -15px;
+    margin-top: 30px;
+    width: 100%;
+    padding-right: 20px;
+    box-sizing: border-box;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.header-container-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%; 
+    margin: 0 0 10px 0 !important;
+}
+
+.status {
+    background: #e1f5e8;
+    color: #2ecc71;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    padding: 20px;
+    max-width: 100%;
+}
+
+.revisor-card {
+    background: var(--student-card) !important;
+    border: 1px solid #e0e4e8 !important;
+    border-radius: 16px !important;
+    padding: 15px !important;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 100%;
+}
+
+/* Parte de arriba: Avatar e Info */
+.card-top {
+    display: flex;
+    align-items: center; 
+    gap: 15px;          
+}
+
+.revisor-data {
+    display: flex;
+    flex-direction: column;
+    flex: 1; 
+    min-width: 0;
+}
+
+.revisor-avatar {
+    width: 70px !important;
+    height: 70px !important;
+    background-color: #f0f2f5 !important;
+    flex-shrink: 0;
+}
+
+.revisor-name-title {
+    font-weight: 700 !important;
+    font-size: 1.1rem !important;
+    color: var(--text-main);
+    margin-bottom: 0 !important;
+}
+
+/* Filas de indicadores y revisor */
+.info-revisor-row, .revisor-row{
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 5px;
+    color: var(--student-label);
+}
+
+.validation-revisor-row{
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 5px;
+    color: var(--student-label);
+}
+
+.label {
+    font-size: 0.85rem;
+    color: var(--student-label);
+}
+
+.labelG {
+    font-size: 1rem;
+    color: var(--student-label);
+}
+
+/* Estilo de los indicadores de curso y nivel */
+.cont-career, .cont-horasA, .cont-completedV {
+    padding: 2px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.cont-career{
+    background-color: #E0CA3C;
+    color: #343333;
+}
+
+.cont-horasA{
+    font-size: 0.95rem;
+    background-color: #048A81;
+    color: #F0F0F0;
+}
+
+.cont-completedV{
+    font-size: 0.95rem;
+    background-color: #8a045d;
+    color: #F0F0F0;
+}
+
+/* Botones de abajo en fila */
+
+.bottom-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.details, .assign {
+    flex: 1; /* Que ambos midan lo mismo */
+    padding: 10px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid #e0e4e8;
+    transition: 0.2s;
+}
+
+.details {
+    background: #f9fafb;
+    color: #4f566b;
+}
+
+.assign {
+    background: #68899D;
+    color: white;
+    border: none;
+}
+
+.details:hover {
+    background: #d2d7db;
+}
+
+.assign:hover {
+    background: #567283;
+}
+
+/* El grupo de botones */
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Responsividad */
+
+@media (max-width: 900px) {
+  .header-container {
+    flex-direction: column;      
+    align-items: flex-start;    
+    gap: 15px;                   
+  }
+
+  .header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+/* Estilos de los botones */
+
+.btn-primary{
+    background-color: #68899D !important;
+    font-size: 15px !important;
+}
+
+.btn-secondary{
+    border-radius: 4px !important;
+}
+
+@media (max-width: 900px) {
+  .header-container {
+    flex-direction: column;      /* Se hace el cambio de fila a columna */
+    align-items: flex-start;     /* Alinea todo a la izquierda*/
+    gap: 15px;                   /* Espacio entre título y botones al estar uno sobre otro */
+  }
+
+  .header-actions {
+    width: 100%;                 /* Los botones ocupan todo el ancho en móvil */
+    justify-content: center;
+  }
+}
+
+.bottom-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}

@@ -8,6 +8,7 @@ import AgendarSesion from "./pages/Tutor/AgendarSesion"
 import AsignarTareas from "./pages/Tutor/AsignarTareas"
 import ControlEstudiantes from "./pages/Organizador/Estudiantes"
 import ControlTutores from "./pages/Organizador/Tutores"
+import ControlRevisores from "./pages/Organizador/Revisores"
 import {Routes, Route} from 'react-router-dom'
 import "./styles/App.css"
 
@@ -22,6 +23,7 @@ function App() {
         <Route path="/historial" element={<HistorialSesiones />} />
         <Route path="/estudiantes" element={<ControlEstudiantes />} />
         <Route path="/tutores" element={<ControlTutores />} />
+        <Route path="/revisores" element={<ControlRevisores />} />
         <Route path="/settings" element={<Settings/>} />
         <Route path="/agendar" element={<AgendarSesion />} />
         <Route path="/tareas" element={<AsignarTareas />} />

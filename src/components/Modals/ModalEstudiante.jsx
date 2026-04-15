@@ -67,7 +67,7 @@ export default function ModalEstudiante({ open, onClose }) {
 
           <div className="modal-actions">
             <Button onClick={onClose} className="btn-cancel">Cancelar</Button>
-            <Button variant="contained" className="btn-save">Registrar Tutor</Button>
+            <Button variant="contained" className="btn-save">Registrar Estudiante</Button>
           </div>
         </form>
       </div>

@@ -41,7 +41,7 @@
 }
 
 .form-mini-group {
-    flex: 0.5;
+    flex: 0.69;
     display: flex;
     flex-direction: column;
     gap: 8px;
