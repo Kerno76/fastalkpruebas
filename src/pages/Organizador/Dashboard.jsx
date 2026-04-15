@@ -1,5 +1,4 @@
 import { entries, recentAct } from "../../data/data"
-import { Card } from "../../components/Cards"
 import { CalendarWidget } from "../../components/CalendarWidget"
 import '../../styles/App.css';
 
@@ -23,14 +22,23 @@ export default function Dashboard() {
       <h2 id="Title">Dashboard</h2>
       <p className="dashboard-subtitle">Bienvenido de vuelta. Aquí está tu resumen de actividades.</p>
 
-      <div className="cardsContainer">
+      <div className="dashboard-cards-grid">
         {entries.map((entry, index) => (
-          <Card
-            key={index}
-            img={entry.img}
-            title={entry.title}
-            amount={entry.amount}
-          />
+          <div key={index} className="dash-card">
+            <div className="dash-card-header">
+              <h1>{entry.title}</h1>
+              <span className="icon-wrapper blue-icon">
+                <img src={entry.img} alt={entry.title} style={{ width: '24px' }} />
+              </span>
+            </div>
+            
+            <div className="stat-container">
+              <span className="stat-number">{entry.amount}</span>
+              <span className="stat-label">Total acumulado</span>
+            </div>
+            
+            <p className="card-footer-text">Actualizado hace un momento</p>
+          </div>
         ))}
       </div>
 

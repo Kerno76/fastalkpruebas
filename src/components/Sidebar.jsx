@@ -12,15 +12,17 @@ export default function Sidebar() {
 
       <ul>
         {navItems.map((item, i) => (
-          <li key={i} 
-              onClick={() => setActiveSection(item.path)}
-              className={activeSection === item.path ? "active" : ""}>
-            
-            <Link to={item.path} className="navItem">
+          <Link 
+            to={item.path} 
+            key={i} 
+            className="nav-link-wrapper"
+            onClick={() => setActiveSection(item.path)}
+          >
+            <li className={activeSection === item.path ? "active" : "navItem"}>
               <img src={item.icon} alt={item.label} />
               {item.label}
-            </Link>
-          </li>
+            </li>
+          </Link>
         ))}
       </ul>
     </div>
