@@ -77,6 +77,8 @@
   --modal-text-color: #1a1f36;
   --modal-background: #FFFFFF;
   --modal-close-button: #697386;
+  
+  --next-sesions: #CCEDEA;
 }
 
 /* Tema oscuro */
@@ -141,6 +143,8 @@
   --modal-text-color: #ffffff;
   --modal-background: #303030;
   --modal-close-button: #FCFCFC;
+
+  --next-sesions: #262626;
 }
 
 body{

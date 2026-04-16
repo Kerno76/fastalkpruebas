@@ -1,0 +1,233 @@
+/* Contenedor Principal */
+.tutor-page-container {
+  padding: 20px;
+}
+
+.page-title-tutor {
+  color: var(--text-main);
+  font-weight: 700 !important;
+  margin-bottom: 10px !important;
+}
+
+.divisor-tutor {
+  border: 0;
+  border-top: 1px solid #3a3a3a;
+  margin: 15px 0 25px 0;
+}
+
+/* Disposición de las secciones */
+.tutor-grid {
+  display: grid;
+  grid-template-columns: 2fr 3fr; /* Dos columnas principales */
+  gap: 20px;
+}
+
+/* Estilo base de todas las tarjetas */
+.tutor-card-main {
+  background: var(--bg-card);
+  border-radius: 15px;
+  padding: 25px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.card-subtitle-tutor {
+  font-size: 22px !important;
+  color: var(--text-main);
+  margin-bottom: 20px !important;
+  letter-spacing: 0.5px;
+}
+
+/*  Perfil (Columa 1) */
+.profile-section-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.tutor-page-avatar {
+  width: 110px !important;
+  height: 110px !important;
+  margin-bottom: 15px;
+  border: 3px solid #3a3a3a;
+}
+
+.tutor-page-name {
+  font-size: 26px !important;
+  font-weight: 700 !important;
+  color: var(--text-main);
+}
+
+.tutor-page-specialty {
+  font-size: 20px !important;
+  color: #b8c1d2;
+  margin-bottom: 15px !important;
+}
+
+.tutor-page-bio {
+  font-size: 19px !important;
+  color: #8792a2;
+  line-height: 1.6;
+  max-width: 300px;
+}
+
+/* Contacto y Sesiones */
+.tutor-col-2 {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Contacto */
+.contact-items-tutor {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.contact-icon {
+  color: #5469d4; /* Color acento azul */
+}
+
+.contact-label {
+  font-size: 11px;
+  color: #8792a2;
+  font-weight: 600;
+}
+
+.contact-value {
+  font-size: 13px;
+  color: var(--text-main);
+}
+
+/* Botones de Contacto estilizados */
+.contact-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: opacity 0.2s;
+}
+
+.chat-btn {
+  background: #2ecc71; /* Verde WhatsApp */
+  color: white;
+}
+
+.chat-btn-mail {
+  background: #4a2bd0; /* Morado Correo */
+  color: white;
+}
+
+.calendar-btn {
+  background: #313131;
+  color: #b8c1d2;
+  border: 1px solid #3a3a3a;
+}
+
+.contact-btn:hover {
+  opacity: 0.8;
+}
+
+/* Sesiones */
+.sessions-list-tutor {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.session-item-tutor {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--next-sesions);
+  padding: 12px;
+  border-radius: 10px;
+}
+
+.status-badge {
+  font-size: 15px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+.status-badge.green {
+  background: #1a472a;
+  color: #2ecc71;
+}
+
+.status-badge.blue {
+  background: #1e40af;
+  color: #dbeafe;
+}
+
+.session-date-tutor {
+  font-size: 13px;
+  color: var(--text-main);
+}
+
+/* Recursos */
+.resources-card {
+  grid-column: 1 / -1; /* Abarca todo el ancho abajo */
+}
+
+.resources-list-tutor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.resource-item-tutor {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #3a3a3a;
+}
+
+.resource-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.file-icon {
+  font-size: 30px !important;
+}
+
+.file-icon.pdf { color: #e74c3c; }
+.file-icon.doc { color: #3498db; }
+.file-icon.link { color: #f1c40f; }
+
+.resource-name {
+  font-size: 14px;
+  color: var(--text-main);
+}
+
+.resource-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.action-btn-tutor {
+  color: #8792a2 !important;
+}
+
+.action-btn-tutor:hover {
+  color: var(--text-main) !important;
+  background-color: #313131 !important;
+}

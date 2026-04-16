@@ -1,0 +1,271 @@
+.dashboard-title {
+  margin: 0 0 5px 0;
+  color: var(--text-main);
+  font-size: 24px;
+  margin-top: 30px;
+}
+
+#dashboard-subtitle {
+  color: #697386;
+  margin-top: -18px;
+  margin-bottom: 30px;
+  font-size: 15px;
+}
+
+/* Grid de las tarjetas */
+.dashboard-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 25px;
+  margin-bottom: 25px;
+}
+
+/* Estilo individual de cada tarjeta */
+.dash-card {
+  background: var(--bg-card);
+  border-radius: 15px;
+  padding: 24px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dash-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+}
+
+.dash-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.dash-card-header h1 {
+  font-size: 24px !important;
+  color: var(--color-card-dash);
+}
+
+/* Círculo de Progreso SVG */
+.progress-container-student {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.progress-circle-student {
+  transform: rotate(-90deg); /* Para que empiece arriba */
+}
+
+.circle-bg-student {
+  fill: none;
+  stroke: #f0f2f5;
+  stroke-width: 8;
+}
+
+.circle-progress-student {
+  fill: none;
+  stroke: #59b800;
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1s ease-out; /* Animación suave al cargar */
+}
+
+.progress-text-student {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.progress-current-student {
+  font-size: 29px;
+  font-weight: 700;
+  color: var(--color-progress-sesdate-dash);
+  line-height: 1;
+}
+
+.progress-total-student {
+  font-size: 17px;
+  color: var(--color-progresstotal-dash);
+}
+
+/* Estadísticas (Beneficiarios) */
+.stat-container {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 15px;
+}
+
+.stat-number {
+  font-size: 42px;
+  font-weight: 700;
+  color: var(--color-progress-sesdate-dash);
+  line-height: 1;
+  margin-bottom: 5px;
+}
+
+.stat-label {
+  font-size: 15px;
+  color: var(--color-progress-sesdate-dash);
+}
+
+/* Detalles Próxima Sesión */
+.session-details {
+  margin-bottom: 20px;
+}
+
+.session-date {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--color-progress-sesdate-dash);
+  margin: 0 0 4px 0;
+}
+
+.session-topic {
+  font-size: 15px;
+  color: #9fa9ba;
+  margin: 0;
+  margin-bottom: 15px;
+}
+
+/* Textos inferiores de ayuda */
+.card-footer-text {
+  margin: 0;
+  font-size: 13px;
+  color: #8792a2;
+}
+
+/* Estilos de la tarjeta de Idioma */
+.map-image {
+  width: 100%;
+  height: 145px;
+  object-fit: contain;
+  opacity: 0.3;
+  margin-top: 10px;
+  filter: sepia(100%) hue-rotate(190deg) saturate(500%); /* Lo hace azulito */
+}
+
+/* Botón sesión*/
+.start-session-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #6b8cff, #4a6cf7);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.start-session-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(107, 140, 255, 0.3);
+}
+
+/* Iconos tamaño */
+
+.iconCard svg {
+  width: 38px;
+  height: 38px;
+}
+
+.bottomSection-student{
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 5px;
+}
+
+/* Card Language */
+.language-display {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.lang-main-title {
+  font-size: 26px;
+  color: var(--color-progress-sesdate-dash);
+  font-weight: 800;
+  margin: 0;
+}
+
+.lang-level-tag {
+  font-size: 18px;
+  color: var(--color-progress-sesdate-dash);
+  font-weight: 600;
+  margin: 0;
+}
+
+.lang-description {
+  font-size: 16px;
+  color: #b8c1d2;
+  line-height: 1.5;
+  margin-top: 10px;
+}
+
+/* Estilos de card de Mi tutor */
+.tutor-row-layout {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  width: 100%;
+}
+
+.student-avatar {
+  width: 65px !important;
+  height: 65px !important;
+  background-color: #f0f2f5 !important;
+  flex-shrink: 0;
+}
+
+.tutor-col-info {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tutor-name-text {
+  font-size: 1.1rem !important;
+  font-weight: 700;
+  color: var(--color-progress-sesdate-dash) !important;
+  margin: 0 0 5px 0 !important; 
+}
+
+.tutor-meta-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.tutor-meta-label {
+  font-size: 20px;
+  color: var(--color-card-dash);
+  font-weight: 700;
+}
+
+.tutor-meta-value {
+  font-size: 16px;
+  color: var(--color-progresstotal-dash);
+}
+
+/* Recent Activity */
+
+.recentActivity-student{
+  background-color: var(--bg-section);
+  border-radius: 15px;
+  padding-left: 20px;
+  padding-right: 5px;
+  margin-bottom: 25px;
+  margin-right: 20px;
+  color: var(--text-main);
+
+  min-height: 250px;
+}

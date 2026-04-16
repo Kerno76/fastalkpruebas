@@ -2,6 +2,8 @@ import Sidebar from "./components/Sidebar"
 import Dashboard from "./pages/Organizador/Dashboard"
 import Settings from "./pages/Config"
 import TutorDashboard from "./pages/Tutor/TutorDashboard"
+import EstudianteDashboard from "./pages/Estudiante/EstudianteDashboard"
+import MiTutor from "./pages/Estudiante/MiTutor"
 import RegistroSesiones from "./pages/Tutor/RegistroSesiones"
 import HistorialSesiones from "./pages/Tutor/HistorialSesiones"
 import AgendarSesion from "./pages/Tutor/AgendarSesion"
@@ -21,6 +23,8 @@ function App() {
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/tutor" element={<TutorDashboard />} />
+        <Route path="/estudianteDash" element={<EstudianteDashboard />} />
+        <Route path="/miTutor" element={<MiTutor />} />
         <Route path="/registro" element={<RegistroSesiones />} />
         <Route path="/historial" element={<HistorialSesiones />} />
         <Route path="/estudiantes" element={<ControlEstudiantes />} />
