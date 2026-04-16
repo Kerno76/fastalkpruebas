@@ -7,7 +7,7 @@ import '../../styles/Organizador/Estudiantes.css';
 
 export default function Repositorio() {
     
-    // Estados para filtros y estados
+    // Estados para filtros y datos
     const [materiales, setMateriales] = useState(materialesIniciales);
     const [filtroIdioma, setFiltroIdioma] = useState('');
     const [filtroNivel, setFiltroNivel] = useState('');
@@ -88,8 +88,10 @@ export default function Repositorio() {
                         </div>
                     </div>
 
-                    <div className="bottom-actions" style={{ marginTop: '15px' }}>
-                        <button className="details" style={{ width: '100%' }}>Descargar / Ver PDF</button>
+                    {/* Botones de acción */}
+                    <div className="bottom-actions" style={{ marginTop: '15px', display: 'flex', gap: '10px' }}>
+                        <button className="details" style={{ flex: 1, padding: '8px', fontSize: '0.9rem' }}>Ver PDF</button>
+                        <button className="assign" style={{ flex: 1, padding: '8px', fontSize: '0.9rem', backgroundColor: '#3b82f6' }}>Descargar</button>
                     </div>
 
                 </Paper>
