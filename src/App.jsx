@@ -9,6 +9,7 @@ import AsignarTareas from "./pages/Tutor/AsignarTareas"
 import ControlEstudiantes from "./pages/Organizador/Estudiantes"
 import ControlTutores from "./pages/Organizador/Tutores"
 import ControlRevisores from "./pages/Organizador/Revisores"
+import MisEstudiantes from "./pages/Tutor/MisEstudiantes"
 import {Routes, Route} from 'react-router-dom'
 import "./styles/App.css"
 
@@ -27,6 +28,7 @@ function App() {
         <Route path="/settings" element={<Settings/>} />
         <Route path="/agendar" element={<AgendarSesion />} />
         <Route path="/tareas" element={<AsignarTareas />} />
+        <Route path="/mis-estudiantes" element={<MisEstudiantes />} />
       </Routes>
     </div>
   )
