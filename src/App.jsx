@@ -10,6 +10,7 @@ import ControlEstudiantes from "./pages/Organizador/Estudiantes"
 import ControlTutores from "./pages/Organizador/Tutores"
 import ControlRevisores from "./pages/Organizador/Revisores"
 import MisEstudiantes from "./pages/Tutor/MisEstudiantes"
+import Repositorio from "./pages/Tutor/Repositorio"
 import {Routes, Route} from 'react-router-dom'
 import "./styles/App.css"
 
@@ -29,6 +30,7 @@ function App() {
         <Route path="/agendar" element={<AgendarSesion />} />
         <Route path="/tareas" element={<AsignarTareas />} />
         <Route path="/mis-estudiantes" element={<MisEstudiantes />} />
+        <Route path="/repositorio" element={<Repositorio />} />
       </Routes>
     </div>
   )

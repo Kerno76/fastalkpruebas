@@ -8,6 +8,7 @@ import calendar_icon from '../assets/calendar.png'
 import task_icon from '../assets/session.png'
 import agenda from '../assets/agenda.png'
 import tasks from '../assets/clipboard.png'
+import repositorio_icon from "../assets/repositorio.png"
 
 /* Profile Settings Items */
 import user from '../assets/user.png'
@@ -20,6 +21,7 @@ export const navItems = [
   { icon: tasks, label: "Asignar Tareas", path: "/tareas" },
   { icon: register_session, label: "Registro de Sesiones", path: "/registro" }, 
   { icon: session_history, label: "Historial de sesiones", path: "/historial" }, 
+  { icon: repositorio_icon, label: "Repositorio de Materiales", path: "/repositorio"},
   { icon: students, label: "Mis Estudiantes", path: "/mis-estudiantes"},
   { icon: students, label: "Estudiantes", path: "/estudiantes" },
   { icon: students, label: "Tutores", path: "/tutores" },
