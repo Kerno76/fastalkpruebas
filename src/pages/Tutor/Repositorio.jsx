@@ -1,20 +1,24 @@
 import { useState } from 'react';
-import { Typography, Paper, Rating } from '@mui/material';
+import { Typography, Paper, Rating, Button } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+
 import { materialesIniciales } from "../../data/dataMateriales.js";
+import ModalMaterial from '../../components/Modals/ModalMaterial.jsx';
 
 import '../../styles/App.css';
 import '../../styles/Organizador/Estudiantes.css'; 
 
 export default function Repositorio() {
     
-    // Estados para filtros y datos
+    // Estados para filtros, datos y modal
     const [materiales, setMateriales] = useState(materialesIniciales);
     const [filtroIdioma, setFiltroIdioma] = useState('');
     const [filtroNivel, setFiltroNivel] = useState('');
+    const [openModal, setOpenModal] = useState(false);
 
     const courseColors = { 'Ingles': 'bg-ingles', 'Frances': 'bg-frances' };
 
-    // Lógica de filtrado y ordenamiento (5 estrellas arriba)
+    // Filtra y ordena
     const materialesFiltrados = materiales
         .filter(mat => filtroIdioma === '' || mat.language === filtroIdioma)
         .filter(mat => filtroNivel === '' || mat.level === filtroNivel)
@@ -31,16 +35,32 @@ export default function Repositorio() {
     return (
         <div className='mainContent'>
             
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '20px', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
+            {/* Encabezado y botón de subir */}
+            <div className="header-container" style={{ alignItems: 'center' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <h2 style={{ margin: 0, fontSize: '1.8rem', fontWeight: 'bold', color: 'var(--text-main)' }}>Repositorio de Materiales</h2>
-                    <p style={{ margin: 0, color: '#666', fontSize: '0.95rem' }}>Explora, filtra y califica los mejores recursos de la comunidad.</p>
+                    <h2 className="dashboard-title">Repositorio de Materiales</h2>
+                    <p className="dashboard-subtitle" style={{ marginTop: '5px', color: '#666'}}>
+                        Explora, filtra y califica los mejores recursos de la comunidad.
+                    </p>
                 </div>
                 
-                <button className="button button-primary" style={{ height: 'fit-content' }}>
-                    + Subir Material
-                </button>
+                {/* Botón que abre el modal */}
+                <div className="header-actions">
+                    <Button 
+                        onClick={() => setOpenModal(true)} 
+                        variant="contained" 
+                        startIcon={<AddIcon />} 
+                        className="btn-primary"
+                    > 
+                        Subir Material 
+                    </Button>
+                    
+                    {/* Renderizar el Modal */}
+                    <ModalMaterial open={openModal} onClose={() => setOpenModal(false)} />
+                </div>
             </div>
+
+            <hr className="divisor" />
 
             {/* Filtros */}
             <div style={{ display: 'flex', gap: '15px', marginBottom: '25px', background: 'var(--bg-card)', padding: '15px', borderRadius: '10px', border: '1px solid #e0e4e8' }}>
@@ -88,10 +108,17 @@ export default function Repositorio() {
                         </div>
                     </div>
 
-                    {/* Botones de acción */}
+                    {/* Botones de acción con hover manual para el azul */}
                     <div className="bottom-actions" style={{ marginTop: '15px', display: 'flex', gap: '10px' }}>
                         <button className="details" style={{ flex: 1, padding: '8px', fontSize: '0.9rem' }}>Ver PDF</button>
-                        <button className="assign" style={{ flex: 1, padding: '8px', fontSize: '0.9rem', backgroundColor: '#3b82f6' }}>Descargar</button>
+                        <button 
+                            className="assign" 
+                            style={{ flex: 1, padding: '8px', fontSize: '0.9rem', backgroundColor: '#3b82f6', transition: '0.2s' }}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2563eb'} // Azul más oscuro al pasar el mouse
+                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3b82f6'} // Vuelve al color original
+                        >
+                            Descargar
+                        </button>
                     </div>
 
                 </Paper>
