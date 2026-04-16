@@ -1,62 +1,62 @@
-export const misTareas = [
+export const misSesiones = [
     {
         id: 1,
-        title: "Workbook Page 12",
-        deadlineDate: "18/04/2026",
-        deadlineTime: "23:59 hrs",
-        materialLink: "https://drive.google.com/...",
-        status: "pending", 
-        grade: null,
-        feedback: null
+        date: "12 Abril 2026",
+        time: "16:00 hrs",
+        course: "Ingles",
+        level: "B2",
+        topic: "First and Second Conditionals",
+        status: "upcoming", 
+        material: false
     },
     {
         id: 2,
-        title: "Write an essay about your holidays",
-        deadlineDate: "15/04/2026",
-        deadlineTime: "12:00 hrs",
-        materialLink: null,
-        status: "submitted",
-        grade: null,
-        feedback: null
+        date: "10 Abril 2026",
+        time: "16:00 hrs",
+        course: "Ingles",
+        level: "B2",
+        topic: "Present Perfect vs Past Simple",
+        status: "past", 
+        material: false 
     },
     {
         id: 3,
-        title: "Verb To Be - Quiz",
-        deadlineDate: "10/04/2026",
-        deadlineTime: "23:59 hrs",
-        materialLink: "https://kahoot.it/...",
-        status: "graded", 
-        grade: "95/100",
-        feedback: "Excellent work, just watch out for the spelling of 'beautiful'."
+        date: "05 Abril 2026",
+        time: "16:00 hrs",
+        course: "Ingles",
+        level: "B2",
+        topic: "Speaking Practice",
+        status: "past", 
+        material: false
     },
     {
         id: 4,
-        title: "Reading Comprehension: The Environment",
-        deadlineDate: "20/04/2026",
-        deadlineTime: "18:00 hrs",
-        materialLink: "https://docs.google.com/...",
-        status: "pending", 
-        grade: null,
-        feedback: null
+        date: "14 Abril 2026",
+        time: "10:00 hrs",
+        course: "Frances",
+        level: "A2",
+        topic: "Passé Composé Intro",
+        status: "upcoming", 
+        material: false
     },
     {
         id: 5,
-        title: "Audio Recording: Self Introduction",
-        deadlineDate: "12/04/2026",
-        deadlineTime: "23:59 hrs",
-        materialLink: null,
-        status: "submitted", 
-        grade: null,
-        feedback: null
+        date: "28 Marzo 2026",
+        time: "16:00 hrs",
+        course: "Ingles",
+        level: "B2",
+        topic: "Modal Verbs of Deduction",
+        status: "past", 
+        material: false 
     },
     {
         id: 6,
-        title: "Grammar Exercises: Past Participle",
-        deadlineDate: "05/04/2026",
-        deadlineTime: "10:00 hrs",
-        materialLink: "https://drive.google.com/...",
-        status: "graded", 
-        grade: "100/100",
-        feedback: "Perfect score! You have completely mastered this topic."
+        date: "25 Marzo 2026",
+        time: "10:00 hrs",
+        course: "Frances",
+        level: "A2",
+        topic: "Vocabulary: La Famille",
+        status: "past", 
+        material: false
     }
 ];

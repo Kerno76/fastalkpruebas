@@ -15,6 +15,7 @@ import MisEstudiantes from "./pages/Tutor/MisEstudiantes"
 import Repositorio from "./pages/Tutor/Repositorio"
 import MisSesiones from "./pages/Estudiante/MisSesiones"
 import MisTareas from "./pages/Estudiante/MisTareas"
+import DashboardRevisor from "./pages/Revisor/DashboardRevisor"
 import {Routes, Route} from 'react-router-dom'
 import "./styles/App.css"
 
@@ -39,6 +40,7 @@ function App() {
         <Route path="/mis-sesiones" element={<MisSesiones />} />
         <Route path="/mis-tareas" element={<MisTareas />} />
         <Route path="/repositorio" element={<Repositorio />} />
+        <Route path="/dashboard-revisor" element={<DashboardRevisor />} />
       </Routes>
     </div>
   )

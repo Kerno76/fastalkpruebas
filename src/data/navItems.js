@@ -12,6 +12,7 @@ import repositorio_icon from "../assets/repositorio.png"
 import tutor from '../assets/user.png'
 import sesiones_icon from '../assets/sesiones.png'
 import tarea_icon from '../assets/clipboard.png'
+import revisar_icon from '../assets/revisar.png'
 
 /* Profile Settings Items */
 import user from '../assets/user.png'
@@ -32,6 +33,7 @@ export const navItems = [
   { icon: students, label: "Mis Estudiantes", path: "/mis-estudiantes"},
   { icon: students, label: "Estudiantes", path: "/estudiantes" },
   { icon: students, label: "Tutores", path: "/tutores" },
+  { icon: revisar_icon, label: "Aprobaciones Pendientes", path: "/dashboard-revisor" },
   { icon: students, label: "Revisores", path: "/revisores" },    
   { icon: config, label: "Configuracion", path: "/settings" }
 ]
