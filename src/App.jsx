@@ -14,6 +14,7 @@ import ControlRevisores from "./pages/Organizador/Revisores"
 import MisEstudiantes from "./pages/Tutor/MisEstudiantes"
 import Repositorio from "./pages/Tutor/Repositorio"
 import MisSesiones from "./pages/Estudiante/MisSesiones"
+import MisTareas from "./pages/Estudiante/MisTareas"
 import {Routes, Route} from 'react-router-dom'
 import "./styles/App.css"
 
@@ -36,6 +37,7 @@ function App() {
         <Route path="/tareas" element={<AsignarTareas />} />
         <Route path="/mis-estudiantes" element={<MisEstudiantes />} />
         <Route path="/mis-sesiones" element={<MisSesiones />} />
+        <Route path="/mis-tareas" element={<MisTareas />} />
         <Route path="/repositorio" element={<Repositorio />} />
       </Routes>
     </div>

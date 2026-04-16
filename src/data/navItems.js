@@ -11,6 +11,7 @@ import tasks from '../assets/clipboard.png'
 import repositorio_icon from "../assets/repositorio.png"
 import tutor from '../assets/user.png'
 import sesiones_icon from '../assets/sesiones.png'
+import tarea_icon from '../assets/clipboard.png'
 
 /* Profile Settings Items */
 import user from '../assets/user.png'
@@ -21,6 +22,7 @@ export const navItems = [
   { icon: dashboard, label: "Dashboard tutores", path: "/tutor" },
   { icon: dashboard, label: "Dashboard Estudiantes", path: "/estudianteDash" },
   { icon: sesiones_icon, label: "Mis Sesiones", path: "/mis-sesiones"},
+  { icon: tarea_icon, label: "Mis Tareas", path: "/mis-tareas"},
   { icon: tutor, label: "Mi Tutor", path: "/miTutor" },  
   { icon: agenda, label: "Agendar Sesión", path: "/agendar" },
   { icon: tasks, label: "Asignar Tareas", path: "/tareas" },
