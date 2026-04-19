@@ -39,7 +39,7 @@ export default function Repositorio() {
             <div className="header-container" style={{ alignItems: 'center' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <h2 className="dashboard-title">Repositorio de Materiales</h2>
-                    <p className="dashboard-subtitle" style={{ marginTop: '5px', color: '#666'}}>
+                    <p id ="dashboard-subtitle" style={{ marginTop: '5px', color: '#666'}}>
                         Explora, filtra y califica los mejores recursos de la comunidad.
                     </p>
                 </div>
@@ -93,12 +93,12 @@ export default function Repositorio() {
                                 <span className="cont-level">{item.level}</span>
                             </div>
 
-                            <Typography variant="body2" style={{ fontSize: '0.85rem', color: '#555', marginBottom: '10px' }}>
+                            <Typography className='whoUp' variant="body2" style={{ fontSize: '0.85rem', marginBottom: '10px' }}>
                                 Subido por: <strong>{item.tutorName}</strong>
                             </Typography>
 
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <Typography variant="body2" style={{ fontSize: '0.85rem', color: '#555' }}>Calificación:</Typography>
+                                <Typography className='rating' variant="body2" style={{ fontSize: '0.85rem' }}>Calificación:</Typography>
                                 <Rating 
                                     value={item.rating} 
                                     onChange={(event, newValue) => handleRating(item.id, newValue)} 

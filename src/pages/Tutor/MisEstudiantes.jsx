@@ -17,7 +17,7 @@ export default function MisEstudiantes() {
             
             {/* Encabezado principal */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '20px', marginBottom: '20px' }}>
-                <h2 style={{ margin: 0, fontSize: '1.8rem', fontWeight: 'bold', color: 'var(--text-main)' }}>Mis Estudiantes</h2>
+                <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', color: 'var(--text-main)' }}>Mis Estudiantes</h2>
                 <p style={{ margin: 0, color: '#666', fontSize: '0.95rem' }}>
                     Aquí puedes ver el progreso y gestionar a los alumnos que tienes asignados.
                 </p>
@@ -48,11 +48,11 @@ export default function MisEstudiantes() {
 
                             {/* Estadísticas individuales con valores por defecto (fallbacks) */}
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginTop: '15px' }}>
-                                <Typography variant="body2" style={{ fontSize: '0.85rem', color: '#555' }}>
-                                    Horas dadas: <strong style={{ color: '#2c3e50' }}>{item.horasTotales || '0 hrs'}</strong>
+                                <Typography className='myStudents-info' variant="body2" style={{ fontSize: '0.85rem' }}>
+                                    Horas dadas: <strong className='info-stud'>{item.horasTotales || '0 hrs'}</strong>
                                 </Typography>
-                                <Typography variant="body2" style={{ fontSize: '0.85rem', color: '#555' }}>
-                                    Última sesión: <strong style={{ color: '#2c3e50' }}>{item.ultimaSesion || 'Sin registro'}</strong>
+                                <Typography className='myStudents-info' variant="body2" style={{ fontSize: '0.85rem' }}>
+                                    Última sesión: <strong className='info-stud'>{item.ultimaSesion || 'Sin registro'}</strong>
                                 </Typography>
                             </div>
                         </div>

@@ -345,3 +345,17 @@
   margin-bottom: 20px;
   color: #1a1f36;
 }
+
+/* Estilos colores para pantalla aprobaciones pendientes */
+
+.tut-info{
+  color: var(--revisor-infor-aprob);
+}
+
+.course-aprob{
+  color: var(--revisor-course-aprob);
+}
+
+.topic-date{
+  color: var(--revisor-topic-date) !important;
+}

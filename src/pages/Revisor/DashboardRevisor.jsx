@@ -33,7 +33,7 @@ export default function DashboardRevisor() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', marginBottom: '20px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <h2 style={{ margin: 0, fontSize: '1.8rem', fontWeight: 'bold', color: 'var(--text-main)' }}>Aprobaciones Pendientes</h2>
-                    <p style={{ margin: 0, color: '#666', fontSize: '0.95rem' }}>
+                    <p className='--subtitle-main' style={{ margin: 0, fontSize: '0.95rem' }}>
                         Revisa las bitácoras y evidencias enviadas por tus tutores asignados para acreditar sus horas.
                     </p>
                 </div>
@@ -69,12 +69,12 @@ export default function DashboardRevisor() {
                             <TableRow key={row.id} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                                 
                                 <TableCell>
-                                    <Typography style={{ fontWeight: 'bold', color: '#2c3e50', fontSize: '0.95rem' }}>{row.tutor}</Typography>
-                                    <Typography style={{ color: '#8792a2', fontSize: '0.85rem' }}>{row.course}</Typography>
+                                    <Typography className='tut-info' style={{ fontWeight: 'bold', fontSize: '0.95rem' }}>{row.tutor}</Typography>
+                                    <Typography className='course-aprob' style={{ fontSize: '0.85rem' }}>{row.course}</Typography>
                                 </TableCell>
                                 
-                                <TableCell style={{ color: '#555' }}>{row.date}</TableCell>
-                                <TableCell style={{ color: '#555' }}>{row.topic}</TableCell>
+                                <TableCell className='topic-date'>{row.date}</TableCell>
+                                <TableCell className='topic-date'>{row.topic}</TableCell>
                                 <TableCell style={{ fontWeight: 'bold', color: '#3b82f6' }}>
                                     {row.duration} {row.duration === 1 ? 'hr' : 'hrs'}
                                 </TableCell>

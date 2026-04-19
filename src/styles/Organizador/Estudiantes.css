@@ -14,6 +14,11 @@
     align-items: center;  /* Asegura que el texto interno también se centre */
 }
 
+#dashboard-subtitle {
+  color: var(--subtitle-main) !important;
+  margin-top: -2px !important;
+}
+
 .header-container {
     display: flex;
     justify-content: space-between;
@@ -174,4 +179,36 @@
 
 .assign:hover {
     background: #567283;
+}
+
+.dateMS{
+    color: var(--date-MS) !important;
+}
+
+.hourMS{
+    color: var(--hour-MS) !important;
+}
+
+.topicMS{
+    color: var(--topic-MS) !important;
+}
+
+.subtitleMainMS{
+    color: var(--subtitle-main);
+}
+
+.whoUp{
+    color: var(--whoUp-repo) !important;
+}
+
+.rating{
+    color: var(--rating-repo) !important;
+}
+
+.myStudents-info{
+    color: var(--myStudents-info);
+}
+
+.info-stud{
+    color: var(--info-stud);
 }

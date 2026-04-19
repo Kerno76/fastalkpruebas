@@ -79,6 +79,20 @@
   --modal-close-button: #697386;
   
   --next-sesions: #CCEDEA;
+
+  --date-MS: #2c3e50;
+  --hour-MS: #666;
+  --topic-MS: #4f566b;
+
+  --whoUp-repo: #555;
+  --rating-repo: #555;
+
+  --myStudents-info: #555;
+  --info-stud: #2c3e50;
+
+  --revisor-infor-aprob: #2c3e50;
+  --revisor-course-aprob: #8792a2;
+  --revisor-topic-date: #555;
 }
 
 /* Tema oscuro */
@@ -145,6 +159,20 @@
   --modal-close-button: #FCFCFC;
 
   --next-sesions: #262626;
+
+  --date-MS: #FFFFFF;
+  --hour-MS: #FFFFFF;
+  --topic-MS: #FFFFFF;
+
+  --whoUp-repo: #ffffff;
+  --rating-repo: #ffffff;
+
+  --myStudents-info: #ffffff;
+  --info-stud: #ffffff;
+
+  --revisor-infor-aprob: #ffffff;
+  --revisor-course-aprob: #ffffff;
+  --revisor-topic-date: #ffffff;
 }
 
 body{

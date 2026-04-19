@@ -20,8 +20,8 @@ export default function MisSesiones() {
         <div className='mainContent'>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '20px', marginBottom: '20px' }}>
-                <h2 style={{ margin: 0, fontSize: '1.8rem', fontWeight: 'bold', color: 'var(--text-main)' }}>Mis Sesiones</h2>
-                <p style={{ margin: 0, color: '#666', fontSize: '0.95rem' }}>
+                <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', color: 'var(--text-main)' }}>Mis Sesiones</h2>
+                <p className='subtitleMainMS' style={{ margin: 0, fontSize: '15px' }}>
                     Consulta tus próximos enlaces de clase y el material de sesiones pasadas.
                 </p>
             </div>
@@ -39,15 +39,15 @@ export default function MisSesiones() {
                     
                     <div style={{ display: 'flex', alignItems: 'center', gap: '25px', minWidth: '300px' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', minWidth: '110px' }}>
-                            <Typography style={{ fontWeight: 'bold', fontSize: '1.1rem', color: '#2c3e50' }}>{item.date}</Typography>
-                            <Typography style={{ color: '#666', fontSize: '0.9rem' }}>{item.time}</Typography>
+                            <Typography className='dateMS' style={{ fontWeight: 'bold', fontSize: '1.1rem'}}>{item.date}</Typography>
+                            <Typography className='hourMS' style={{fontSize: '0.9rem' }}>{item.time}</Typography>
                         </div>
                         <div style={{ borderLeft: '2px solid #e0e4e8', height: '45px' }}></div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                             <span className={`cont-course ${courseColors[item.course] || 'bg-default'}`} style={{ width: 'fit-content', fontSize: '0.75rem' }}>
                                 {item.course} - {item.level}
                             </span>
-                            <Typography style={{ fontSize: '0.95rem', color: '#4f566b', fontWeight: '500' }}>{item.topic}</Typography>
+                            <Typography className='topicMS' style={{ fontSize: '0.95rem', fontWeight: '500' }}>{item.topic}</Typography>
                         </div>
                     </div>
 
@@ -72,15 +72,15 @@ export default function MisSesiones() {
                     
                     <div style={{ display: 'flex', alignItems: 'center', gap: '25px', minWidth: '300px' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', minWidth: '110px' }}>
-                            <Typography style={{ fontWeight: 'bold', fontSize: '1.1rem', color: '#2c3e50' }}>{item.date}</Typography>
-                            <Typography style={{ color: '#666', fontSize: '0.9rem' }}>{item.time}</Typography>
+                            <Typography  className='dateMS' style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>{item.date}</Typography>
+                            <Typography  className='hourMS' style={{ fontSize: '0.9rem' }}>{item.time}</Typography>
                         </div>
                         <div style={{ borderLeft: '2px solid #e0e4e8', height: '45px' }}></div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                             <span className={`cont-course ${courseColors[item.course] || 'bg-default'}`} style={{ width: 'fit-content', fontSize: '0.75rem' }}>
                                 {item.course} - {item.level}
                             </span>
-                            <Typography style={{ fontSize: '0.95rem', color: '#4f566b', fontWeight: '500' }}>{item.topic}</Typography>
+                            <Typography className='topicMS' style={{ fontSize: '0.95rem', fontWeight: '500' }}>{item.topic}</Typography>
                         </div>
                     </div>
 
