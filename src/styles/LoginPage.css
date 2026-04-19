@@ -1,0 +1,139 @@
+.login-page-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  width: 100%;
+  background-color: #fdfbf7;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg stroke='%23c89f70' stroke-width='1' stroke-opacity='0.4'%3E%3Ccircle cx='60' cy='60' r='3' fill='%23c89f70'/%3E%3Cpath d='M0 0l60 60M120 0L60 60M0 120l60-60M120 120L60 60'/%3E%3C/g%3E%3C/svg%3E");
+  padding: 20px;
+}
+
+.login-card {
+  background: linear-gradient(145deg, #ffffff, #fffaf0);
+  padding: 50px 40px;
+  border-radius: 16px;
+  box-shadow: 0 15px 35px rgba(200, 159, 112, 0.2);
+  width: 100%;
+  max-width: 440px;
+  text-align: center;
+  border: 2px solid #d4af82;
+}
+
+.login-logo-img {
+  height: 90px;
+  margin-bottom: 10px;
+  object-fit: contain;
+}
+
+.login-slogan {
+  font-family: 'Georgia', serif;
+  font-style: italic;
+  font-size: 1.1rem;
+  color: #b08d60;
+  margin-bottom: 35px;
+  line-height: 1.4;
+}
+
+.login-title-main {
+  font-size: 1.6rem;
+  color: #1e293b;
+  font-weight: 800;
+  margin-bottom: 5px;
+}
+
+.login-subtitle-main {
+  color: #64748b;
+  margin-bottom: 30px;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.login-form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.input-group-custom {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  gap: 8px;
+}
+
+.input-group-custom label {
+  font-weight: 700;
+  color: #334155;
+  font-size: 0.85rem;
+}
+
+.input-wrapper-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.field-icon {
+  position: absolute;
+  left: 14px;
+  color: #94a3b8;
+  font-size: 1.1rem;
+}
+
+.input-wrapper-icon input {
+  width: 100%;
+  padding: 14px 14px 14px 45px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  outline: none;
+  background-color: #ffffff;
+}
+
+.input-wrapper-icon input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.forgot-link-box {
+  text-align: right;
+  margin-top: -10px;
+}
+
+.forgot-link-box a {
+  color: #b08d60;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.forgot-link-box a:hover {
+  text-decoration: underline;
+  color: #8c6e48;
+}
+
+.btn-login-submit {
+  margin-top: 10px;
+  padding: 15px;
+  border: none;
+  border-radius: 10px;
+  background-color: #3b82f6;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-login-submit:hover {
+  background-color: #2563eb;
+  transform: translateY(-1px);
+}
+
+.btn-login-submit:active {
+  transform: translateY(0);
+}

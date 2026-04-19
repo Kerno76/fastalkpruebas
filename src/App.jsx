@@ -16,13 +16,18 @@ import Repositorio from "./pages/Tutor/Repositorio"
 import MisSesiones from "./pages/Estudiante/MisSesiones"
 import MisTareas from "./pages/Estudiante/MisTareas"
 import DashboardRevisor from "./pages/Revisor/DashboardRevisor"
-import {Routes, Route} from 'react-router-dom'
+import LoginPage from "./pages/Login/LoginPage"
+import { Routes, Route, useLocation } from 'react-router-dom' 
 import "./styles/App.css"
 
 function App() {
+  const location = useLocation();
+  const isLoginPage = location.pathname === '/login';
+
   return (
-    <div className="dashboard">
-      <Sidebar />
+    <div className={isLoginPage ? "" : "dashboard"}>
+      {!isLoginPage && <Sidebar />}
+    
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/tutor" element={<TutorDashboard />} />
@@ -41,6 +46,7 @@ function App() {
         <Route path="/mis-tareas" element={<MisTareas />} />
         <Route path="/repositorio" element={<Repositorio />} />
         <Route path="/dashboard-revisor" element={<DashboardRevisor />} />
+        <Route path="/login" element={<LoginPage />} />
       </Routes>
     </div>
   )
