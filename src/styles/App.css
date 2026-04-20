@@ -20,6 +20,8 @@
   gap: 25px;
 
   border-radius: 30px;
+
+  animation: fadeIn 0.8s ease-out;
 }
 
 #Title{

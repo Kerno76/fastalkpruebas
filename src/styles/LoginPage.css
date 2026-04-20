@@ -1,12 +1,42 @@
 .login-page-wrapper {
   display: flex;
+  top: 0;
+  left: 0;
+
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  width: 100%;
+  width: 100vw;
+  height: 100vh;
+  position: absolute;
+
   background-color: #fdfbf7;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg stroke='%23c89f70' stroke-width='1' stroke-opacity='0.4'%3E%3Ccircle cx='60' cy='60' r='3' fill='%23c89f70'/%3E%3Cpath d='M0 0l60 60M120 0L60 60M0 120l60-60M120 120L60 60'/%3E%3C/g%3E%3C/svg%3E");
+  
+  background-repeat: repeat; 
+  background-size: 120px 120px;
+  
   padding: 20px;
+}
+
+/* Clase de entrada */
+.fade-in {
+  animation: fadeIn 0.8s ease-out forwards;
+}
+
+/* Clase de salida */
+.fade-out {
+  animation: fadeOut 0.6s ease-in forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(1.2); }
 }
 
 .login-card {

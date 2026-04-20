@@ -1,9 +1,29 @@
 import { Dialog, IconButton, Typography, TextField, Button, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import toast from 'react-hot-toast';
 
 import '../../styles/Modals/Modales.css'; 
 
 export default function ModalRevisor({ open, onClose }) {
+
+  const handleRegistrar = () => {
+    // Simulación de que algo está pasando
+    const loadingToast = toast.loading('Registrando nuevo revisor...');
+
+    // Restraso en el servidor para realismo lol
+    setTimeout(() => {
+      toast.dismiss(loadingToast); // Esto quita el mensaje de "cargando"
+      
+      toast.success('Revisor registrado con éxito!', {
+        duration: 3000,
+        icon: '🎓',
+      });
+
+      onClose();
+      
+    }, 2000);
+  };
+
   return (
     <Dialog 
       open={open} 
@@ -64,7 +84,7 @@ export default function ModalRevisor({ open, onClose }) {
 
           <div className="modal-actions">
             <Button onClick={onClose} className="btn-cancel">Cancelar</Button>
-            <Button variant="contained" className="btn-save">Registrar Revisor</Button>
+            <Button onClick={handleRegistrar} variant="contained" className="btn-save">Registrar Revisor</Button>
           </div>
         </form>
       </div>

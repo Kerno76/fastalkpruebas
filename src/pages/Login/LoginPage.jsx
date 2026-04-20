@@ -4,18 +4,33 @@ import { FaLock, FaEnvelope } from 'react-icons/fa';
 import logo from '../../assets/FasTalk.jpeg'; 
 import '../../styles/LoginPage.css';
 
+import toast from 'react-hot-toast';
+import ModalOlvidoPassword from '../../components/Modals/ModalOlvidoPassword';
+
 export default function LoginPage() {
+  const [isExiting, setIsExiting] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    navigate('/dashboard-revisor');
+
+    // 1. Disparamos el Toast
+    toast.success('¡Sesión iniciada con éxito!');
+
+    // 2. Activamos la animación de salida
+    setIsExiting(true);
+
+    setTimeout(() => {
+      navigate('/');
+    }, 600);
   };
 
+  const [openForgot, setOpenForgot] = useState(false);
+
   return (
-    <div className="login-page-wrapper">
+    <div className={`login-page-wrapper ${isExiting ? 'fade-out' : 'fade-in'}`}>
       
       <div className="login-card">
         
@@ -59,7 +74,9 @@ export default function LoginPage() {
           </div>
 
           <div className="forgot-link-box">
-            <a href="/olvido-contrasena">¿Olvidaste tu contraseña?</a>
+            <span className="forgot-password-trigger" onClick={() => setOpenForgot(true)} style={{ cursor: 'pointer', color: '#c89f70', fontSize: '14px' }}>
+              ¿Olvidaste tu contraseña?
+            </span>
           </div>
 
           <button type="submit" className="btn-login-submit">
@@ -67,6 +84,8 @@ export default function LoginPage() {
           </button>
           
         </form>
+
+        <ModalOlvidoPassword open={openForgot} onClose={() => setOpenForgot(false)} />
         
       </div>
 
