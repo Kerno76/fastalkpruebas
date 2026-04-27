@@ -1,93 +1,164 @@
-import { Dialog, IconButton, Typography, TextField, Button, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
+import { useState, useEffect } from 'react';
+import { Dialog, DialogContent, IconButton, Typography, TextField, Button, MenuItem, Select, OutlinedInput, Checkbox, ListItemText } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import toast from 'react-hot-toast';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
 import '../../styles/Modals/Modales.css'; 
 
 export default function ModalRevisor({ open, onClose }) {
+  const [tutoresDisponibles, setTutoresDisponibles] = useState([]);
+  const [formData, setFormData] = useState({
+    Name: '',
+    BirthDate: '',
+    Email: '',
+    Phone: '',
+    Career: '', 
+    AssignedTutors: [], 
+    Notes: ''
+  });
 
-  const handleRegistrar = () => {
-    // Simulación de que algo está pasando
+  useEffect(() => {
+    if (open) {
+      const fetchTutores = async () => {
+        try {
+          const response = await fetch("http://localhost:8000/api/admin/tutores");
+          const data = await response.json();
+          if (Array.isArray(data)) setTutoresDisponibles(data);
+        } catch (error) {
+          console.error("Error al obtener tutores:", error);
+        }
+      };
+      fetchTutores();
+    }
+  }, [open]);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleRegistrar = async () => {
+    if (!formData.Name || !formData.Email || !formData.BirthDate) {
+      toast.error("Nombre, correo y fecha de nacimiento son obligatorios.");
+      return;
+    }
+
     const loadingToast = toast.loading('Registrando nuevo revisor...');
 
-    // Restraso en el servidor para realismo lol
-    setTimeout(() => {
-      toast.dismiss(loadingToast); // Esto quita el mensaje de "cargando"
-      
-      toast.success('Revisor registrado con éxito!', {
-        duration: 3000,
-        icon: '🎓',
+    try {
+      const response = await fetch("http://localhost:8000/api/admin/registrar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nombre: formData.Name,
+          email: formData.Email,
+          Phone: formData.Phone,
+          BirthDate: formData.BirthDate,
+          career: formData.Career, 
+          assignedTutors: formData.AssignedTutors, 
+          notes: formData.Notes,
+          rol: "Reviewer"
+        })
       });
 
-      onClose();
-      
-    }, 2000);
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success('¡Revisor registrado con éxito!', { id: loadingToast, icon: '🎓' });
+        setFormData({ Name: '', BirthDate: '', Email: '', Phone: '', Career: '', AssignedTutors: [], Notes: '' });
+        onClose();
+      } else {
+        toast.error(data.message || 'Error al registrar', { id: loadingToast });
+      }
+    } catch (error) {
+      toast.error('Error al conectar con el servidor', { id: loadingToast });
+    }
   };
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose} 
-      maxWidth="sm" 
-      fullWidth
-      PaperProps={{ className: 'modal-container' }}
-    >
-      <IconButton onClick={onClose} className="close-button">
-        <CloseIcon />
-      </IconButton>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth PaperProps={{ className: 'modal-container' }}>
+      <IconButton onClick={onClose} className="close-button"><CloseIcon /></IconButton>
 
-      <div className="modal-content">
+      {/* DialogContent es el que permite el scroll interno si el contenido crece mucho */}
+      <DialogContent className="modal-content" style={{ padding: '20px 0 0 0', overflowY: 'auto' }}>
         <Typography className="modal-title">Nuevo Revisor</Typography>
 
         <form className="modal-form">
           <div className="form-row">
             <div className="form-group">
               <label>Nombre Completo</label>
-              <TextField fullWidth placeholder="Escriba el nombre..." variant="outlined" />
+              <TextField fullWidth placeholder="Escriba el nombre..." variant="outlined" name="Name" value={formData.Name} onChange={handleChange} />
             </div>
             <div className="form-mini-group">
-              <label>Edad</label>
-                <TextField fullWidth placeholder="Escribe la edad del revisor..." variant="outlined" />
+              <label>Fecha de Nacimiento</label>
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DatePicker 
+                  onChange={(newValue) => setFormData({ ...formData, BirthDate: newValue ? newValue.format('YYYY-MM-DD') : '' })}
+                  slotProps={{ textField: { fullWidth: true, variant: "outlined", placeholder: "MM/DD/YYYY" } }}
+                />
+              </LocalizationProvider>
             </div>
-
-
           </div>
 
           <div className="form-row">
             <div className="form-group">
               <label>Correo Electrónico</label>
-              <TextField fullWidth placeholder="correo@ejemplo.com" />
+              <TextField fullWidth placeholder="correo@ejemplo.com" type="email" name="Email" value={formData.Email} onChange={handleChange} />
             </div>
+            
             <div className="form-group">
               <label>Número Telefónico</label>
-              <TextField fullWidth placeholder="55 1234 5678" />
+              <TextField fullWidth placeholder="55 1234 5678" name="Phone" value={formData.Phone} onChange={handleChange} inputProps={{ maxLength: 10 }} />
+            </div>
+          </div>
+
+          {/* Carrera y Notas en la misma fila */}
+          <div className="form-row">
+            <div className="form-mini-group">
+              <label>Carrera (Siglas)</label>
+              <TextField fullWidth placeholder="Ej. ITC, ISD" name="Career" value={formData.Career} onChange={handleChange} inputProps={{ maxLength: 6 }} />
+            </div>
+            <div className="form-group">
+              <label>Notas (Opcional)</label>
+              <TextField fullWidth placeholder="Ej. Límite de 3 tutores" name="Notes" value={formData.Notes} onChange={handleChange} />
             </div>
           </div>
 
           <div className="form-row">
             <div className="form-group">
               <label>Tutores Asignados</label>
-              <Select defaultValue="" displayEmpty fullWidth>
-                <MenuItem value="" disabled>ej. Antonio Martinez</MenuItem>
-                <MenuItem value="Juan">Juan Gomez</MenuItem>
-                <MenuItem value="Loami">Loami Sodi</MenuItem>
+              <Select
+                multiple
+                fullWidth
+                name="AssignedTutors"
+                value={formData.AssignedTutors}
+                onChange={handleChange}
+                input={<OutlinedInput />}
+                renderValue={(selected) => {
+                  return tutoresDisponibles
+                    .filter(tutor => selected.includes(tutor.ID))
+                    .map(tutor => tutor.Name)
+                    .join(', ');
+                }}
+              >
+                {tutoresDisponibles.map((tutor) => (
+                  <MenuItem key={tutor.ID} value={tutor.ID}>
+                    <Checkbox checked={formData.AssignedTutors.indexOf(tutor.ID) > -1} />
+                    <ListItemText primary={tutor.Name} />
+                  </MenuItem>
+                ))}
               </Select>
             </div>
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>Notas(Opcional)</label>
-              <TextField fullWidth placeholder="Ej. Solo puede trabajar con una carga de 3 tutores por ahora" />
-            </div>
-          </div>
-
-          <div className="modal-actions">
+          <div className="modal-actions" style={{ marginBottom: '10px' }}>
             <Button onClick={onClose} className="btn-cancel">Cancelar</Button>
             <Button onClick={handleRegistrar} variant="contained" className="btn-save">Registrar Revisor</Button>
           </div>
         </form>
-      </div>
+      </DialogContent>
     </Dialog>
   );
 }

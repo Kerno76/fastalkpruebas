@@ -19,24 +19,33 @@ import user from '../assets/user.png'
 import bell from '../assets/bell.png'
 
 export const navItems = [
-  { icon: dashboard, label: "Dashboard", path: "/" },
-  { icon: dashboard, label: "Dashboard tutores", path: "/tutor" },
-  { icon: dashboard, label: "Dashboard Estudiantes", path: "/estudianteDash" },
-  { icon: sesiones_icon, label: "Mis Sesiones", path: "/mis-sesiones"},
-  { icon: tarea_icon, label: "Mis Tareas", path: "/mis-tareas"},
-  { icon: tutor, label: "Mi Tutor", path: "/miTutor" },  
-  { icon: agenda, label: "Agendar Sesión", path: "/agendar" },
-  { icon: tasks, label: "Asignar Tareas", path: "/tareas" },
-  { icon: register_session, label: "Registro de Sesiones", path: "/registro" }, 
-  { icon: session_history, label: "Historial de sesiones", path: "/historial" }, 
-  { icon: repositorio_icon, label: "Repositorio de Materiales", path: "/repositorio"},
-  { icon: students, label: "Mis Estudiantes", path: "/mis-estudiantes"},
-  { icon: students, label: "Estudiantes", path: "/estudiantes" },
-  { icon: students, label: "Tutores", path: "/tutores" },
-  { icon: revisar_icon, label: "Aprobaciones Pendientes", path: "/dashboard-revisor" },
-  { icon: students, label: "Revisores", path: "/revisores" },    
-  { icon: config, label: "Configuracion", path: "/settings" }
-]
+  // --- SECCIÓN ADMIN ---
+  { icon: dashboard, label: "Dashboard General", path: "/", roles: ['Admin'] },
+  { icon: students, label: "Control Estudiantes", path: "/estudiantes", roles: ['Admin'] },
+  { icon: students, label: "Control Tutores", path: "/tutores", roles: ['Admin'] },
+  { icon: students, label: "Control Revisores", path: "/revisores", roles: ['Admin'] },
+
+  // --- SECCIÓN TUTOR (También para Admin) ---
+  { icon: dashboard, label: "Dashboard Tutor", path: "/tutor", roles: ['Tutor'] },
+  { icon: students, label: "Mis Estudiantes", path: "/mis-estudiantes", roles: ['Tutor', 'Admin'] },
+  { icon: agenda, label: "Agendar Sesión", path: "/agendar", roles: ['Tutor'] },
+  { icon: tasks, label: "Asignar Tareas", path: "/tareas", roles: ['Tutor', 'Admin'] },
+  { icon: register_session, label: "Registro de Sesiones", path: "/registro", roles: ['Tutor', 'Admin'] },
+  { icon: session_history, label: "Historial de sesiones", path: "/historial", roles: ['Tutor', 'Admin'] },
+
+  // --- SECCIÓN ESTUDIANTE (También para Admin) ---
+  { icon: dashboard, label: "Dashboard Estudiante", path: "/estudianteDash", roles: ['Student'] },
+  { icon: tutor, label: "Mi Tutor", path: "/miTutor", roles: ['Student'] },
+  { icon: sesiones_icon, label: "Mis Sesiones", path: "/mis-sesiones", roles: ['Student', 'Admin'] },
+  { icon: tarea_icon, label: "Mis Tareas", path: "/mis-tareas", roles: ['Student', 'Admin'] },
+
+  // --- SECCIÓN REVISOR (También para Admin) ---
+  { icon: revisar_icon, label: "Aprobaciones Pendientes", path: "/dashboard-revisor", roles: ['Reviewer', 'Admin'] },
+
+  // --- GENERAL ---
+  { icon: repositorio_icon, label: "Repositorio", path: "/repositorio", roles: ['Tutor', 'Admin'] },
+  { icon: config, label: "Configuración", path: "/settings", roles: ['Admin', 'Tutor', 'Student', 'Reviewer'] }
+];
 
 export const profileItems = [
   { icon: user, label: "Mi Perfil", section: "profile"},

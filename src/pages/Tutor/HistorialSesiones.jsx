@@ -19,12 +19,13 @@ const datosEjemplo = [
 ];
 
 export default function HistorialSesiones() {
+  const user = JSON.parse(localStorage.getItem('user'));
+  const isAdmin = user?.Rol === 'Admin';
   return (
     <div className="histo">
       <h2 id="Title">Historial de Sesiones</h2>
       <p id="dashboard-subtitle">Bienvenido, tus últimas sesiones desglosadas aquí mismo</p>
 
-      {/*Haremos los cambios dentro de los componentes usando el atajo sx para evitar conflictos de preferencias*/}
 
       <Box className='sess' sx={{ mt: 4, mb: 4 }}>
         <TableContainer component={Paper} sx={{ 

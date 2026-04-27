@@ -5,121 +5,155 @@ import '../../styles/Modals/Modales.css';
 import toast from 'react-hot-toast';
 
 export default function ModalOlvidoPassword({ open, onClose }) {
-    const [step, setStep] = useState(1); // Estados del flujo: 1: Email, 2: Código, 3: Nueva Password
+    const [step, setStep] = useState(1);
     const [email, setEmail] = useState('');
     const [otp, setOtp] = useState('');
-
-    // Función que simula la llamada al servidor (fetch)
-    const sendEmailRequest = () => {
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
-                const exito = true; // Simulación de respuesta del server
-                exito ? resolve() : reject();
-            }, 2000);
-        });
-    };
-
-    const handleChange = (e) => {
-        const val = e.target.value;
-        
-        // Usamos una expresión regular para permitir SOLO números
-        if (val === '' || /^[0-9\b]+$/.test(val)) {
-            setOtp(val);
-        }
-    };
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
 
     const handleAction = async () => {
-        if (step === 1) {
-            // USANDO PROMISE: Maneja carga, éxito y error en una línea
-            toast.promise(
-                sendEmailRequest(),
-                {
-                    loading: 'Enviando código de seguridad...',
-                    success: '¡Código enviado! Revisa tu bandeja.',
-                    error: 'Error al enviar el correo. Reintenta.',
-                }
-            );
-
-            // Solo avanzamos si la promesa es exitosa (aquí simulado)
-            try {
-                await sendEmailRequest();
+    if (step === 1) {
+        if (!email) return toast.error("Ingresa tu correo");
+        
+        const loading = toast.loading('Enviando código...');
+        try {
+            const res = await fetch("http://localhost:8000/api/auth/forgot-password", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email })
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+                toast.success('¡Código enviado!', { id: loading });
                 setStep(2);
-            } catch (e) { }
-
-        } else if (step === 2) {
-            toast.success('Código verificado correctamente');
-            setStep(3);
-        } else {
-            handleReset();
-            toast.success('Contraseña restablecida con éxito', {icon: '🔒'});
+            } else {
+                throw new Error(data.message || "Error al enviar");
+            }
+        } catch (err) {
+            toast.error(err.message, { id: loading });
         }
-    };
+        return; 
+    }
+
+    // --- PASO 2: VERIFICAR OTP ---
+    if (step === 2) {
+        if (otp.length < 6) return toast.error("Ingresa el código completo");
+
+        const loading = toast.loading('Verificando...');
+        try {
+            const res = await fetch("http://localhost:8000/api/auth/verify-otp", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, token: otp })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                toast.success('Código verificado', { id: loading });
+                setStep(3);
+            } else {
+                throw new Error(data.message || "Código incorrecto");
+            }
+        } catch (err) {
+            toast.error(err.message, { id: loading });
+        }
+        return; 
+    }
+
+    // --- PASO 3: NUEVA PASSWORD ---
+    if (step === 3) {
+        if (newPassword.length < 6) {
+            return toast.error("La contraseña debe tener al menos 6 caracteres");
+        }
+        if (newPassword !== confirmPassword) {
+            return toast.error("Las contraseñas no coinciden");
+        }
+
+        const loading = toast.loading('Actualizando contraseña...');
+        try {
+            const res = await fetch("http://localhost:8000/api/auth/update-password", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password: newPassword })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                toast.success('Contraseña restablecida', { id: loading, icon: '🔒' });
+                handleReset(); 
+            } else {
+                throw new Error(data.message);
+            }
+        } catch (err) {
+            toast.error(err.message, { id: loading });
+        }
+    }
+};
 
     const handleReset = () => {
         onClose();
         setStep(1);
         setOtp("");
+        setEmail("");
+        setNewPassword("");
+        setConfirmPassword("");
     };
 
     return (
         <Dialog open={open} onClose={handleReset} maxWidth="xs" fullWidth PaperProps={{ className: 'modal-container' }}>
-        <IconButton onClick={handleReset} className="close-button">
-            <CloseIcon />
-        </IconButton>
+            <IconButton onClick={handleReset} className="close-button"><CloseIcon /></IconButton>
 
-        <div className="modal-content">
-            <Typography className="modal-title">
-            {step === 1 && "Recuperar Contraseña"}
-            {step === 2 && "Verificar Código"}
-            {step === 3 && "Nueva Contraseña"}
-            </Typography>
+            <div className="modal-content">
+                <Typography className="modal-title">
+                    {step === 1 && "Recuperar Contraseña"}
+                    {step === 2 && "Verificar Código"}
+                    {step === 3 && "Nueva Contraseña"}
+                </Typography>
 
-            <form className="modal-form">
-                {/* Ingresar Correo */}
-                {step === 1 && (
-                    <div className="form-group">
-                    <label>Introduce tu correo institucional</label>
-                    <TextField fullWidth placeholder="ejemplo@tec.mx" value={email} onChange={(e) => setEmail(e.target.value)}/>
-                    <p className="modal-info-text">Te enviaremos un código de 6 dígitos.</p>
-                    </div>
-                )}
-
-                {/* Ingresar OTP */}
-                {step === 2 && (
-                    <div className="form-group">
-                    <label>Código de verificación</label>
-                    <TextField onChange={handleChange} value={otp} fullWidth placeholder="000000" inputProps={{ maxLength: 6, style: { textAlign: 'center', letterSpacing: '10px', fontSize: '20px' } }} />
-                    <p className="modal-info-text">Enviado a: {email}</p>
-                    </div>
-                )}
-
-                {/* Nueva Contraseña */}
-                {step === 3 && (
-                    <>
-                    <div className="form-group">
-                        <label>Nueva Contraseña</label>
-                        <TextField fullWidth type="password" placeholder="••••••••" />
-                    </div>
-                    <div className="form-group">
-                        <label>Confirmar Contraseña</label>
-                        <TextField fullWidth type="password" placeholder="••••••••" />
-                    </div>
-                    </>
-                )}
-
-                <div className="modal-actions">
-                    {step < 3 ? (
-                    <Button variant="contained" onClick={handleAction} className="btn-save" fullWidth>
-                        {step === 1 ? "Enviar Código" : "Verificar Código"}
-                    </Button>
-                    ) : (
-                    <Button variant="contained" onClick={handleAction} className="btn-save" fullWidth>
-                        Restablecer Contraseña
-                    </Button>
+                <form className="modal-form" onSubmit={(e) => e.preventDefault()}>
+                    {step === 1 && (
+                        <div className="form-group">
+                            <label>Introduce tu correo institucional</label>
+                            <TextField fullWidth placeholder="ejemplo@tec.mx" value={email} onChange={(e) => setEmail(e.target.value)}/>
+                            <p className="modal-info-text">Te enviaremos un código de seguridad.</p>
+                        </div>
                     )}
-                </div>
-            </form>
-        </div>
+
+                    {step === 2 && (
+                        <div className="form-group">
+                            <label>Código de verificación</label>
+                            <TextField 
+                                value={otp} 
+                                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))} 
+                                fullWidth 
+                                placeholder="000000" 
+                                inputProps={{ maxLength: 6, style: { textAlign: 'center', letterSpacing: '10px', fontSize: '20px' } }} 
+                            />
+                            <p className="modal-info-text">Enviado a: {email}</p>
+                        </div>
+                    )}
+
+                    {step === 3 && (
+                        <>
+                            <div className="form-group">
+                                <label>Nueva Contraseña</label>
+                                <TextField fullWidth type="password" placeholder="••••••••" value={newPassword} onChange={(e) => setNewPassword(e.target.value)}/>
+                            </div>
+                            <div className="form-group">
+                                <label>Confirmar Contraseña</label>
+                                <TextField fullWidth type="password" placeholder="••••••••" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}/>
+                            </div>
+                        </>
+                    )}
+
+                    <div className="modal-actions">
+                        <Button variant="contained" onClick={handleAction} className="btn-save" fullWidth>
+                            {step === 1 ? "Enviar Código" : step === 2 ? "Verificar Código" : "Restablecer Contraseña"}
+                        </Button>
+                    </div>
+                </form>
+            </div>
         </Dialog>
     );
 }

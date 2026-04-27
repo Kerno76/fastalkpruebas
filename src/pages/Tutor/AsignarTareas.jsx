@@ -3,6 +3,21 @@ import '../../styles/App.css';
 import '../../styles/Config.css'; 
 
 export default function AsignarTareas() {
+  const user = JSON.parse(localStorage.getItem('user'));
+  const isAdmin = user?.Rol === 'Admin';
+  
+  // Datos de ejemplo (En el futuro vendrán de tu base de datos)
+  const alumnosGlobales = [
+    { id: "ID_1", nombre: "David Pérez (A2)" },
+    { id: "ID_2", nombre: "Sofía Gómez (A1)" },
+    { id: "ID_3", nombre: "Luis Eduardo (B1)" },
+    { id: "ID_4", nombre: "Alan R. (B2)" }
+  ];
+
+  const misAlumnos = [
+    { id: "ID_1", nombre: "David Pérez (A2)" }
+  ];
+
   const [tarea, setTarea] = useState({
     alumno: '', titulo: '', descripcion: '', fecha: '', hora: '', linkMaterial: ''
   });
@@ -13,14 +28,16 @@ export default function AsignarTareas() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    alert('¡Tarea asignada correctamente a tu alumno!');
+    alert(isAdmin ? 'Tarea asignada globalmente por el Administrador' : '¡Tarea asignada correctamente a tu alumno!');
     console.log("Datos a enviar a Node.js:", tarea);
   };
 
   return (
     <div className="mainContent">
-      <h2 id="Title">Asignar Tareas</h2>
-      <p className="dashboard-subtitle">Envía ejercicios y establece fechas límite para tus alumnos.</p>
+      <h2 id="Title">{isAdmin ? "Asignación Global de Tareas" : "Asignar Tareas"}</h2>
+      <p className="dashboard-subtitle">
+        {isAdmin ? "Panel de supervisión: Puedes asignar ejercicios a cualquier alumno del sistema." : "Envía ejercicios y establece fechas límite para tus alumnos."}
+      </p>
 
       {/* Contenedor central tipo tarjeta */}
       <div className="settingsPanel" style={{ maxWidth: '850px', padding: '35px', display: 'block', marginTop: '20px' }}>
@@ -31,10 +48,17 @@ export default function AsignarTareas() {
               <div className="formField">
                 <label>Alumno</label>
                 <select className="select-field" name="alumno" onChange={handleChange} required>
-                  <option value="">Selecciona a tu alumno...</option>
-                  <option value="ID_1">David Pérez (A2)</option>
-                  <option value="ID_2">Sofía Gómez (A1)</option>
-                  <option value="ID_3">Luis Eduardo (B1)</option>
+                  <option value="">Selecciona al alumno...</option>
+                  
+                  {isAdmin ? (
+                    alumnosGlobales.map(est => (
+                      <option key={est.id} value={est.id}>{est.nombre}</option>
+                    ))
+                  ) : (
+                    misAlumnos.map(est => (
+                      <option key={est.id} value={est.id}>{est.nombre}</option>
+                    ))
+                  )}
                 </select>
               </div>
 
@@ -73,8 +97,8 @@ export default function AsignarTareas() {
               ></textarea>
             </div>
 
-            {/* Botón alineado a la derecha */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '15px', alignItems: 'center' }}>
+              {isAdmin && <span style={{ color: '#3b82f6', fontSize: '0.85rem', fontWeight: 'bold' }}>👑 Modo Administrador Activo</span>}
               <button type="submit" className="button button-primary">
                 Publicar Tarea
               </button>

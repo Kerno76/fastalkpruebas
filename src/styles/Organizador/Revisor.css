@@ -1,5 +1,4 @@
 /* Estilo para el grupo de los botones*/
-
 .header-container {
     display: flex;
     justify-content: space-between;
@@ -20,7 +19,7 @@
 .header-container-card {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start !important;
     width: 100%; 
     margin: 0 0 10px 0 !important;
 }
@@ -33,6 +32,10 @@
     font-size: 0.75rem;
     font-weight: bold;
     flex-shrink: 0;
+}
+.status-inactive {
+    background: #fde8e8 !important;
+    color: #e02424 !important;
 }
 
 .cards-grid {
@@ -57,7 +60,7 @@
 /* Parte de arriba: Avatar e Info */
 .card-top {
     display: flex;
-    align-items: center; 
+    align-items: flex-start; 
     gap: 15px;          
 }
 
@@ -80,25 +83,30 @@
     font-size: 1.1rem !important;
     color: var(--text-main);
     margin-bottom: 0 !important;
+    line-height: 1.2;
+    word-break: break-word;
+    padding-right: 10px;
 }
 
-/* Filas de indicadores y revisor */
-.info-revisor-row, .revisor-row{
+/* --- NUEVAS CLASES ESTRUCTURALES --- */
+.info-grid {
     display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
+    flex-direction: column;
+    gap: 12px;
     margin-top: 5px;
-    color: var(--student-label);
+    margin-bottom: 12px;
 }
 
-.validation-revisor-row{
+.info-row-card {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.info-item {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
     gap: 8px;
-    margin-top: 5px;
-    color: var(--student-label);
 }
 
 .label {
@@ -140,11 +148,12 @@
 
 .bottom-actions {
     display: flex;
+    flex-wrap: wrap;
     gap: 10px;
 }
 
 .details, .assign {
-    flex: 1; /* Que ambos midan lo mismo */
+    flex: 1; 
     padding: 10px;
     border-radius: 8px;
     font-weight: 600;
@@ -172,12 +181,15 @@
     background: #567283;
 }
 
-/* El grupo de botones */
+/* Estilos de los botones del Header */
 
-.header-actions {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+.btn-primary{
+    background-color: #68899D !important;
+    font-size: 15px !important;
+}
+
+.btn-secondary{
+    border-radius: 4px !important;
 }
 
 /* Responsividad */
@@ -194,34 +206,4 @@
     flex-wrap: wrap;
     justify-content: center;
   }
-}
-
-/* Estilos de los botones */
-
-.btn-primary{
-    background-color: #68899D !important;
-    font-size: 15px !important;
-}
-
-.btn-secondary{
-    border-radius: 4px !important;
-}
-
-@media (max-width: 900px) {
-  .header-container {
-    flex-direction: column;      /* Se hace el cambio de fila a columna */
-    align-items: flex-start;     /* Alinea todo a la izquierda*/
-    gap: 15px;                   /* Espacio entre título y botones al estar uno sobre otro */
-  }
-
-  .header-actions {
-    width: 100%;                 /* Los botones ocupan todo el ancho en móvil */
-    justify-content: center;
-  }
-}
-
-.bottom-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
 }

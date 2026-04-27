@@ -1,22 +1,13 @@
-/* Estilo de la linea divisora entre la primera sección y la segunda */
-
-.divisor{
-    border: 0;
-    border-top: 1px solid #CCC;
-    margin: 1em 0;
-}
-
-/* Contenedor principal del encabezado */
 
 .dashboard-title {
-    margin: 0 !important; /* Quita el margen que viene por defecto */
+    margin: 0 !important;
     display: flex;
-    align-items: center;  /* Asegura que el texto interno también se centre */
+    align-items: center;
 }
 
 #dashboard-subtitle {
-  color: var(--subtitle-main) !important;
-  margin-top: -2px !important;
+    color: var(--subtitle-main) !important;
+    margin-top: -2px !important;
 }
 
 .header-container {
@@ -28,41 +19,28 @@
     width: 100%;
 }
 
-/* El grupo de botones */
-
 .header-actions {
     display: flex;
     align-items: center;
     gap: 12px;
 }
 
-/* Responsividad */
-
-@media (max-width: 900px) {
-  .header-container {
-    flex-direction: column;      /* Se hace el cambio de fila a columna */
-    align-items: flex-start;     /* Alinea todo a la izquierda*/
-    gap: 15px;                   /* Espacio entre título y botones al estar uno sobre otro */
-  }
-
-  .header-actions {
-    width: 100%;                 /* Los botones ocupan todo el ancho en móvil */
-    justify-content: center;
-  }
+.divisor {
+    border: 0;
+    border-top: 1px solid #CCC;
+    margin: 1em 0;
 }
 
-/* Estilos de los botones */
 
-.btn-primary{
+.btn-primary {
     background-color: #68899D !important;
     font-size: 15px !important;
 }
 
-.btn-secondary{
+.btn-secondary {
     border-radius: 4px !important;
 }
 
-/* Estilos para las cards de cada estudiante */
 
 .cards-grid {
     display: grid;
@@ -70,8 +48,6 @@
     gap: 20px;
     padding: 20px;
 }
-
-/* La tarjeta individual */
 
 .student-card {
     background: var(--student-card) !important;
@@ -83,11 +59,11 @@
     gap: 20px;
 }
 
-/* Parte de arriba: Avatar e Info */
+
 .card-top {
     display: flex;
-    align-items: center; /* Centra el avatar verticalmente con el texto */
-    gap: 15px;          /* Espacio entre avatar e info */
+    align-items: flex-start;
+    gap: 15px;
 }
 
 .student-avatar {
@@ -97,19 +73,66 @@
     flex-shrink: 0;
 }
 
+.student-data {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+}
+
+.header-container-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start !important;
+    width: 100%;
+    margin: 0 0 10px 0 !important;
+}
+
 .student-name-title {
     font-weight: 700 !important;
     font-size: 1.1rem !important;
     color: var(--text-main);
-    margin-bottom: 15px !important;
+    margin-bottom: 0 !important;
+    line-height: 1.2;
+    word-break: break-word;
+    padding-right: 10px;
 }
 
-/* Filas de indicadores y tutor */
-.info-row, .tutor-row {
+.status {
+    background: #e1f5e8;
+    color: #2ecc71;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+
+.info-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 5px;
+    margin-bottom: 12px;
+}
+
+.info-row-card {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.info-item {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-top: 5px;
+}
+
+.tutor-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     color: var(--student-label);
 }
 
@@ -118,7 +141,6 @@
     color: var(--student-label);
 }
 
-/* Estilo de los indicadores de curso y nivel */
 .cont-level, .cont-course {
     padding: 2px 12px;
     border-radius: 20px;
@@ -126,25 +148,26 @@
     font-weight: 500;
 }
 
-.cont-level{ 
-    background-color: #d1f2e1; 
-    color: #1a472a; 
+.cont-level {
+    background-color: #d1f2e1;
+    color: #1a472a;
 }
 
-.bg-ingles { 
-    background-color: #dbeafe; 
-    color: #1e40af; 
-}
-.bg-frances { 
-    background-color: #c12a7f !important; 
-    color: #f0f0f0 !important; 
-}
-.bg-default { 
-    background-color: #f3f4f6; 
-    color: #374151; 
+.bg-ingles {
+    background-color: #dbeafe;
+    color: #1e40af;
 }
 
-/* Botones de abajo en fila */
+.bg-frances {
+    background-color: #c12a7f !important;
+    color: #f0f0f0 !important;
+}
+
+.bg-default {
+    background-color: #f3f4f6;
+    color: #374151;
+}
+
 
 .bottom-actions {
     display: flex;
@@ -153,7 +176,7 @@
 }
 
 .details, .assign {
-    flex: 1; /* Que ambos midan lo mismo */
+    flex: 1;
     padding: 10px;
     border-radius: 8px;
     font-weight: 600;
@@ -181,34 +204,26 @@
     background: #567283;
 }
 
-.dateMS{
-    color: var(--date-MS) !important;
-}
 
-.hourMS{
-    color: var(--hour-MS) !important;
-}
+.dateMS { color: var(--date-MS) !important; }
+.hourMS { color: var(--hour-MS) !important; }
+.topicMS { color: var(--topic-MS) !important; }
+.subtitleMainMS { color: var(--subtitle-main); }
+.whoUp { color: var(--whoUp-repo) !important; }
+.rating { color: var(--rating-repo) !important; }
+.myStudents-info { color: var(--myStudents-info); }
+.info-stud { color: var(--info-stud); }
 
-.topicMS{
-    color: var(--topic-MS) !important;
-}
 
-.subtitleMainMS{
-    color: var(--subtitle-main);
-}
+@media (max-width: 900px) {
+    .header-container {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
 
-.whoUp{
-    color: var(--whoUp-repo) !important;
-}
-
-.rating{
-    color: var(--rating-repo) !important;
-}
-
-.myStudents-info{
-    color: var(--myStudents-info);
-}
-
-.info-stud{
-    color: var(--info-stud);
+    .header-actions {
+        width: 100%;
+        justify-content: center;
+    }
 }

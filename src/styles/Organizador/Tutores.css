@@ -20,6 +20,7 @@
 .header-container-card {
     display: flex;
     justify-content: space-between;
+    align-items: flex-start !important;
     align-items: center;
     width: 100%; 
     margin: 0 0 10px 0 !important;
@@ -79,9 +80,30 @@
     font-weight: 700 !important;
     font-size: 1.1rem !important;
     color: var(--text-main);
+    line-height: 1.2;
+    word-break: break-word;
     margin-bottom: 0 !important;
 }
 
+.info-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 5px;
+    margin-bottom: 15px;
+}
+
+.info-row {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
 /* Filas de indicadores y tutor */
 .info-tutor-row, .tutor-row {
     display: flex;
@@ -206,24 +228,24 @@
 /* Responsividad */
 
 @media (max-width: 900px) {
-  .header-container {
-    flex-direction: column;      
-    align-items: flex-start;    
-    gap: 15px;                   
-  }
+    .header-container {
+        flex-direction: column;      
+        align-items: flex-start;    
+        gap: 15px;                   
+    }
 
-  .header-actions {
-    width: 100%;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
+    .header-actions {
+        width: 100%;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
 
-  .progress-stat {
-    margin-left: 0;
-    margin-top: 10px;
-    width: 60%;
-    min-width: 0%;
-  }
+    .progress-stat {
+        margin-left: 0;
+        margin-top: 10px;
+        width: 60%;
+        min-width: 0%;
+    }
 }
 
 /* Estilos de los botones */
@@ -238,16 +260,16 @@
 }
 
 @media (max-width: 900px) {
-  .header-container {
-    flex-direction: column;      /* Se hace el cambio de fila a columna */
-    align-items: flex-start;     /* Alinea todo a la izquierda*/
-    gap: 15px;                   /* Espacio entre título y botones al estar uno sobre otro */
-  }
+.header-container {
+        flex-direction: column;      
+        align-items: flex-start;    
+        gap: 15px;                   
+    }
 
-  .header-actions {
-    width: 100%;                 /* Los botones ocupan todo el ancho en móvil */
+.header-actions {
+    width: 100%;                
     justify-content: center;
-  }
+    }
 }
 
 .bottom-actions {

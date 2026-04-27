@@ -1,7 +1,6 @@
-*{
+* {
   box-sizing: border-box;
 }
-
 
 #root {
   max-width: 1950px;
@@ -9,22 +8,17 @@
   padding: 2rem;
 }
 
-/* Estilo del contenedor principál, donde se concentran todos los recursos*/
-
 .dashboard {
   background-color: var(--bg-dashboard);
   width: 100%;
   min-height: 600px;
-
   display: flex;
   gap: 25px;
-
   border-radius: 30px;
-
   animation: fadeIn 0.8s ease-out;
 }
 
-#Title{
+#Title {
   margin-top: -20px;
   color: var(--text-main) !important;
 }
@@ -34,9 +28,7 @@
   margin-top: -20px !important;
 }
 
-/*Ocupamos todo el espacio restante en cuanto a distribución*/
-
-.mainContent{
+.mainContent {
   flex: 1;
   display: flex;
   padding: 20px;
@@ -44,11 +36,9 @@
   gap: 25px;
 }
 
-.mainContent h2{
+.mainContent h2 {
   padding-top: 20px;
 }
-
-/*Estilo de las tarjetas donde mostramos la información más relevante del sistema*/
 
 .dashboard-cards-grid {
   display: grid;
@@ -71,7 +61,7 @@
 }
 
 .dash-card:hover {
-  transform: translateY(-5px); /* Efecto de levitación más premium */
+  transform: translateY(-5px);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
 }
 
@@ -101,62 +91,115 @@
   color: var(--subtitle-main);
 }
 
-.card-footer-text{
+.card-footer-text {
   font-size: 15px !important;
 }
 
-/*Sección de navegación principal entre los sistemas*/
-
-.sidebar{
-  width: 230px;
+/* Sidebar Estructura */
+.sidebar {
+  width: 260px;
   background-color: var(--bg-sidebar);
   border-radius: 20px;
-  padding: 20px;
-
+  padding: 20px 10px;
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 10px;
+  height: calc(100vh - 4rem);
+  position: sticky;
+  top: 2rem;
 }
 
-.sidebar ul{
-  list-style: none;
-  padding: 0;
-}
-
-.sidebar li{
+/* Estilo para el contenedor del Logo y Título */
+.sidebar-brand {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
+  margin-bottom: 10px;
+}
 
-  margin: 10px 0;
-  padding: 8px 10px;
+.sidebar-logo {
+  width: 45px;
+  height: 45px;
+  border-radius: 10px; /* Bordes redondeados para el logo */
+  object-fit: cover;
+}
 
+.sidebar h2 {
+  font-size: 28px; /* Ajustado ligeramente para balancear con el logo */
+  margin: 0;
+  color: var(--text-main);
+}
+
+.nav-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  flex: 1;
+  padding-right: 5px;
+}
+
+.nav-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.nav-list::-webkit-scrollbar-thumb {
+  background: rgba(200, 159, 112, 0.3);
+  border-radius: 10px;
+}
+
+/* Separadores de Rol */
+.nav-separator {
+  padding: 15px 10px 5px 15px;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--subtitle-main);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  opacity: 0.7;
+  display: block;
+  margin-top: 10px;
+}
+
+.sidebar li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0;
+  padding: 10px 15px;
   color: var(--sidebar-btn);
   cursor: pointer;
-  border-radius: 10px;
+  border-radius: 12px;
+  transition: all 0.2s ease;
   font-size: 18px;
 }
 
 .sidebar li span {
   flex: 1;
+  font-size: 15px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.sidebar li img{
-  border-radius: 15px;
-  width: auto;
-  height: 45px;
+.sidebar li img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
 }
 
-.sidebar li:hover{
+.sidebar li:hover {
   background-color: var(--sidebar-hover);
   color: white;
 }
 
-.sidebar li:hover img{
+.sidebar li:hover img {
   filter: brightness(0) invert(1);
 }
 
-.sidebar li.active{
+.sidebar li.active {
   background-color: var(--sidebar-li-active);
   color: var(--sidebar-li-active-text);
 }
@@ -165,23 +208,20 @@
   filter: brightness(0) invert(1);
 }
 
-/* Estilo para el link */
-.nav-link-wrapper{
+.nav-link-wrapper {
   text-decoration: none;
   color: inherit;
   display: block;
 }
 
-/*Estilo de la sección inferior donde mezclamos secciones para un mejor resultado visual*/
-
-.bottomSection{
+.bottomSection {
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 5px;
 }
 
 .recentActivity,
-.calendar{
+.calendar {
   background-color: var(--bg-section);
   border-radius: 15px;
   padding-left: 20px;
@@ -189,36 +229,31 @@
   margin-bottom: 25px;
   margin-right: 20px;
   color: var(--text-main);
-
   min-height: 250px;
 }
 
-/*Responsividad*/
-
-@media (max-width: 900px){
-
-  .dashboard{
+@media (max-width: 900px) {
+  .dashboard {
     flex-direction: column;
   }
-
-  .sidebar{
+  .sidebar {
     width: 100%;
+    height: auto;
+    position: relative;
+    top: 0;
   }
-
-  .bottomSection{
+  .nav-list {
+    overflow-y: visible;
+  }
+  .bottomSection {
     grid-template-columns: 1fr;
   }
-
-  .settingRow{
+  .settingRow {
     padding-left: 20px;
     padding-bottom: 30px;
   }
-
 }
 
-/*Estilo del toggle para modo oscuro o claro*/
-
-/* Base compartida */
 .settingRow {
   display: flex;
   align-items: center;
@@ -230,12 +265,11 @@
   font-size: 16px;
   font-weight: 400;
   color: var(--toggle-dark);        
-  text-transform: uppercase; /* Todo en mayúsculas */
-  letter-spacing: 1px;       /* Más espaciado */
+  text-transform: uppercase;
+  letter-spacing: 1px;
   user-select: none;
 }
 
-/* Switch base */
 .switch {
   position: relative;
   display: inline-block;
@@ -243,28 +277,23 @@
   height: 36px;  
 }
 
-/* Se oculta el checkbox */
 .switch input {
   opacity: 0;
   width: 0;
   height: 0;
 }
 
-/* Escena de día (Por defecto - Modo Claro) */
 .slider {
   position: absolute;
   cursor: pointer;
   inset: 0;
   border-radius: 36px;
   transition: background 0.5s ease;
-  
-  /* Sol y cielo diurno */
   background: 
     radial-gradient(circle at 25% 70%, #ffdf5c 0%, #ffd024 30%, transparent 70%),
     linear-gradient(to top, #4ca07d 0%, #a7f3d0 40%, #a7e0f6 100%);
 }
 
-/* Círculo */
 .slider::before {
   content: "";
   position: absolute;
@@ -278,20 +307,16 @@
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* Mover el círculo al activarse */
 .switch input:checked + .slider::before {
   transform: translateX(34px);
 }
 
-/* Escena de noche (Cuando está activo - Modo Oscuro) */
 .switch input:checked + .slider {
   background: 
-    /* Luna y cielo nocturno */
     radial-gradient(circle at 75% 30%, #dfdcf1 0%, #afb8ea 30%, transparent 60%),
     linear-gradient(to top, #111 0%, #1a1c38 40%, #2f2a58 100%);
 }
 
-/* Recent Activity */
 .activity-card {
   display: flex !important;
   align-items: center;
@@ -310,14 +335,12 @@
   border-color: #e0e0e0 !important;
 }
 
-/* El Avatar (Círculo del icono) */
 .activity-avatar {
   margin-right: 16px !important;
   width: 45px !important;
   height: 45px !important;
 }
 
-/* Textos dentro de la actividad */
 .activity-info {
   flex-grow: 1;
 }
@@ -340,7 +363,6 @@
   white-space: nowrap;
 }
 
-/* Títulos de secciones */
 .section-title {
   font-size: 1.25rem;
   font-weight: 600;
@@ -348,16 +370,14 @@
   color: #1a1f36;
 }
 
-/* Estilos colores para pantalla aprobaciones pendientes */
-
-.tut-info{
+.tut-info {
   color: var(--revisor-infor-aprob);
 }
 
-.course-aprob{
+.course-aprob {
   color: var(--revisor-course-aprob);
 }
 
-.topic-date{
+.topic-date {
   color: var(--revisor-topic-date) !important;
 }

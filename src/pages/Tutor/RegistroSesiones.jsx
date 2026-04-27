@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import '../../styles/Tutor/RegistroSesiones.css';
 
 export default function RegistroSesiones() {
+  const user = JSON.parse(localStorage.getItem('user'));
+  const isAdmin = user?.Rol === 'Admin';
+  
   const [step, setStep] = useState(1);
   const [sessionData, setSessionData] = useState({
     alumno: '',
     tipoAsistencia: '',
     enlaceZoom: '',
-    // Datos de bitácora
     duracion: '',
     tema: '',
     descripcion: '',
@@ -19,14 +21,15 @@ export default function RegistroSesiones() {
   
   // Clase Programada Simulada 
   const claseProgramada = new Date();
-  claseProgramada.setMinutes(claseProgramada.getMinutes() + 5); // Es en 5 mins
+  claseProgramada.setMinutes(claseProgramada.getMinutes() + 5); 
 
-  // Verifica si estamos en la ventana de 10 min antes
+  // Ventana de tiempo: 10 min antes y 15 min después
   const diffMinutes = (claseProgramada - currentTime) / 60000;
-  const isAttendanceWindowOpen = diffMinutes <= 10 && diffMinutes >= -15; // 10 min antes y hasta 15 min después
+  // Si es Admin, la ventana SIEMPRE está abierta
+  const isAttendanceWindowOpen = isAdmin || (diffMinutes <= 10 && diffMinutes >= -15);
 
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 60000); // Actualiza cada minuto
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
     return () => clearInterval(timer);
   }, []);
 
@@ -41,15 +44,15 @@ export default function RegistroSesiones() {
         alert("Por favor, llena todos los campos de asistencia.");
         return;
     }
-    alert("Asistencia registrada. ¡El botón de Zoom está activo!");
-    setStep(2); // Avanza al paso de Zoom / Bitácora
+    alert(isAdmin ? "Modo Admin: Registro forzado exitoso." : "Asistencia registrada. ¡El botón de Zoom está activo!");
+    setStep(2); 
   };
 
   const handleBitacoraSubmit = (e) => {
     e.preventDefault();
-    alert("¡Bitácora guardada con éxito! Horas calculadas y enviadas al sistema.");
+    alert("¡Bitácora guardada con éxito!");
     console.log("Datos enviados:", sessionData);
-    setStep(1); // Reinicia el flujo
+    setStep(1);
     setSessionData({
       alumno: '', tipoAsistencia: '', enlaceZoom: '', duracion: '', tema: '', descripcion: '', planeacionSiguiente: '', linkEvidencia: ''
     });
@@ -58,9 +61,8 @@ export default function RegistroSesiones() {
   return (
     <div className="registro-container">
       <div className="registro-header">
-        <h2>Registro de Sesión Unificado</h2>
+        <h2>{isAdmin ? "📝 Registro de Sesión (Admin)" : "Registro de Sesión Unificado"}</h2>
         
-        {/* Barra de progreso visual */}
         <div className="progress-bar-container">
             <div className={`progress-step ${step >= 1 ? 'active' : ''}`}>1. Asistencia</div>
             <div className={`progress-line ${step >= 2 ? 'active' : ''}`}></div>
@@ -71,21 +73,22 @@ export default function RegistroSesiones() {
       <div className="registro-content">
         {step === 1 && (
           <form onSubmit={handleAsistenciaSubmit} className="registro-form">
-            <h3>Pase de Asistencia (Previo a clase)</h3>
+            <h3>Pase de Asistencia {isAdmin && "(Saltar Restricción de Tiempo)"}</h3>
             
             {!isAttendanceWindowOpen ? (
                 <div className="warning-box">
                     <p>⚠️ La asistencia solo se puede registrar 10 minutos antes de tu sesión programada.</p>
-                    <p>Próxima clase: {claseProgramada.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
                 </div>
             ) : (
                 <>
                     <div className="form-group">
-                        <label>Alumno Asignado</label>
+                        <label>Alumno {isAdmin && " (Global)"}</label>
                         <select name="alumno" value={sessionData.alumno} onChange={handleInputChange} required>
                             <option value="">Selecciona un alumno...</option>
+                            {/* Aquí podrías mapear una lista completa si es Admin */}
                             <option value="David_Perez">David Pérez (Secundaria A2)</option>
                             <option value="Sofia_Gomez">Sofía Gómez (Secundaria A1)</option>
+                            {isAdmin && <option value="Admin_Test">Alumno de Prueba (Admin)</option>}
                         </select>
                     </div>
 
@@ -96,28 +99,28 @@ export default function RegistroSesiones() {
                             <option value="Titular">Tutor TITULAR</option>
                             <option value="Reemplazo">Tutor de reemplazo "BACK UP"</option>
                             <option value="Apoyo">Tutor de APOYO</option>
+                            {isAdmin && <option value="Admin_Forced">Registro Administrativo</option>}
                         </select>
                     </div>
 
                     <div className="form-group">
-                        <label>Enlace de Zoom (Clase Virtual)</label>
+                        <label>Enlace de Zoom</label>
                         <input 
                             type="url" 
                             name="enlaceZoom" 
-                            placeholder="https://zoom.us/j/..." 
+                            placeholder={isAdmin ? "Enlace de respaldo" : "https://zoom.us/j/..."}
                             value={sessionData.enlaceZoom} 
                             onChange={handleInputChange} 
                             required 
                         />
-                        <small>Este enlace se activará en el siguiente paso.</small>
                     </div>
 
                     <div className="info-box">
-                        <p><strong>Recuerda:</strong> Tolerancia máxima de 10 minutos. Si el alumno no llega, deberás llenar el reporte de incidencia.</p>
+                        <p><strong>{isAdmin ? "Aviso Admin:" : "Recuerda:"}</strong> {isAdmin ? "Estás registrando una sesión con privilegios de administrador." : "Tolerancia máxima de 10 minutos."}</p>
                     </div>
 
                     <button type="submit" className="button button-primary full-width">
-                        Registrar Asistencia y Activar Clase
+                        {isAdmin ? "Forzar Registro de Asistencia" : "Registrar Asistencia y Activar Clase"}
                     </button>
                 </>
             )}
@@ -126,13 +129,12 @@ export default function RegistroSesiones() {
 
         {step === 2 && (
           <div className="registro-form">
-            <h3>Clase en Curso & Bitácora</h3>
+            <h3>{isAdmin ? "Edición de Bitácora" : "Clase en Curso & Bitácora"}</h3>
             
-            {/* El "Botón Mágico" de Zoom */}
             <div className="zoom-section">
-                <p>Tu asistencia ha sido registrada. Puedes iniciar tu clase:</p>
+                <p>{isAdmin ? "Enlace registrado:" : "Tu asistencia ha sido registrada. Puedes iniciar tu clase:"}</p>
                 <a href={sessionData.enlaceZoom} target="_blank" rel="noopener noreferrer" className="button button-zoom">
-                    🎥 Ingresar a Zoom
+                    🎥 {isAdmin ? "Probar Enlace" : "Ingresar a Zoom"}
                 </a>
             </div>
 
@@ -140,21 +142,20 @@ export default function RegistroSesiones() {
 
             <form onSubmit={handleBitacoraSubmit}>
                 <h4>Expediente Post-Sesión</h4>
-                <p className="subtitle">Llenar inmediatamente al finalizar para cálculo automático de horas.</p>
 
                 <div className="form-group">
                     <label>Tema Visto</label>
-                    <input type="text" name="tema" value={sessionData.tema} onChange={handleInputChange} placeholder="Ej. Present Simple" required />
+                    <input type="text" name="tema" value={sessionData.tema} onChange={handleInputChange} required />
                 </div>
 
                 <div className="form-group">
-                    <label>Descripción de la sesión (Observaciones)</label>
-                    <textarea name="descripcion" value={sessionData.descripcion} onChange={handleInputChange} placeholder="¿Cómo participó el alumno? ¿Hubo dudas?" rows="3" required></textarea>
+                    <label>Descripción de la sesión</label>
+                    <textarea name="descripcion" value={sessionData.descripcion} onChange={handleInputChange} rows="3" required></textarea>
                 </div>
 
                 <div className="form-group">
                     <label>Planeación Siguiente Sesión</label>
-                    <textarea name="planeacionSiguiente" value={sessionData.planeacionSiguiente} onChange={handleInputChange} placeholder="¿Qué tema verán? (De acuerdo a su estilo de aprendizaje)" rows="2" required></textarea>
+                    <textarea name="planeacionSiguiente" value={sessionData.planeacionSiguiente} onChange={handleInputChange} rows="2" required></textarea>
                 </div>
 
                 <div className="form-group">
@@ -163,12 +164,12 @@ export default function RegistroSesiones() {
                 </div>
                 
                 <div className="form-group">
-                    <label>Link de Evidencia (Drive/Capturas)</label>
-                    <input type="url" name="linkEvidencia" value={sessionData.linkEvidencia} onChange={handleInputChange} placeholder="https://docs.google.com/..." required />
+                    <label>Link de Evidencia</label>
+                    <input type="url" name="linkEvidencia" value={sessionData.linkEvidencia} onChange={handleInputChange} required />
                 </div>
 
-                <button type="submit" className="button button-success full-width">
-                    Guardar Bitácora y Acreditar Horas
+                <button type="submit" className="button button-success full-width" style={{ backgroundColor: isAdmin ? '#3b82f6' : '#2ecc71' }}>
+                    {isAdmin ? "Finalizar Ajuste Administrativo" : "Guardar Bitácora y Acreditar Horas"}
                 </button>
             </form>
           </div>
