@@ -1,0 +1,256 @@
+const express = require('express');
+const router = express.Router();
+const { supabaseAdmin } = require('../config/supabase');
+const nodemailer = require('nodemailer');
+
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: 'dancc3112@gmail.com',
+        pass: 'pmqfsimimwkdvovn' 
+    }
+});
+
+const getTemplateCorreo = (rol, nombre, email, passwordTemporal, language) => {
+    let detalleRol = '';
+
+    if (rol === 'Tutor') {
+        detalleRol = `<p>Idioma a impartir: <strong>${language}</strong></p>`;
+    } else if (rol === 'Student') {
+        detalleRol = `<p>Curso enrolado: <strong>${language}</strong></p>`;
+    } else if (rol === 'Reviewer') {
+        detalleRol = `<p>Tu función será evaluar y revisar el material de los tutores.</p>`;
+    }
+
+    return `
+        <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+            <h2 style="color: #3b82f6;">¡Hola, ${nombre}!</h2>
+            <p>Tu cuenta como <strong>${rol}</strong> ha sido creada exitosamente.</p>
+            ${detalleRol}
+            <div style="background: #f4f4f4; padding: 10px; border-radius: 5px;">
+                <p><strong>Usuario:</strong> ${email}</p>
+                <p><strong>Contraseña:</strong> ${passwordTemporal}</p>
+            </div>
+            <br>
+            <a href="http://localhost:5173/login" style="background: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Entrar a FasTalk</a>
+        </div>
+    `;
+};
+
+router.post('/registrar', async (req, res) => {
+    // Aquí es donde se agregaron assignedTutors y notes, además de CurrentLevel
+    const { nombre, email, rol, hobbies, language, Phone, career, BirthDate, CurrentLevel, assignedTutors, notes } = req.body; 
+    
+    const passwordTemporal = '12345678';
+
+    try {
+        const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
+            email,
+            password: passwordTemporal,
+            email_confirm: true
+        });
+
+        if (authError) throw authError;
+
+        const userId = authUser.user.id;
+
+        const { error: profileError } = await supabaseAdmin
+            .from('UsersProfiles')
+            .insert([{ ID: userId, Name: nombre, Email: email, Rol: rol }]);
+
+        if (profileError) throw profileError;
+
+        if (rol === 'Tutor') {
+            const { error: tutorError } = await supabaseAdmin
+                .from('Tutors')
+                .insert([{
+                    ID: userId,
+                    Phone: Phone,
+                    Language: language,
+                    Hobbies: hobbies,
+                    Career: career 
+                }]);
+            if (tutorError) throw tutorError;
+        } else if (rol === 'Student') {
+            const { error: studentError } = await supabaseAdmin
+                .from('Students')
+                .insert([{ 
+                    ID: userId, 
+                    Phone: Phone,
+                    BirthDate: BirthDate,
+                    Language: language,
+                    CurrentLevel: CurrentLevel
+                }]);
+            if (studentError) throw studentError;
+        } else if (rol === 'Reviewer') {
+            const totalAssigned = assignedTutors ? assignedTutors.length : 0;
+
+            const { error: reviewerError } = await supabaseAdmin
+                .from('Reviewer') 
+                .insert([{ 
+                    ID: userId,
+                    Phone: Phone,
+                    BirthDate: BirthDate,
+                    Career: career,
+                    AsignedTutors: totalAssigned,
+                    Notes: notes
+                }]);
+                
+            if (reviewerError) throw reviewerError;
+
+            if (totalAssigned > 0) {
+                const enrollments = assignedTutors.map(tutorId => ({
+                    TutorID: tutorId,
+                    ReviewerID: userId
+                }));
+
+                const { error: enrollError } = await supabaseAdmin
+                    .from('Enrollments_Reviewers')
+                    .insert(enrollments);
+                    
+                if (enrollError) throw enrollError;
+            }
+        }
+
+        const mailOptions = {
+            from: '"FasTalk Admin" <dancc3112@gmail.com>',
+            to: email,
+            subject: `Bienvenido a FasTalk - Cuenta de ${rol} activada`,
+            html: getTemplateCorreo(rol, nombre, email, passwordTemporal, language)
+        };
+
+        await transporter.sendMail(mailOptions);
+
+        res.status(200).json({ success: true, message: 'Usuario registrado y correo enviado.' });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.get('/tutores', async (req, res) => {
+    try {
+        const { data: tutores, error } = await supabaseAdmin
+            .from('UsersProfiles')
+            .select(`
+                ID, Name, Email, Rol, State,
+                Tutors ( Phone, Language, Hobbies, Career, TotalHours ) 
+            `) 
+            .eq('Rol', 'Tutor');
+
+        if (error) throw error;
+
+        const { data: asignaciones, error: enrollError } = await supabaseAdmin
+            .from('Enrollments_Reviewers')
+            .select('TutorID, ReviewerID');
+
+        const tutoresCompletos = tutores.map(tutor => {
+            const revisorAsignado = asignaciones?.filter(a => a.TutorID === tutor.ID) || [];
+            return {
+                ...tutor,
+                Enrollments_Reviewers: revisorAsignado 
+            };
+        });
+
+        res.status(200).json(tutoresCompletos);
+    } catch (error) {
+        console.error("Error al obtener tutores:", error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get('/estudiantes', async (req, res) => {
+    try {
+        const { data, error } = await supabaseAdmin
+            .from('UsersProfiles')
+            .select(`
+                ID, Name, Email, Rol, State, 
+                Students ( Phone, BirthDate, Language, CurrentLevel ) 
+            `) 
+            .eq('Rol', 'Student');
+
+        if (error) throw error;
+        res.status(200).json(data);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.get('/revisores', async (req, res) => {
+    try {
+        const { data, error } = await supabaseAdmin
+            .from('UsersProfiles')
+            .select(`
+                ID, Name, Email, Rol, State,
+                Reviewer ( Phone, BirthDate, Career, AsignedTutors, ValidationsCompleted ) 
+            `) 
+            .eq('Rol', 'Reviewer');
+
+        if (error) throw error;
+        res.status(200).json(data);
+    } catch (error) {
+        console.error("Error al jalar revisores:", error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Ruta para cambiar el estado (Activo/Inactivo) de cualquier usuario
+router.put('/cambiar-estado', async (req, res) => {
+    const { userId, newState } = req.body;
+
+    try {
+        const { error } = await supabaseAdmin
+            .from('UsersProfiles')
+            .update({ State: newState })
+            .eq('ID', userId);
+
+        if (error) throw error;
+
+        res.status(200).json({ success: true, message: 'Estado actualizado correctamente.' });
+    } catch (error) {
+        console.error("Error al cambiar estado:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// Ruta para asignar un Revisor a un Tutor existente
+router.post('/asignar-revisor', async (req, res) => {
+    const { tutorId, reviewerId } = req.body;
+
+    try {
+        const { error: insertError } = await supabaseAdmin
+            .from('Enrollments_Reviewers')
+            .insert([{ 
+                TutorID: tutorId, 
+                ReviewerID: reviewerId 
+            }]);
+
+        if (insertError) throw insertError;
+
+        const { data: revisorData, error: fetchError } = await supabaseAdmin
+            .from('Reviewer')
+            .select('AsignedTutors')
+            .eq('ID', reviewerId)
+            .single();
+            
+        if (fetchError) throw fetchError;
+
+        const nuevosTutores = (revisorData.AsignedTutors || 0) + 1;
+
+        const { error: updateError } = await supabaseAdmin
+            .from('Reviewer')
+            .update({ AsignedTutors: nuevosTutores })
+            .eq('ID', reviewerId);
+
+        if (updateError) throw updateError;
+
+        res.status(200).json({ success: true, message: 'Revisor asignado correctamente en la BD.' });
+
+    } catch (error) {
+        console.error("Error al asignar revisor:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+module.exports = router;

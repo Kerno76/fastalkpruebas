@@ -1,25 +1,21 @@
 import { useState } from 'react';
+import dayjs from 'dayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { TimePicker } from '@mui/x-date-pickers/TimePicker';
+
 import '../../styles/App.css';
-import '../../styles/Config.css'; 
+import '../../styles/Tutor/AgendarSesion.css'; // ¡Magia! Reutilizamos el mismo CSS
 
 export default function AsignarTareas() {
-  const user = JSON.parse(localStorage.getItem('user'));
-  const isAdmin = user?.Rol === 'Admin';
-  
-  // Datos de ejemplo (En el futuro vendrán de tu base de datos)
-  const alumnosGlobales = [
-    { id: "ID_1", nombre: "David Pérez (A2)" },
-    { id: "ID_2", nombre: "Sofía Gómez (A1)" },
-    { id: "ID_3", nombre: "Luis Eduardo (B1)" },
-    { id: "ID_4", nombre: "Alan R. (B2)" }
-  ];
-
-  const misAlumnos = [
-    { id: "ID_1", nombre: "David Pérez (A2)" }
-  ];
-
   const [tarea, setTarea] = useState({
-    alumno: '', titulo: '', descripcion: '', fecha: '', hora: '', linkMaterial: ''
+    alumno: '', 
+    titulo: '', 
+    descripcion: '', 
+    fecha: null, // Inicializamos en null para Day.js
+    hora: null, 
+    linkMaterial: ''
   });
 
   const handleChange = (e) => {
@@ -28,85 +24,103 @@ export default function AsignarTareas() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    alert(isAdmin ? 'Tarea asignada globalmente por el Administrador' : '¡Tarea asignada correctamente a tu alumno!');
-    console.log("Datos a enviar a Node.js:", tarea);
+    
+    // Validación de fecha y hora
+    if (!tarea.fecha || !tarea.hora) {
+        alert("Por favor, selecciona una fecha y hora límite válidas.");
+        return;
+    }
+
+    // Formateo para mandar al backend
+    const datosListos = {
+        ...tarea,
+        fecha: tarea.fecha.format('YYYY-MM-DD'),
+        hora: tarea.hora.format('HH:mm')
+    };
+
+    alert('¡Tarea asignada correctamente a tu alumno!');
+    console.log("Datos a enviar a Node.js:", datosListos);
   };
 
   return (
-    <div className="mainContent">
-      <h2 id="Title">{isAdmin ? "Asignación Global de Tareas" : "Asignar Tareas"}</h2>
-      <p className="dashboard-subtitle">
-        {isAdmin ? "Panel de supervisión: Puedes asignar ejercicios a cualquier alumno del sistema." : "Envía ejercicios y establece fechas límite para tus alumnos."}
-      </p>
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+        <div className="mainContent">
+        <h2 id="Title">Asignar Tareas</h2>
+        <p className="dashboard-subtitle">Envía ejercicios y establece fechas límite para tus alumnos.</p>
 
-      {/* Contenedor central tipo tarjeta */}
-      <div className="settingsPanel" style={{ maxWidth: '850px', padding: '35px', display: 'block', marginTop: '20px' }}>
-        <div className="settingsThings" style={{ padding: '0' }}>
-          <form onSubmit={handleSubmit}>
+        {/* Aplicamos la tarjeta con la franja de color superior */}
+        <div className="agendar-card color-accent">
+            <form onSubmit={handleSubmit}>
             
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '25px', marginBottom: '25px' }}>
-              <div className="formField">
+            <div className="agendar-row-2">
+                <div className="agendar-group">
                 <label>Alumno</label>
-                <select className="select-field" name="alumno" onChange={handleChange} required>
-                  <option value="">Selecciona al alumno...</option>
-                  
-                  {isAdmin ? (
-                    alumnosGlobales.map(est => (
-                      <option key={est.id} value={est.id}>{est.nombre}</option>
-                    ))
-                  ) : (
-                    misAlumnos.map(est => (
-                      <option key={est.id} value={est.id}>{est.nombre}</option>
-                    ))
-                  )}
+                <select className="agendar-input" name="alumno" value={tarea.alumno} onChange={handleChange} required>
+                    <option value="">Selecciona a tu alumno...</option>
+                    <option value="ID_1">David Pérez (A2 - Inglés)</option>
+                    <option value="ID_2">Sofía Gómez (A1 - Inglés)</option>
+                    <option value="ID_3">Luis Eduardo (B1 - Francés)</option>
                 </select>
-              </div>
+                </div>
 
-              <div className="formField">
+                <div className="agendar-group">
                 <label>Título de la tarea</label>
-                <input type="text" name="titulo" placeholder="Ej. Workbook Page 12" onChange={handleChange} required />
-              </div>
+                <input type="text" className="agendar-input" name="titulo" value={tarea.titulo} placeholder="Ej. Workbook Page 12" onChange={handleChange} required />
+                </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '25px', marginBottom: '25px' }}>
-              <div className="formField">
+            <div className="agendar-row-3">
+                {/* Pickers de Material UI */}
+                <div className="agendar-group mui-override">
                 <label>Fecha Límite</label>
-                <input type="date" name="fecha" onChange={handleChange} required />
-              </div>
+                <DatePicker 
+                    value={tarea.fecha}
+                    onChange={(newValue) => setTarea({...tarea, fecha: newValue})}
+                    format="DD/MM/YYYY"
+                    slotProps={{ textField: { required: true, placeholder: "Selecciona el día" } }}
+                />
+                </div>
 
-              <div className="formField">
+                <div className="agendar-group mui-override">
                 <label>Hora Límite</label>
-                <input type="time" name="hora" onChange={handleChange} required />
-              </div>
+                <TimePicker 
+                    value={tarea.hora}
+                    onChange={(newValue) => setTarea({...tarea, hora: newValue})}
+                    minutesStep={5}
+                    slotProps={{ textField: { required: true, placeholder: "Selecciona la hora" } }}
+                />
+                </div>
 
-              <div className="formField">
+                <div className="agendar-group">
                 <label>Link de Material (Opcional)</label>
-                <input type="text" name="linkMaterial" placeholder="https://..." onChange={handleChange} />
-              </div>
+                <input type="url" className="agendar-input" name="linkMaterial" value={tarea.linkMaterial} placeholder="https://..." onChange={handleChange} />
+                </div>
             </div>
 
-            <div className="formField" style={{ marginBottom: '35px' }}>
-              <label>Instrucciones detalladas</label>
-              <textarea 
+            <div className="agendar-group" style={{ marginBottom: '25px' }}>
+                <label>Instrucciones detalladas</label>
+                <textarea 
+                className="agendar-input"
                 name="descripcion" 
                 rows="4" 
-                style={{ padding: '12px', borderRadius: '10px', border: '1px solid #d6dbe1', background: 'linear-gradient(145deg,#E3E9F5,#E1EBF7)', outline: 'none', resize: 'vertical', fontFamily: 'inherit' }}
+                // Evitamos que la altura fija de 48px del input afecte al textarea
+                style={{ height: 'auto', resize: 'vertical', paddingTop: '12px' }} 
                 placeholder="Escribe aquí las instrucciones para resolver la tarea..." 
+                value={tarea.descripcion}
                 onChange={handleChange} 
                 required
-              ></textarea>
+                ></textarea>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '15px', alignItems: 'center' }}>
-              {isAdmin && <span style={{ color: '#3b82f6', fontSize: '0.85rem', fontWeight: 'bold' }}>👑 Modo Administrador Activo</span>}
-              <button type="submit" className="button button-primary">
+            <div className="agendar-actions">
+                <button type="submit" className="btn-agendar-gradient">
                 Publicar Tarea
-              </button>
+                </button>
             </div>
 
-          </form>
+            </form>
         </div>
-      </div>
-    </div>
+        </div>
+    </LocalizationProvider>
   );
 }

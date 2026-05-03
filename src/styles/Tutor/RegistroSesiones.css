@@ -1,207 +1,278 @@
-.registro-container {
-    background-color: var(--bg-section);
-    border-radius: 15px;
-    padding: 30px;
-    margin-right: 20px;
-    min-height: 600px;
-    margin-top: 20px;
-    margin-bottom: 20px;
+/* Container principal extendido */
+.sesiones-manager-container {
+    padding: 20px;
+    max-width: 100%; /* Extendemos a todo el ancho disponible */
+    margin: 0 auto;
+    color: var(--text-main);
 }
 
-.registro-header {
+.sesiones-manager-header {
     margin-bottom: 30px;
-    text-align: center;
 }
 
-.registro-header h2 {
+.sesiones-manager-header h2 {
+    font-size: 28px;
+    font-weight: bold;
     color: var(--text-main);
     margin-bottom: 5px;
 }
 
-.registro-header p {
-    color: var(--card-h2);
+/* Diseño de Filas (Rows) en lugar de Cards cuadradas */
+.sesiones-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.sesion-row {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 15px 20px;
+    display: flex;
+    flex-direction: row; 
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    transition: all 0.2s ease;
+    gap: 20px; /* Le da aire entre el texto y los botones */
+    flex-wrap: wrap; /* Si la pantalla es más chica, baja los elementos en vez de aplastarlos */
+}
+
+
+.sesion-row:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+/* Destacar la próxima sesión */
+.sesion-row.prox-sesion {
+    border-left: 5px solid #2D8CFF;
+    background-color: #f8fbff;
+}
+
+.sesion-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.sesion-header-tag {
+    align-self: flex-start;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.tag-prox { background-color: #e3f2fd; color: #1976d2; }
+.tag-past { background-color: #fef3c7; color: #b45309; }
+.tag-done { background-color: #e8f5e9; color: #2e7d32; }
+
+.sesion-info h3 {
+    font-size: 16px;
+    margin: 0 0 5px 0;
+    color: var(--text-main);
+}
+
+.sesion-info p {
+    margin: 2px 0;
+    color: var(--text-muted);
     font-size: 14px;
 }
 
-/* Barra de progreso */
-.progress-bar-container {
+.sesion-info strong {
+    color: var(--text-main);
+}
+
+/* Botones en horizontal (derecha a izquierda) */
+.sesion-actions {
+    display: flex;
+    flex-direction: row; 
+    gap: 10px;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap; /* Permite que los 3 botones respiren si no caben en una línea */
+}
+
+.btn-sesion {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background-color 0.2s;
     display: flex;
     align-items: center;
-    justify-content: center;
-    margin-top: 20px;
-    gap: 10px;
+    gap: 6px;
+    text-decoration: none;
 }
 
-.progress-step {
-    padding: 8px 16px;
-    background-color: var(--bg-body);
-    color: var(--card-h2);
-    border-radius: 20px;
-    font-weight: 600;
-    transition: all 0.3s;
-}
-
-.progress-step.active {
-    background-color: var(--btn-save-start);
+.btn-sesion-link {
+    background-color: #2D8CFF;
     color: white;
 }
+.btn-sesion-link:hover { background-color: #1a73e8; }
 
-.progress-line {
-    height: 4px;
-    width: 50px;
-    background-color: var(--bg-body);
+.btn-bitacora {
+    background-color: #10b981; 
+    color: white;
+}
+.btn-bitacora:hover { background-color: #059669; }
+
+.btn-incidencia {
+    background-color: #ef4444; 
+    color: white;
+}
+.btn-incidencia:hover { background-color: #dc2626; }
+
+.btn-disabled {
+    background-color: #f3f4f6;
+    color: #9ca3af;
+    cursor: not-allowed;
+    border: 1px solid #e5e7eb;
 }
 
-.progress-line.active {
-    background-color: var(--btn-save-start);
-}
-
-/* Formulario */
-.registro-form {
-    max-width: 600px;
-    margin: 0 auto;
-    background: var(--bg-card);
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-    border: 1px solid var(--border-settingsMenu);
-}
-
-.registro-form h3 {
-    margin-bottom: 20px;
-    color: var(--text-main);
-    border-bottom: 2px solid var(--btn-save-start);
-    padding-bottom: 10px;
-    display: inline-block;
-}
-
-.registro-form h4 {
-    margin-top: 10px;
-    margin-bottom: 5px;
-    color: var(--text-main);
-}
-
-.subtitle {
-    color: var(--card-h2);
-    font-size: 13px;
-    margin-bottom: 20px;
-}
-
-.form-group {
-    margin-bottom: 20px;
+/* =========================================
+   Estilos de los Modales (Popups)
+   ========================================= */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(0, 0, 0, 0.3); /* Lo hacemos un poco más transparente */
+    backdrop-filter: blur(8px); 
+    -webkit-backdrop-filter: blur(8px); /* Soporte para Safari/Mac */
     display: flex;
-    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: var(--bg-card);
+    border-radius: 12px;
+    width: 95%;
+    max-width: 550px;
+    padding: 30px;
+    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 20px;
+    color: var(--text-main);
+}
+
+.close-button {
+    position: absolute; /* La saca del flujo normal */
+    top: 15px;
+    right: 20px;
+    background: none; 
+    border: none; 
+    font-size: 28px;
+    cursor: pointer; 
+    color: #9ca3af;
+    line-height: 1;
+}
+
+.close-button:hover { 
+    color: #ef4444; 
+}
+
+/* Inputs con bordes bien definidos */
+.form-group {
+    margin-bottom: 18px;
 }
 
 .form-group label {
-    font-weight: 500;
-    margin-bottom: 8px;
-    color: var(--label-profile);
-}
-
-.form-group input, 
-.form-group select, 
-.form-group textarea {
-    padding: 12px;
-    border-radius: 8px;
-    border: 1px solid #d6dbe1;
-    background: linear-gradient(145deg, #E3E9F5, #E1EBF7);
-    outline: none;
+    display: block; margin-bottom: 6px;
+    font-weight: 600; color: #374151;
     font-size: 14px;
-    color: #333; /* Mantener texto oscuro para legibilidad en el input */
 }
 
-body.dark .form-group input, 
-body.dark .form-group select, 
-body.dark .form-group textarea {
-    background: #2a3443;
-    border-color: #3a4454;
-    color: white;
-}
-
-.form-group small {
-    margin-top: 5px;
-    color: var(--card-h2);
-    font-size: 12px;
-}
-
-/* Cajas de Alerta */
-.warning-box {
-    background-color: #fff3cd;
-    color: #856404;
-    padding: 15px;
-    border-radius: 8px;
-    border-left: 5px solid #ffeeba;
-    margin-bottom: 20px;
-}
-
-.info-box {
-    background-color: #e2e3e5;
-    color: #383d41;
-    padding: 12px;
-    border-radius: 8px;
-    font-size: 13px;
-    margin-bottom: 20px;
-}
-
-body.dark .warning-box { background-color: #4d4013; color: #ffd666; border-left-color: #c99c06;}
-body.dark .info-box { background-color: #313538; color: #d0d2d3; }
-
-/* Botones específicos */
-.full-width {
+.form-group input[type="text"],
+.form-group textarea {
     width: 100%;
-    font-size: 16px;
-    padding: 14px;
+    padding: 10px 12px;
+    border: 1.5px solid #d1d5db; /* Borde visible y marcado */
+    border-radius: 6px;
+    font-size: 14px;
+    color: #1f2937;
+    background-color: #f9fafb;
+    transition: all 0.2s;
 }
 
-.zoom-section {
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #2D8CFF;
+    background-color: #ffffff;
+    box-shadow: 0 0 0 3px rgba(45, 140, 255, 0.1);
+}
+
+/* Área de Drag & Drop para imágenes */
+.drag-drop-zone {
+    border: 2px dashed #9ca3af;
+    border-radius: 8px;
+    padding: 30px 20px;
     text-align: center;
-    padding: 20px;
-    background-color: rgba(45, 140, 255, 0.1);
-    border-radius: 10px;
-    margin-bottom: 20px;
+    background-color: #f9fafb;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
 }
 
-.zoom-section p {
-    margin-bottom: 15px;
-    color: var(--text-main);
+.drag-drop-zone:hover, .drag-drop-zone.active {
+    border-color: #2D8CFF;
+    background-color: #eff6ff;
 }
 
-.button-zoom {
-    background-color: #2D8CFF; /* Color oficial de Zoom */
-    color: white;
-    font-size: 18px;
-    padding: 15px 30px;
-    text-decoration: none;
-    display: inline-flex;
+.drag-drop-zone input[type="file"] {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    opacity: 0;
+    cursor: pointer;
 }
 
-.button-zoom:hover {
-    background-color: #0b6bed;
-    color: white;
+.drag-drop-zone p {
+    margin: 0; color: #6b7280; font-size: 14px;
 }
 
-.button-success {
-    background: linear-gradient(135deg, #10b981, #059669);
-    color: white;
+.drag-drop-zone .file-name {
+    color: #10b981;
+    font-weight: bold;
     margin-top: 10px;
 }
 
-.divider {
-    border: 0;
-    height: 1px;
-    background-image: linear-gradient(to right, transparent, var(--border-settingsMenu), transparent);
-    margin: 30px 0;
+/* Info precargada */
+.precargado-box {
+    background-color: #f3f4f6; padding: 15px;
+    border-radius: 6px; margin-bottom: 20px;
+    border-left: 4px solid #9ca3af;
 }
+.precargado-box p { margin: 4px 0; font-size: 14px; color: #4b5563; }
+.precargado-box strong { color: #111827; }
 
-
-
-
-@media (max-width: 900px){
-
-  .registro-container{
-    margin-left: 20px;
-    margin-bottom: 30px;
-  }
-
+/* Botones de envío */
+.modal-actions { margin-top: 25px; }
+.btn-submit {
+    width: 100%; padding: 12px; border: none; border-radius: 6px;
+    color: white; font-weight: bold; font-size: 15px; cursor: pointer;
 }
+.btn-submit.green { background-color: #10b981; }
+.btn-submit.green:hover { background-color: #059669; }
+.btn-submit.red { background-color: #ef4444; }
+.btn-submit.red:hover { background-color: #dc2626; }

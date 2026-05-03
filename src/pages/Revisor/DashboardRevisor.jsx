@@ -1,38 +1,21 @@
 // src/pages/Revisor/DashboardRevisor.jsx
-import { useState, useEffect } from 'react';
-import { 
-    Typography, Paper, Table, TableBody, TableCell, TableContainer, 
-    TableHead, TableRow, Button, Chip, Snackbar, Alert, Select, 
-    MenuItem, TextField, Box 
-} from '@mui/material';
+
+import { useState } from 'react';
+import { Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Chip, Snackbar, Alert, Select, MenuItem } from '@mui/material';
 import CheckIcon from '@mui/icons-material/Check';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import SearchIcon from '@mui/icons-material/Search';
 import { evidenciasPendientes } from "../../data/dataRevisor.js";
 
 import '../../styles/App.css';
 
 export default function DashboardRevisor() {
-    const user = JSON.parse(localStorage.getItem('user'));
-    const isAdmin = user?.Rol === 'Admin';
-    
+  
+    // Estados para datos, filtros y la alerta flotante
     const [evidencias, setEvidencias] = useState(evidenciasPendientes);
-    const [filtroStatus, setFiltroStatus] = useState('Pending');
-    const [busquedaAdmin, setBusquedaAdmin] = useState("");
+    const [filtro, setFiltro] = useState('Pending');
     const [openAlert, setOpenAlert] = useState(false);
 
-    // Filtrado dinámico: Admin ve todo o busca, Revisor solo lo asignado
-    const evidenciasFiltradas = evidencias.filter((item) => {
-        const coincideStatus = item.status === filtroStatus;
-        
-        if (isAdmin) {
-            // El Admin ve todo lo que coincida con el status y la búsqueda de tutor
-            return coincideStatus && (busquedaAdmin === "" || item.tutor.toLowerCase().includes(busquedaAdmin.toLowerCase()));
-        }
-        // El Revisor solo ve lo que coincida con el status y su propio nombre
-        return coincideStatus && item.revisorAsignado === user?.Name;
-    });
-
+    // Cambiamos el estado de la fila 
     const handleAprobar = (id) => {
         const nuevasEvidencias = evidencias.map(item => 
             item.id === id ? { ...item, status: 'Approved' } : item
@@ -41,22 +24,23 @@ export default function DashboardRevisor() {
         setOpenAlert(true); 
     };
 
+    const evidenciasMostradas = evidencias.filter(item => item.status === filtro);
+
     return (
         <div className='mainContent'>
             
+            {/* Encabezado con Dropdown de filtro */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', marginBottom: '20px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <h2 style={{ margin: 0, fontSize: '1.8rem', fontWeight: 'bold', color: 'var(--text-main)' }}>
-                        {isAdmin ? "Control Global de Aprobaciones" : "Aprobaciones Pendientes"}
-                    </h2>
+                    <h2 style={{ margin: 0, fontSize: '1.8rem', fontWeight: 'bold', color: 'var(--text-main)' }}>Aprobaciones Pendientes</h2>
                     <p className='--subtitle-main' style={{ margin: 0, fontSize: '0.95rem' }}>
-                        {isAdmin ? "Panel de supervisión para acreditar las horas de todos los tutores." : "Revisa las bitácoras y evidencias enviadas por tus tutores asignados."}
+                        Revisa las bitácoras y evidencias enviadas por tus tutores asignados para acreditar sus horas.
                     </p>
                 </div>
 
                 <Select 
-                    value={filtroStatus} 
-                    onChange={(e) => setFiltroStatus(e.target.value)} 
+                    value={filtro} 
+                    onChange={(e) => setFiltro(e.target.value)} 
                     size="small" 
                     style={{ backgroundColor: 'white', minWidth: '160px', borderRadius: '8px' }}
                 >
@@ -64,22 +48,6 @@ export default function DashboardRevisor() {
                     <MenuItem value="Approved">Aprobadas</MenuItem>
                 </Select>
             </div>
-
-            {/* Buscador exclusivo para el Admin */}
-            {isAdmin && (
-                <Box sx={{ mb: 4, p: 2, bgcolor: '#f0f4f8', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <SearchIcon style={{ color: '#64748b' }} />
-                    <TextField 
-                        fullWidth 
-                        variant="outlined" 
-                        size="small" 
-                        placeholder="Buscar por nombre del tutor..."
-                        value={busquedaAdmin}
-                        onChange={(e) => setBusquedaAdmin(e.target.value)}
-                        sx={{ bgcolor: 'white' }}
-                    />
-                </Box>
-            )}
 
             <hr className="divisor" style={{ marginBottom: '25px', borderTop: '1px solid #e0e4e8' }} />
 
@@ -97,8 +65,9 @@ export default function DashboardRevisor() {
                     </TableHead>
 
                     <TableBody>
-                        {evidenciasFiltradas.map((row) => (
+                        {evidenciasMostradas.map((row) => (
                             <TableRow key={row.id} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                                
                                 <TableCell>
                                     <Typography className='tut-info' style={{ fontWeight: 'bold', fontSize: '0.95rem' }}>{row.tutor}</Typography>
                                     <Typography className='course-aprob' style={{ fontSize: '0.85rem' }}>{row.course}</Typography>
@@ -111,15 +80,11 @@ export default function DashboardRevisor() {
                                 </TableCell>
                                 
                                 <TableCell align="center">
-                                    <Chip 
-                                        label={row.status === 'Pending' ? "Pendiente" : "Aprobada"} 
-                                        size="small" 
-                                        style={{ 
-                                            backgroundColor: row.status === 'Pending' ? '#e2e8f0' : '#dcfce3', 
-                                            color: row.status === 'Pending' ? '#64748b' : '#16a34a', 
-                                            fontWeight: 'bold' 
-                                        }} 
-                                    />
+                                    {row.status === 'Pending' ? (
+                                        <Chip label="Pendiente" size="small" style={{ backgroundColor: '#e2e8f0', color: '#64748b', fontWeight: 'bold' }} />
+                                    ) : (
+                                        <Chip label="Aprobada" size="small" style={{ backgroundColor: '#dcfce3', color: '#16a34a', fontWeight: 'bold' }} />
+                                    )}
                                 </TableCell>
                                 
                                 <TableCell align="center">
@@ -135,8 +100,8 @@ export default function DashboardRevisor() {
                                             Ver Evidencia
                                         </Button>
                                         
-                                        {/* El Admin solo puede ver, el Revisor puede aprobar */}
-                                        {row.status === 'Pending' && !isAdmin && (
+                                        {/* Esconder el botón de Aprobar si ya fue aprobada */}
+                                        {row.status === 'Pending' && (
                                             <Button 
                                                 variant="contained" 
                                                 size="small" 
@@ -149,18 +114,20 @@ export default function DashboardRevisor() {
                                         )}
                                     </div>
                                 </TableCell>
+
                             </TableRow>
                         ))}
                     </TableBody>
                 </Table>
 
-                {evidenciasFiltradas.length === 0 && (
+                {evidenciasMostradas.length === 0 && (
                     <div style={{ padding: '40px', textAlign: 'center', color: '#8792a2' }}>
                         No hay bitácoras en esta sección.
                     </div>
                 )}
             </TableContainer>
 
+            {/* Mensaje de Éxito Flotante */}
             <Snackbar 
                 open={openAlert} 
                 autoHideDuration={3000} 
@@ -171,6 +138,7 @@ export default function DashboardRevisor() {
                     ¡Horas aprobadas y sumadas al tutor con éxito!
                 </Alert>
             </Snackbar>
+
         </div>
     );
 }
