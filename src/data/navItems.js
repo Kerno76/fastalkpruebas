@@ -24,6 +24,7 @@ export const navItems = [
   { icon: students, label: "Control Estudiantes", path: "/estudiantes", roles: ['Admin'], section: "Administración" },
   { icon: students, label: "Control Tutores", path: "/tutores", roles: ['Admin'], section: "Administración" },
   { icon: students, label: "Control Revisores", path: "/revisores", roles: ['Admin'], section: "Administración" },
+  { icon: students, label: "Control Cursos", path: "/cursos", roles: ['Admin'], section: "Administración" },
 
   // --- SECCIÓN TUTOR (También para Admin) ---
   { icon: dashboard, label: "Dashboard Tutor", path: "/tutor", roles: ['Tutor'], section: "Tutoría" },

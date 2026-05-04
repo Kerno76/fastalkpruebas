@@ -19,7 +19,7 @@ import DashboardRevisor from "./pages/Revisor/DashboardRevisor"
 import LoginPage from "./pages/Login/LoginPage"
 import ProtectedRoute from "./components/ProtectedRoute"
 import PublicRoute from "./components/PublicRoute"
-
+import Cursos from "./pages/Organizador/Cursos"
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom' 
 import { Toaster } from 'react-hot-toast';
 import "./styles/App.css"
@@ -52,6 +52,7 @@ function App() {
         <Route path="/estudiantes" element={<ProtectedRoute allowedRoles={['Admin']}><ControlEstudiantes /></ProtectedRoute>} />
         <Route path="/tutores" element={<ProtectedRoute allowedRoles={['Admin']}><ControlTutores /></ProtectedRoute>} />
         <Route path="/revisores" element={<ProtectedRoute allowedRoles={['Admin']}><ControlRevisores /></ProtectedRoute>} />
+        <Route path="/cursos" element={<ProtectedRoute allowedRoles={['Admin']}><Cursos /></ProtectedRoute>} />
 
         {/* --- RUTAS DE TUTOR --- */}
         <Route path="/tutor" element={<ProtectedRoute allowedRoles={['Tutor']}><TutorDashboard /></ProtectedRoute>} />

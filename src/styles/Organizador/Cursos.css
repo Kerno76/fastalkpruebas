@@ -1,0 +1,212 @@
+/* División de años */  
+.cursos-timeline {
+    margin-top: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+}
+
+.year-divider {
+    background-color: #566072;
+    color: white;
+    text-align: center;
+    padding: 8px 0;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+    margin-bottom: 25px;
+}
+
+.year-divider span {
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 4px;
+}
+
+/* Columnas de idiomas */
+.language-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Dos columnas para los idiomas: Inglés y Francés */
+    gap: 40px;
+    align-items: start;
+}
+
+.language-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+/* El nuevo cuadrito contenedor del icono */
+.lang-icon-wrapper {
+    width: 58px;
+    height: 58px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 14px; /* Redondeado estilo iOS */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06); /* Sombra elegante */
+    border: 1px solid rgba(0,0,0,0.04);
+}
+
+/* Fondos tenues para cada idioma */
+.bg-icon-ingles {
+    background-color: #eff6ff; /* Azul muy clarito */
+}
+
+.bg-icon-frances {
+    background-color: #fdf2f8; /* Rosa/Rojo muy clarito */
+}
+
+/* El icono del idioma, imagen SVG */
+.lang-svg-icon {
+    width: 36px; 
+    height: auto;
+    border-radius: 3px; 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.lang-title {
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #1a202c;
+    letter-spacing: -0.5px;
+}
+
+/* Tarjetas de grupos */
+.cursos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 15px;
+}
+
+.curso-card {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 16px !important;
+    padding: 15px 18px !important;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02) !important;
+}
+
+/* Tarjetas pasadas (grises y medio transparentes) */
+.card-past {
+    opacity: 0.7;
+    background: #f8fafc !important;
+}
+
+.curso-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.curso-name {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #1a202c;
+}
+
+.curso-period {
+    font-size: 0.85rem;
+    color: #718096;
+}
+
+/* Estados (Active, Upcoming, Past) */
+.curso-status {
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.status-active { background: #e1f5e8; color: #10b981; }
+.status-upcoming { background: #ffedd5; color: #f97316; }
+.status-past { background: #edf2f7; color: #a0aec0; }
+
+/* --- ESTADÍSTICAS Y BADGES --- */
+.curso-stats-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.stat-value {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #2d3748;
+}
+
+.stat-label {
+    font-size: 0.7rem;
+    color: #718096;
+}
+
+.curso-badges {
+    display: flex;
+    gap: 5px;
+}
+
+.badge {
+    padding: 2px 8px;
+    border-radius: 50%; /* Estilo circular de tu imagen */
+    font-size: 0.7rem;
+    font-weight: bold;
+    color: white;
+}
+
+.badge-level { 
+    background-color: #9f7aea;
+    font-size: 15px; 
+} 
+
+/* Botones inferiores */
+.curso-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 5px;
+}
+
+.btn-curso {
+    flex: 1;
+    background-color: #68899D; /* Tu color principal */
+    color: white;
+    border: none;
+    padding: 6px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-curso:hover {
+    background-color: #567283;
+}
+
+/* Tarjeta fantasmita */
+.ghost-card {
+    border: 2px dashed #cbd5e0;
+    border-radius: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 50px;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.ghost-card:hover {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: #a0aec0;
+}
