@@ -38,7 +38,6 @@ const getTemplateCorreo = (rol, nombre, email, passwordTemporal, language) => {
 };
 
 router.post('/registrar', async (req, res) => {
-    // Aquí es donde se agregaron assignedTutors y notes, además de CurrentLevel
     const { nombre, email, rol, hobbies, language, Phone, career, BirthDate, CurrentLevel, assignedTutors, notes } = req.body; 
     
     const passwordTemporal = '12345678';
@@ -56,7 +55,7 @@ router.post('/registrar', async (req, res) => {
 
         const { error: profileError } = await supabaseAdmin
             .from('UsersProfiles')
-            .insert([{ ID: userId, Name: nombre, Email: email, Rol: rol }]);
+            .insert([{ ID: userId, Name: nombre, Email: email, Rol: rol, BirthDate: BirthDate }]);
 
         if (profileError) throw profileError;
 
@@ -77,7 +76,6 @@ router.post('/registrar', async (req, res) => {
                 .insert([{ 
                     ID: userId, 
                     Phone: Phone,
-                    BirthDate: BirthDate,
                     Language: language,
                     CurrentLevel: CurrentLevel
                 }]);
@@ -90,7 +88,6 @@ router.post('/registrar', async (req, res) => {
                 .insert([{ 
                     ID: userId,
                     Phone: Phone,
-                    BirthDate: BirthDate,
                     Career: career,
                     AsignedTutors: totalAssigned,
                     Notes: notes
@@ -134,7 +131,7 @@ router.get('/tutores', async (req, res) => {
         const { data: tutores, error } = await supabaseAdmin
             .from('UsersProfiles')
             .select(`
-                ID, Name, Email, Rol, State,
+                ID, Name, Email, Rol, State, BirthDate,
                 Tutors ( Phone, Language, Hobbies, Career, TotalHours ) 
             `) 
             .eq('Rol', 'Tutor');
@@ -165,8 +162,8 @@ router.get('/estudiantes', async (req, res) => {
         const { data, error } = await supabaseAdmin
             .from('UsersProfiles')
             .select(`
-                ID, Name, Email, Rol, State, 
-                Students ( Phone, BirthDate, Language, CurrentLevel ) 
+                ID, Name, Email, Rol, State, BirthDate,
+                Students ( Phone, Language, CurrentLevel ) 
             `) 
             .eq('Rol', 'Student');
 
@@ -182,8 +179,8 @@ router.get('/revisores', async (req, res) => {
         const { data, error } = await supabaseAdmin
             .from('UsersProfiles')
             .select(`
-                ID, Name, Email, Rol, State,
-                Reviewer ( Phone, BirthDate, Career, AsignedTutors, ValidationsCompleted ) 
+                ID, Name, Email, Rol, State, BirthDate,
+                Reviewer ( Phone, Career, AsignedTutors, ValidationsCompleted ) 
             `) 
             .eq('Rol', 'Reviewer');
 
@@ -195,7 +192,6 @@ router.get('/revisores', async (req, res) => {
     }
 });
 
-// Ruta para cambiar el estado (Activo/Inactivo) de cualquier usuario
 router.put('/cambiar-estado', async (req, res) => {
     const { userId, newState } = req.body;
 
@@ -214,17 +210,13 @@ router.put('/cambiar-estado', async (req, res) => {
     }
 });
 
-// Ruta para asignar un Revisor a un Tutor existente
 router.post('/asignar-revisor', async (req, res) => {
     const { tutorId, reviewerId } = req.body;
 
     try {
         const { error: insertError } = await supabaseAdmin
             .from('Enrollments_Reviewers')
-            .insert([{ 
-                TutorID: tutorId, 
-                ReviewerID: reviewerId 
-            }]);
+            .insert([{ TutorID: tutorId, ReviewerID: reviewerId }]);
 
         if (insertError) throw insertError;
 
@@ -253,4 +245,305 @@ router.post('/asignar-revisor', async (req, res) => {
     }
 });
 
+router.get('/estudiantes-disponibles', async (req, res) => {
+    try {
+        const { data: estudiantes, error: estError } = await supabaseAdmin
+            .from('UsersProfiles')
+            .select(`
+                ID, Name,
+                Students ( Language, CurrentLevel )
+            `)
+            .eq('Rol', 'Student');
+
+        if (estError) throw estError;
+
+        const { data: enrollments, error: enrError } = await supabaseAdmin
+            .from('Enrollments')
+            .select('StudentID');
+
+        if (enrError) throw enrError;
+
+        const enrolledIds = enrollments.map(e => e.StudentID);
+        const disponibles = estudiantes.filter(est => !enrolledIds.includes(est.ID));
+
+        const formated = disponibles.map(est => {
+            const studentData = Array.isArray(est.Students) ? est.Students[0] : (est.Students || {});
+            return {
+                ID: est.ID,
+                Name: est.Name,
+                Language: studentData.Language || '',
+                CurrentLevel: studentData.CurrentLevel || ''
+            };
+        });
+
+        res.status(200).json(formated);
+    } catch (error) {
+        console.error("Error al obtener estudiantes:", error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+router.post('/cursos', async (req, res) => {
+    const { Name, Language, Level, Period, TutorID, StartDate, EndDate, StudentIDs } = req.body;
+
+    try {
+        const { data: nuevoCurso, error: cursoError } = await supabaseAdmin
+            .from('Courses')
+            .insert([{ Name, Language, Level, Period, TutorID: TutorID || null, StartDate, EndDate, Status: 'Active' }])
+            .select()
+            .single();
+
+        if (cursoError) throw cursoError;
+
+        if (StudentIDs && StudentIDs.length > 0) {
+            const enrollments = StudentIDs.map(studentId => ({
+                CourseID: nuevoCurso.CourseID,
+                StudentID: studentId
+            }));
+
+            const { error: enrollError } = await supabaseAdmin
+                .from('Enrollments')
+                .insert(enrollments);
+
+            if (enrollError) throw enrollError;
+        }
+
+        res.status(200).json({ success: true, message: 'Curso creado y alumnos enrolados.' });
+    } catch (error) {
+        console.error("Error al crear curso:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.get('/cursos-list', async (req, res) => {
+    try {
+        const { data: courses, error: coursesError } = await supabaseAdmin
+            .from('Courses')
+            .select('*');
+        if (coursesError) throw coursesError;
+
+        const { data: enrollments, error: enrollError } = await supabaseAdmin
+            .from('Enrollments')
+            .select('CourseID');
+        if (enrollError) throw enrollError;
+
+        const { data: profiles, error: profError } = await supabaseAdmin
+            .from('UsersProfiles')
+            .select('ID, Name');
+        if (profError) throw profError;
+
+        const cursosConConteo = courses.map(curso => {
+            const studentCount = enrollments.filter(e => e.CourseID === curso.CourseID).length;
+            const tutor = profiles.find(p => p.ID === curso.TutorID);
+            
+            return { 
+                ...curso, 
+                studentCount,
+                tutorName: tutor ? tutor.Name : 'Sin asignar'
+            };
+        });
+
+        res.status(200).json({ success: true, cursos: cursosConConteo });
+    } catch (error) {
+        console.error("Error en cursos-list:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.post('/enroll-students', async (req, res) => {
+    const { courseId, studentIds } = req.body;
+
+    try {
+        if (studentIds && studentIds.length > 0) {
+            const enrollments = studentIds.map(studentId => ({
+                CourseID: courseId,
+                StudentID: studentId
+            }));
+
+            const { error: enrollError } = await supabaseAdmin
+                .from('Enrollments')
+                .insert(enrollments);
+
+            if (enrollError) throw enrollError;
+        }
+
+        res.status(200).json({ success: true, message: 'Alumnos añadidos exitosamente al curso.' });
+    } catch (error) {
+        console.error("Error al enrolar alumnos extras:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.get('/curso-alumnos/:courseId', async (req, res) => {
+    const { courseId } = req.params;
+    try {
+        const { data: enrollments, error: enrError } = await supabaseAdmin
+            .from('Enrollments')
+            .select('StudentID')
+            .eq('CourseID', courseId);
+        if (enrError) throw enrError;
+
+        const { data: profiles, error: profError } = await supabaseAdmin
+            .from('UsersProfiles')
+            .select('ID, Name');
+        if (profError) throw profError;
+
+        const alumnos = enrollments.map(item => {
+            const profile = profiles.find(p => p.ID === item.StudentID);
+            return {
+                ID: item.StudentID,
+                Name: profile ? profile.Name : 'Desconocido'
+            };
+        });
+
+        res.status(200).json({ success: true, alumnos });
+    } catch (error) {
+        console.error("Error en curso-alumnos:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+router.get('/tutor-cursos/:tutorId', async (req, res) => {
+    const { tutorId } = req.params;
+    try {
+        const { data, error } = await supabaseAdmin
+            .from('Courses')
+            .select('*')
+            .eq('TutorID', tutorId);
+
+        if (error) throw error;
+        res.status(200).json({ success: true, cursos: data });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.get('/revisor-tutores/:reviewerId', async (req, res) => {
+    const { reviewerId } = req.params;
+    try {
+        const { data: enrollments, error: enrError } = await supabaseAdmin
+            .from('Enrollments_Reviewers')
+            .select('TutorID')
+            .eq('ReviewerID', reviewerId);
+        if (enrError) throw enrError;
+
+        const { data: profiles, error: profError } = await supabaseAdmin
+            .from('UsersProfiles')
+            .select('ID, Name')
+            .eq('Rol', 'Tutor');
+        if (profError) throw profError;
+
+        const tutores = enrollments.map(e => {
+            const profile = profiles.find(p => p.ID === e.TutorID);
+            return {
+                ID: e.TutorID,
+                Name: profile ? profile.Name : 'Desconocido'
+            };
+        });
+
+        res.status(200).json({ success: true, tutores });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.get('/tutores-sin-revisor', async (req, res) => {
+    try {
+        const { data: tutores, error: tutError } = await supabaseAdmin
+            .from('UsersProfiles')
+            .select('ID, Name')
+            .eq('Rol', 'Tutor')
+            .eq('State', 'Active');
+        if (tutError) throw tutError;
+
+        const { data: asignados, error: asigError } = await supabaseAdmin
+            .from('Enrollments_Reviewers')
+            .select('TutorID');
+        if (asigError) throw asigError;
+
+        const asignadosIds = asignados.map(a => a.TutorID);
+        const disponibles = tutores.filter(t => !asignadosIds.includes(t.ID));
+
+        res.status(200).json({ success: true, tutores: disponibles });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.post('/asignar-tutores-revisor', async (req, res) => {
+    const { reviewerId, tutorIds } = req.body;
+    try {
+        if (tutorIds && tutorIds.length > 0) {
+            const inserts = tutorIds.map(tId => ({
+                ReviewerID: reviewerId,
+                TutorID: tId
+            }));
+
+            const { error: insertError } = await supabaseAdmin
+                .from('Enrollments_Reviewers')
+                .insert(inserts);
+            if (insertError) throw insertError;
+
+            const { data: revData, error: fetchError } = await supabaseAdmin
+                .from('Reviewer')
+                .select('AsignedTutors')
+                .eq('ID', reviewerId)
+                .single();
+            
+            if (!fetchError && revData) {
+                await supabaseAdmin
+                    .from('Reviewer')
+                    .update({ AsignedTutors: (revData.AsignedTutors || 0) + tutorIds.length })
+                    .eq('ID', reviewerId);
+            }
+        }
+        res.status(200).json({ success: true, message: 'Tutores asignados correctamente.' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.get('/estudiantes-list', async (req, res) => {
+    try {
+        const { data: students, error: studErr } = await supabaseAdmin
+            .from('UsersProfiles')
+            .select('ID, Name, Email, State, BirthDate, Students (Phone, Language, CurrentLevel)')
+            .eq('Rol', 'Student');
+        if (studErr) throw studErr;
+
+        const { data: enrollments, error: enrErr } = await supabaseAdmin
+            .from('Enrollments')
+            .select('StudentID, CourseID');
+        if (enrErr) throw enrErr;
+
+        const { data: courses, error: courErr } = await supabaseAdmin
+            .from('Courses')
+            .select('*');
+        if (courErr) throw courErr;
+
+        const { data: profiles } = await supabaseAdmin
+            .from('UsersProfiles')
+            .select('ID, Name');
+
+        const estudiantesCompletos = students.map(st => {
+            const enrollment = enrollments.find(e => e.StudentID === st.ID);
+            let cursoData = null;
+            let tutorName = 'Sin asignar';
+            
+            if (enrollment) {
+                const curso = courses.find(c => c.CourseID === enrollment.CourseID);
+                if (curso) {
+                    const tutor = profiles?.find(p => p.ID === curso.TutorID);
+                    cursoData = { ...curso, tutorName: tutor ? tutor.Name : 'Sin asignar' };
+                    tutorName = cursoData.tutorName;
+                }
+            }
+            return { ...st, cursoData, tutorAsignado: tutorName };
+        });
+
+        res.status(200).json(estudiantesCompletos);
+    } catch (error) {
+        console.error("Error en estudiantes-list:", error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
 module.exports = router;

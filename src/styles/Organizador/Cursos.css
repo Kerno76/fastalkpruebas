@@ -210,3 +210,108 @@
     background: rgba(255, 255, 255, 0.8);
     border-color: #a0aec0;
 }
+
+.level-header-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    margin-top: 10px;
+}
+
+.level-badge-title {
+    background-color: #f1f5f9;
+    color: #475569;
+    font-weight: 800;
+    font-size: 0.9rem;
+    padding: 6px 14px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+    border: 1px solid #e2e8f0;
+}
+
+.level-divider-line {
+    flex-grow: 1;
+    height: 1px;
+    background: linear-gradient(90deg, #e2e8f0 0%, rgba(226, 232, 240, 0) 100%);
+    border: none;
+}
+
+.curso-card {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 16px !important;
+    padding: 18px !important;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02) !important;
+    transition: all 0.3s ease !important;
+}
+
+.curso-card:hover {
+    box-shadow: 0 10px 15px rgba(0,0,0,0.05) !important;
+    transform: translateY(-2px);
+    border-color: #cbd5e1 !important;
+}
+
+.btn-curso-outline {
+    flex: 1;
+    background-color: transparent;
+    color: #68899D;
+    border: 1px solid #68899D;
+    padding: 6px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-curso-outline:hover {
+    background-color: #f0f4f8;
+}
+
+.btn-curso-solid {
+    flex: 1;
+    background-color: #68899D;
+    color: white;
+    border: 1px solid #68899D;
+    padding: 6px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-curso-solid:hover {
+    background-color: #567283;
+}
+
+.filters-container {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+    background: #ffffff;
+    padding: 15px 20px;
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.filter-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #4b5563;
+    margin-right: 8px;
+}
+
+.MuiSelect-select {
+    padding: 8px 14px !important;
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+    color: #1a202c !important;
+}

@@ -1,13 +1,15 @@
-import { tutorStats, recentActTutor } from "../../data/dataTutor.js";
-import { CalendarWidget } from "../../components/CalendarWidget";
+import { useState, useEffect } from 'react';
 import { Box, Typography, Avatar, Paper } from '@mui/material';
+import { CalendarWidget } from "../../components/CalendarWidget";
+import { recentActTutor } from "../../data/dataTutor.js"; 
 
-// Iconos MUI
-import VideocamIcon from '@mui/icons-material/Videocam'; // Sesiones
-import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn'; // Tareas recibidas
-import CloudUploadIcon from '@mui/icons-material/CloudUpload'; // Material subido
-import CheckCircleIcon from '@mui/icons-material/CheckCircle'; // Sesión terminada
-import EventAvailableIcon from '@mui/icons-material/EventAvailable'; // Registro de sesión
+import VideocamIcon from '@mui/icons-material/Videocam'; 
+import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn'; 
+import CloudUploadIcon from '@mui/icons-material/CloudUpload'; 
+import CheckCircleIcon from '@mui/icons-material/CheckCircle'; 
+import EventAvailableIcon from '@mui/icons-material/EventAvailable'; 
+import PeopleIcon from '@mui/icons-material/People';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 
 import '../../styles/Tutor/TutorDashboard.css';
 import '../../styles/App.css';
@@ -21,65 +23,97 @@ const iconMap = {
 };
 
 export default function TutorDashboard() {
+  const user = JSON.parse(localStorage.getItem('user'));
+  const tutorId = user?.ID;
+
+  const [dashData, setDashData] = useState({
+      name: 'Cargando...',
+      totalHours: 0,
+      totalStudents: 0,
+      nivelesAsignados: 'Cargando...'
+  });
+
+  const metaHoras = 120; 
+
+  useEffect(() => {
+      const fetchDashboardData = async () => {
+          if (!tutorId) return;
+          try {
+              const response = await fetch(`http://localhost:8000/api/tutor/dashboard/${tutorId}`);
+              const result = await response.json();
+              if (result.success) {
+                  setDashData(result.data);
+              }
+          } catch (error) {
+              console.error("Error cargando dashboard:", error);
+          }
+      };
+      fetchDashboardData();
+  }, [tutorId]);
+
+  const progressRatio = Math.min(dashData.totalHours / metaHoras, 1);
+  const strokeDashoffset = 251.2 - (progressRatio * 251.2);
+
   return (
     <div className="mainContent">
-      <h2 className="dashboard-title">Panel de TutorTEC</h2>
-      <p className = "dashboard-subtitle">Bienvenido de vuelta. Aquí está tu resumen de actividades.</p>
+      <h2 className="dashboard-title">Panel de {dashData.name} | TutorTEC</h2>
+      <p className="dashboard-subtitle">Bienvenido de vuelta. Aquí está tu resumen de actividades.</p>
 
       <div className="dashboard-cards-grid">
-        {tutorStats.map((stat) => (
-          <div key={stat.id} className="dash-card">
-            <div className="dash-card-header">
-              <h1>{stat.title}</h1>
-              <span className={`icon-wrapper ${stat.colorClass}`}>{stat.icon}</span>
-            </div>
-
-            {stat.type === 'progress' && (
-              <div className="progress-container">
-                <svg className="progress-circle" width="100" height="100">
-                  <circle cx="50" cy="50" r="40" className="circle-bg" />
-                  <circle 
-                    cx="50" cy="50" r="40" 
-                    className="circle-progress" 
-                    style={{ strokeDasharray: 251.2, strokeDashoffset: 251.2 - (stat.current / stat.total) * 251.2 }} 
-                  />
-                </svg>
-                <div className="progress-text">
-                  <span className="progress-current">{stat.current}</span>
-                  <span className="progress-total">/ {stat.total} hrs</span>
-                </div>
-              </div>
-            )}
-
-            {stat.type === 'stat' && (
-              <div className="stat-container">
-                <span className="stat-number">{stat.amount}</span>
-                <span className="stat-label">{stat.subtitle}</span>
-              </div>
-            )}
-
-            {stat.type === 'action' && (
-              <div className="session-details">
-                <p className="session-date">{stat.date}</p>
-                <p className="session-student">{stat.student}</p>
-                <button className="start-session-btn">Unirse a Sesión</button>
-              </div>
-            )}
-            
-            {stat.footer && <p className="card-footer-text">{stat.footer}</p>}
+        <div className="dash-card">
+          <div className="dash-card-header">
+            <h1>Horas Acreditadas</h1>
+            <span className="icon-wrapper blue-icon"><AccessTimeIcon /></span>
           </div>
-        ))}
+          <div className="progress-container">
+            <svg className="progress-circle" width="100" height="100">
+              <circle cx="50" cy="50" r="40" className="circle-bg" />
+              <circle 
+                cx="50" cy="50" r="40" 
+                className="circle-progress" 
+                style={{ strokeDasharray: 251.2, strokeDashoffset: strokeDashoffset }} 
+              />
+            </svg>
+            <div className="progress-text">
+              <span className="progress-current">{dashData.totalHours}</span>
+              <span className="progress-total">/ {metaHoras} hrs</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="dash-card">
+          <div className="dash-card-header">
+            <h1>Mis Beneficiarios</h1>
+            <span className="icon-wrapper green-icon"><PeopleIcon /></span>
+          </div>
+          <div className="stat-container">
+            <span className="stat-number">{dashData.totalStudents}</span>
+            <span className="stat-label">Alumnos Activos</span>
+          </div>
+          <p className="card-footer-text">
+            Niveles {dashData.nivelesAsignados} asignados
+          </p>
+        </div>
+
+        <div className="dash-card">
+          <div className="dash-card-header">
+            <h1>Próxima Sesión</h1>
+            <span className="icon-wrapper purple-icon"><EventAvailableIcon /></span>
+          </div>
+          <div className="session-details">
+            <p className="session-date">Hoy, 4:00 PM</p>
+            <p className="session-student">con Luis Eduardo Martínez</p>
+            <button className="start-session-btn">Unirse a Sesión</button>
+          </div>
+        </div>
       </div>
 
       <div className="bottomSection">
         <div className="recentActivity">
-          <h2>Recent Activity</h2>
+          <h2>Actividad Reciente</h2>
           {recentActTutor.map((item) => (
             <Paper key={item.id} className="activity-card" elevation={0}>
-              <Avatar 
-                className="activity-avatar" 
-                style={{ backgroundColor: item.bgColor, color: item.color }}
-              >
+              <Avatar className="activity-avatar" style={{ backgroundColor: item.bgColor, color: item.color }}>
                 {iconMap[item.type]}
               </Avatar>
               <Box className="activity-info">

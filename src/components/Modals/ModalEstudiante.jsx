@@ -39,9 +39,9 @@ export default function ModalEstudiante({ open, onClose }) {
           nombre: formData.Name,
           email: formData.Email,
           Phone: formData.Phone,
+          BirthDate: formData.BirthDate,
           language: formData.Language,
           CurrentLevel: formData.CurrentLevel, 
-          BirthDate: formData.BirthDate,
           rol: "Student"
         })
       });

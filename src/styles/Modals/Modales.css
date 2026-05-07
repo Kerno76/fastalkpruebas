@@ -1,13 +1,13 @@
-/* El contenedor blanco del modal */
 .modal-container {
     border-radius: 20px !important;
-    padding: 20px;
+    padding: 25px;
     position: relative;
-    overflow: hidden !important; 
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
     background-color: var(--modal-background) !important;
 }
 
-/* El fondo oscuro con desenfoque */
 .MuiBackdrop-root {
     background-color: rgba(0, 0, 0, 0.2) !important;
     backdrop-filter: blur(6px);
@@ -24,13 +24,14 @@
     display: flex;
     flex-direction: column;
     gap: 20px;
+    box-sizing: border-box;
 }
 
-/* Filas de dos columnas */
 .form-row {
     display: flex;
     gap: 20px;
     width: 100%;
+    box-sizing: border-box;
 }
 
 .form-group {
@@ -38,6 +39,7 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+    min-width: 0; 
 }
 
 .form-mini-group {
@@ -45,22 +47,20 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+    min-width: 0; 
 }
 
-
-.form-group, .form-mini-group label {
+.form-group label, .form-mini-group label {
     font-size: 0.9rem;
     font-weight: 700;
     color: var(--modal-text-color);
 }
 
-/* Personalización de los inputs para que se vean redonditos */
 .MuiOutlinedInput-root {
     border-radius: 12px !important;
     background-color: #fcfcfc;
 }
 
-/* Botón X de cerrar */
 .close-button {
     position: absolute !important;
     right: 15px;
@@ -68,7 +68,6 @@
     color: var(--modal-close-button) !important;
 }
 
-/* Botones de acción */
 .modal-actions {
     display: flex;
     justify-content: flex-end;

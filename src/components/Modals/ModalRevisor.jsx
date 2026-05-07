@@ -81,7 +81,6 @@ export default function ModalRevisor({ open, onClose }) {
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth PaperProps={{ className: 'modal-container' }}>
       <IconButton onClick={onClose} className="close-button"><CloseIcon /></IconButton>
 
-      {/* DialogContent es el que permite el scroll interno si el contenido crece mucho */}
       <DialogContent className="modal-content" style={{ padding: '20px 0 0 0', overflowY: 'auto' }}>
         <Typography className="modal-title">Nuevo Revisor</Typography>
 
@@ -114,7 +113,6 @@ export default function ModalRevisor({ open, onClose }) {
             </div>
           </div>
 
-          {/* Carrera y Notas en la misma fila */}
           <div className="form-row">
             <div className="form-mini-group">
               <label>Carrera (Siglas)</label>

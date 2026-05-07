@@ -1,0 +1,188 @@
+/* --- ENCABEZADO --- */
+.header-text-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 20px;
+    margin-bottom: 15px;
+}
+
+.header-title-students {
+    margin: 0;
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--text-main);
+}
+
+.header-subtitle-students {
+    margin: 0;
+    color: #666;
+    font-size: 0.95rem;
+}
+
+/* --- BUSCADOR --- */
+.search-container {
+    margin-bottom: 1.5rem;
+    padding: 16px;
+    background-color: #f0f4f8;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.search-icon {
+    color: #64748b;
+}
+
+.search-input {
+    background-color: white;
+    border-radius: 4px;
+}
+
+.divisor-spaced {
+    margin-top: 15px;
+    margin-bottom: 10px;
+}
+
+/* --- TARJETAS DE ESTUDIANTES --- */
+.student-card-tutor {
+    background-color: var(--bg-card);
+    border-color: #e0e4e8;
+}
+
+.admin-tutor-label {
+    font-size: 0.7rem;
+    font-weight: bold;
+    color: #3b82f6;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+}
+
+.student-name-tutor {
+    margin-bottom: 10px;
+}
+
+.course-label-margin {
+    margin-left: 10px;
+}
+
+.student-stats-container {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 15px;
+}
+
+.myStudents-info-tutor {
+    font-size: 0.85rem;
+}
+
+.btn-agendar {
+    background-color: #4caf50 !important;
+    box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3) !important;
+}
+
+.empty-state-text {
+    text-align: center;
+    margin-top: 40px;
+    color: #94a3b8;
+}
+
+/* --- MODAL EXPEDIENTE --- */
+.modal-body-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.modal-header-card {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background-color: #f8fafc;
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+}
+
+.modal-avatar-large {
+    width: 64px !important;
+    height: 64px !important;
+    background-color: #048A81 !important;
+}
+
+.modal-student-name {
+    font-weight: 800;
+    color: #1e293b;
+}
+
+.modal-student-email {
+    color: #64748b;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.chip-active-student {
+    background-color: #dcfce7 !important;
+    color: #166534 !important;
+    font-weight: 700 !important;
+}
+
+.modal-course-info {
+    background-color: #eff6ff;
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid #bfdbfe;
+}
+
+.modal-course-title {
+    font-weight: 800;
+    color: #1e40af;
+    text-transform: uppercase;
+}
+
+.modal-course-details {
+    display: flex;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.detail-label {
+    color: #3b82f6;
+    font-size: 0.75rem;
+}
+
+.detail-value {
+    font-weight: 700;
+    color: #1e3a8a;
+}
+
+.detail-value-cap {
+    font-weight: 700;
+    color: #1e3a8a;
+    text-transform: capitalize;
+}
+
+.modal-stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.modal-stat-paper {
+    padding: 15px;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+}
+
+.modal-stat-label {
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+}
+
+.modal-stat-value {
+    font-weight: 700;
+    color: #334155;
+}
