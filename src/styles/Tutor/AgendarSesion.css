@@ -1,16 +1,21 @@
-/* Contenedor principal de la tarjeta */
 .agendar-card {
-    background-color: #ffffff; /* Blanco puro para resaltar */
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
     padding: 35px 40px;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
     margin-top: 25px;
     width: 100%;
-    max-width: 900px; /* Evita que se estire horrible en pantallas grandes */
+    max-width: 900px;
+    transition: all 0.3s ease;
 }
 
-/* Grillas para acomodar los inputs */
+.agendar-card:hover {
+    box-shadow: 0 10px 15px rgba(0,0,0,0.05);
+    border-color: #cbd5e1;
+    transform: translateY(-2px);
+}
+
 .agendar-row-2 {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -22,10 +27,9 @@
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 30px;
-    margin-bottom: 35px;
+    margin-bottom: 30px;
 }
 
-/* Estilos de los grupos y etiquetas */
 .agendar-group {
     display: flex;
     flex-direction: column;
@@ -33,159 +37,176 @@
 }
 
 .agendar-group label {
-    font-size: 14px;
-    font-weight: 600;
-    color: #374151; /* Gris oscuro elegante */
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #4b5563;
     margin-bottom: 8px;
     letter-spacing: 0.3px;
 }
 
-/* El secreto del input perfecto */
 .agendar-input {
     width: 100%;
-    box-sizing: border-box !important; /* Evita que el padding rompa el tamaño */
-    height: 48px; /* Altura fija y cómoda */
+    box-sizing: border-box !important;
+    height: 48px;
     padding: 0 16px;
     border-radius: 8px;
-    border: 1.5px solid #d1d5db;
-    background-color: #f9fafb;
-    font-size: 15px;
-    color: #111827;
+    border: 1px solid #e2e8f0;
+    background-color: #f8fafc;
+    font-size: 0.95rem;
+    color: #1a202c;
     font-family: inherit;
     transition: all 0.2s ease-in-out;
 }
 
 .agendar-input::placeholder {
-    color: #9ca3af;
+    color: #a0aec0;
 }
 
 .agendar-input:focus {
     outline: none;
-    border-color: #2D8CFF;
+    border-color: #68899D;
     background-color: #ffffff;
-    box-shadow: 0 0 0 4px rgba(45, 140, 255, 0.15);
+    box-shadow: 0 0 0 3px rgba(104, 137, 157, 0.15);
 }
 
-/* Arreglando el horror del <select> */
 select.agendar-input {
-    appearance: none; /* Quitamos la flecha fea por defecto del navegador */
+    appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
-    /* Agregamos una flecha SVG moderna */
-    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236b7280%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23718096%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
     background-repeat: no-repeat;
     background-position: right 16px top 50%;
     background-size: 12px auto;
-    padding-right: 40px; /* Espacio para que el texto no pise la flecha */
+    padding-right: 40px;
     cursor: pointer;
 }
 
-.agendar-hint {
-    color: #6b7280;
+.students-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
     margin-top: 8px;
-    font-size: 13px;
 }
 
-/* Zona del botón separada */
+.student-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.student-checkbox-label:hover {
+    background-color: #e2e8f0;
+}
+
+.student-checkbox-label.selected {
+    background-color: #eff6ff;
+    border-color: #68899D;
+    color: #68899D;
+}
+
+.student-checkbox-label input[type="checkbox"] {
+    accent-color: #68899D;
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+}
+
 .agendar-actions {
     display: flex;
     justify-content: flex-end;
     padding-top: 25px;
-    border-top: 1px solid #f3f4f6;
+    border-top: 1px solid #e2e8f0;
+    margin-top: 20px;
 }
 
-.btn-agendar-dark {
-    background-color: #1e293b; /* Azul marino/Casi negro */
+.btn-agendar-solid {
+    background-color: #68899D;
     color: white;
-    padding: 14px 28px;
-    border: none;
+    border: 1px solid #68899D;
+    padding: 12px 30px;
     border-radius: 8px;
     font-weight: 600;
-    font-size: 15px;
+    font-size: 0.95rem;
     cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: 0.2s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-.btn-agendar-dark:hover {
-    background-color: #334155;
+.btn-agendar-solid:hover {
+    background-color: #567283;
     transform: translateY(-1px);
-    box-shadow: 0 6px 8px rgba(0,0,0,0.15);
 }
 
-/* Responsividad */
+.revisor-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: #f8fafc;
+    color: #475569;
+    cursor: default;
+    border: 1px solid #e2e8f0;
+    user-select: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.revisor-badge-error {
+    display: flex;
+    align-items: center;
+    color: #ef4444;
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.students-wrapper {
+    margin-bottom: 25px;
+    padding: 15px;
+    background-color: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.students-wrapper-label {
+    color: #1e293b;
+    font-size: 0.9rem;
+}
+
+.agendar-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.agendar-textarea {
+    height: 48px;
+    padding: 12px 16px;
+    resize: none;
+}
+
+.agendar-row-margin {
+    margin-top: 10px;
+}
+
 @media (max-width: 768px) {
     .agendar-row-2, 
-    .agendar-row-3 {
+    .agendar-row-3,
+    .agendar-grid-2 {
         grid-template-columns: 1fr;
         gap: 20px;
     }
-    
     .agendar-card {
         padding: 25px 20px;
     }
-}
-
-/* Línea de color superior para la tarjeta */
-.agendar-card.color-accent {
-    position: relative;
-    overflow: hidden;
-}
-
-.agendar-card.color-accent::before {
-    content: '';
-    position: absolute;
-    top: 0; 
-    left: 0; 
-    right: 0;
-    height: 6px;
-    background: linear-gradient(90deg, #2D8CFF, #10b981); /* De azul FasTalk a verde éxito */
-}
-
-/* Nuevo botón con gradiente para que resalte más */
-.btn-agendar-gradient {
-    background: linear-gradient(135deg, #2D8CFF, #1a73e8);
-    color: white;
-    padding: 14px 30px;
-    border: none;
-    border-radius: 8px;
-    font-weight: bold;
-    font-size: 15px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 10px rgba(45, 140, 255, 0.3);
-}
-
-.btn-agendar-gradient:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(45, 140, 255, 0.4);
-    background: linear-gradient(135deg, #1a73e8, #0052cc);
-}
-
-/* --- Adaptación para Material UI (MUI) --- */
-
-/* Hace que los Date/Time Pickers midan lo mismo que tus otros inputs (48px) */
-.mui-override .MuiInputBase-root {
-    height: 48px !important;
-    background-color: #f9fafb;
-    border-radius: 8px;
-    font-family: inherit;
-    font-size: 15px;
-}
-
-/* Oculta la línea negra fea que le pone Material UI por defecto abajo */
-.mui-override .MuiOutlinedInput-notchedOutline {
-    border: 1.5px solid #d1d5db !important;
-    transition: all 0.2s ease-in-out;
-}
-
-/* Efecto azul al dar clic en el calendario/reloj */
-.mui-override .MuiInputBase-root.Mui-focused .MuiOutlinedInput-notchedOutline {
-    border-color: #2D8CFF !important;
-    box-shadow: 0 0 0 4px rgba(45, 140, 255, 0.15);
-}
-
-/* Cambia el color del ícono del reloj y el calendario */
-.mui-override .MuiSvgIcon-root {
-    color: #2D8CFF;
 }

@@ -269,3 +269,75 @@
 
   min-height: 250px;
 }
+
+/* Estilos para Actividad Reciente (Notificaciones) */
+.activity-card {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background-color: #ffffff;
+}
+
+.activity-card:hover {
+    background-color: #f8fafc;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+}
+
+/* Estado de No Leída */
+.activity-card.unread {
+    background-color: #eff6ff; /* Azul muy clarito */
+    border-left: 4px solid #3b82f6; /* Línea azul a la izquierda */
+}
+
+.activity-info {
+    flex-grow: 1;
+    margin-left: 15px;
+    margin-right: 15px;
+}
+
+.activity-title {
+    font-weight: 700 !important;
+    color: #1e293b;
+    font-size: 0.95rem !important;
+    margin-bottom: 2px !important;
+}
+
+.activity-desc {
+    color: #64748b;
+    font-size: 0.85rem !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 250px; /* Para que no rompa el diseño si el texto es muy largo */
+}
+
+.activity-time {
+    font-size: 0.75rem !important;
+    color: #94a3b8;
+    font-weight: 600 !important;
+    min-width: 60px;
+    text-align: right;
+}
+
+.unread-dot {
+    width: 10px;
+    height: 10px;
+    background-color: #3b82f6;
+    border-radius: 50%;
+    margin-left: 10px;
+}
+
+/* Modal de Notificación */
+.notif-modal-date {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    font-weight: 600;
+    margin-bottom: 15px;
+    display: block;
+}

@@ -1,273 +1,398 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import '../../styles/Tutor/RegistroSesiones.css';
 
-// Data inflada basada en tu array 'misSesiones'
-const sesionesData = [
-    {
-        id: 1,
-        alumno: "Elvis Alain Calzada",
-        date: "27 Abril 2026",
-        time: "16:00 hrs",
-        course: "Ingles",
-        level: "C1",
-        topic: "First and Second Conditionals",
-        status: "upcoming", 
-        meetLink: "https://meet.google.com/abc-defg-hij",
-        bitacoraLlena: false
-    },
-    {
-        id: 4,
-        alumno: "Daniel Carballido",
-        date: "27 Abril 2026",
-        time: "10:00 hrs",
-        course: "Frances",
-        level: "B1",
-        topic: "Passé Composé Intro",
-        status: "past", 
-        bitacoraLlena: false // Faltó llenar hoy
-    },
-    {
-        id: 2,
-        alumno: "Mario Alejandro Avendaño",
-        date: "10 Abril 2026",
-        time: "16:00 hrs",
-        course: "Ingles",
-        level: "B2",
-        topic: "Present Perfect vs Past Simple",
-        status: "past", 
-        bitacoraLlena: false 
-    },
-    {
-        id: 3,
-        alumno: "Javier Juárez",
-        date: "05 Abril 2026",
-        time: "16:00 hrs",
-        course: "Frances",
-        level: "A2",
-        topic: "Speaking Practice",
-        status: "past", 
-        bitacoraLlena: true // Ya la llenó en su momento
-    },
-    {
-        id: 5,
-        alumno: "Miguel Castañeda",
-        date: "28 Marzo 2026",
-        time: "16:00 hrs",
-        course: "Frances",
-        level: "C1",
-        topic: "Modal Verbs of Deduction",
-        status: "past", 
-        bitacoraLlena: true 
-    }
-];
-
 export default function RegistroSesiones() {
-  const [sesiones, setSesiones] = useState(sesionesData);
-  const [activeModal, setActiveModal] = useState(null); 
-  const [selectedSession, setSelectedSession] = useState(null);
+    const user = JSON.parse(localStorage.getItem('user'));
+    
+    const [sesiones, setSesiones] = useState([]);
+    const [activeModal, setActiveModal] = useState(null); 
+    const [selectedSession, setSelectedSession] = useState(null);
 
-  // Estados de formularios y archivos
-  const [bitacoraData, setBitacoraData] = useState({
-    tema: '', descripcion: '', planeacionSiguiente: ''
-  });
-  const [selectedFile, setSelectedFile] = useState(null);
+    const [bitacoraData, setBitacoraData] = useState({ descripcion: '', planeacionSiguiente: '' });
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [asistenciaAlumnos, setAsistenciaAlumnos] = useState([]);
+    
+    const [reagendarData, setReagendarData] = useState({ fecha: '', hora: '' });
 
-  // --- HANDLERS ---
-  const openBitacora = (sesion) => {
-    setSelectedSession(sesion);
-    setActiveModal('bitacora');
-  };
+    const fetchSesionesPendientes = async () => {
+        if (!user?.ID) return;
+        try {
+            const res = await fetch(`http://localhost:8000/api/tutor/sesiones-pendientes/${user.ID}`);
+            const data = await res.json();
+            if (data.success) setSesiones(data.sesiones);
+        } catch (error) {
+            console.error(error);
+        }
+    };
 
-  const openInasistencia = (sesion) => {
-    setSelectedSession(sesion);
-    setActiveModal('inasistencia');
-  };
+    useEffect(() => { fetchSesionesPendientes(); }, [user?.ID]);
 
-  const closeModal = () => {
-    setActiveModal(null);
-    setSelectedSession(null);
-    setBitacoraData({ tema: '', descripcion: '', planeacionSiguiente: '' });
-    setSelectedFile(null);
-  };
+    const openModal = (type, sesion) => {
+        setSelectedSession(sesion);
+        setAsistenciaAlumnos(sesion.estudiantes || []);
+        if(type === 'posponer') setReagendarData({ fecha: sesion.Date, hora: sesion.StartTime });
+        setActiveModal(type);
+    };
+    
+    const closeModal = () => {
+        setActiveModal(null);
+        setSelectedSession(null);
+        setBitacoraData({ descripcion: '', planeacionSiguiente: '' });
+        setSelectedFile(null);
+        setAsistenciaAlumnos([]);
+        setReagendarData({ fecha: '', hora: '' });
+    };
 
-  const handleFileChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
-    }
-  };
+    const handleFileChange = (e) => {
+        if (e.target.files && e.target.files[0]) setSelectedFile(e.target.files[0]);
+    };
 
-  const handleBitacoraSubmit = (e) => {
-    e.preventDefault();
-    if (!selectedFile) {
-        alert("Por favor, adjunta una imagen de evidencia.");
-        return;
-    }
-    const actualizadas = sesiones.map(s => 
-      s.id === selectedSession.id ? { ...s, bitacoraLlena: true, status: 'past' } : s
-    );
-    setSesiones(actualizadas);
-    alert("¡Bitácora guardada con éxito! Evidencia subida. Horas calculadas (1 hr).");
-    closeModal();
-  };
+    const fileToBase64 = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    };
 
-  const handleIncidenciaSubmit = (e) => {
-    e.preventDefault();
-    if (!selectedFile) {
-        alert("Debes adjuntar la captura de pantalla comprobando tu asistencia.");
-        return;
-    }
-    const actualizadas = sesiones.map(s => 
-      s.id === selectedSession.id ? { ...s, bitacoraLlena: true, status: 'past' } : s 
-    );
-    setSesiones(actualizadas);
-    alert("Incidencia por inasistencia registrada correctamente.");
-    closeModal();
-  };
+    const handleStudentUpdate = (studentId, field, value) => {
+        setAsistenciaAlumnos(prev => prev.map(est => 
+            est.StudentID === studentId ? { ...est, [field]: value } : est
+        ));
+    };
 
-  // --- RENDER DE FILAS ---
-  const renderSesionRow = (sesion) => {
-    const isUpcoming = sesion.status === 'upcoming';
-    const isPending = sesion.status === 'past' && !sesion.bitacoraLlena;
-    const isDone = sesion.bitacoraLlena;
+    const handleSaveIncidencias = async (e) => {
+        e.preventDefault();
+        const toastId = toast.loading("Guardando reporte...");
+        try {
+            const res = await fetch("http://localhost:8000/api/tutor/guardar-incidencias", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ SessionID: selectedSession.SessionID, estudiantesData: asistenciaAlumnos })
+            });
+            const data = await res.json();
+            if (data.success) {
+                toast.success("Asistencia y reportes actualizados", { id: toastId });
+                fetchSesionesPendientes();
+                closeModal();
+            } else throw new Error(data.message);
+        } catch (error) { toast.error(error.message, { id: toastId }); }
+    };
+
+    const handleCompletarSesion = async (e) => {
+            e.preventDefault();
+
+            if (!bitacoraData.descripcion || bitacoraData.descripcion.trim() === '') {
+                return toast.error("El resumen de la clase es obligatorio.");
+            }
+            
+            if (!bitacoraData.planeacionSiguiente || bitacoraData.planeacionSiguiente.trim() === '') {
+                return toast.error("La planeación de la próxima clase es obligatoria.");
+            }
+
+            if (!selectedFile) {
+                return toast.error("La captura de evidencia es obligatoria.");
+            }
+
+            const toastId = toast.loading("Cerrando sesión y enviando a revisión...");
+            
+            try {
+                const fileBase64 = await fileToBase64(selectedFile);
+                
+                const estudiantesPorDefecto = (selectedSession.estudiantes || []).map(est => ({
+                    StudentID: est.StudentID,
+                    Attendance: est.Attendance || 'Presente',
+                    IncidentReport: est.IncidentReport || ''
+                }));
+
+                const payload = {
+                    SessionID: selectedSession.SessionID,
+                    Status: 'Completed',
+                    Description: bitacoraData.descripcion.trim(),
+                    NextSession: bitacoraData.planeacionSiguiente.trim(),
+                    fileBase64,
+                    fileName: selectedFile.name,
+                    fileType: selectedFile.type,
+                    estudiantesData: estudiantesPorDefecto 
+                };
+
+                const res = await fetch("http://localhost:8000/api/tutor/completar-sesion", {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await res.json();
+                
+                if (data.success) {
+                    toast.success("Bitácora enviada exitosamente", { id: toastId });
+                    fetchSesionesPendientes();
+                    closeModal();
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) { 
+                toast.error(error.message || "Ocurrió un error al enviar la bitácora", { id: toastId }); 
+            }
+        };
+
+    const handlePosponer = async (e) => {
+        e.preventDefault();
+        const toastId = toast.loading("Reprogramando sesión...");
+        try {
+            const res = await fetch("http://localhost:8000/api/tutor/posponer-sesion", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    SessionID: selectedSession.SessionID,
+                    TutorID: user.ID,
+                    NewDate: reagendarData.fecha,
+                    NewTime: reagendarData.hora,
+                    Estudiantes: asistenciaAlumnos,
+                    Topic: selectedSession.Topic
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                toast.success("Sesión pospuesta y alumnos notificados", { id: toastId });
+                fetchSesionesPendientes();
+                closeModal();
+            } else throw new Error(data.message);
+        } catch (error) { toast.error(error.message, { id: toastId }); }
+    };
+
+    const handleCancelar = async () => {
+        const toastId = toast.loading("Cancelando sesión...");
+        try {
+            const res = await fetch("http://localhost:8000/api/tutor/cancelar-sesion", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    SessionID: selectedSession.SessionID,
+                    TutorID: user.ID,
+                    Estudiantes: asistenciaAlumnos,
+                    Topic: selectedSession.Topic
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                toast.success("Sesión cancelada", { id: toastId });
+                fetchSesionesPendientes();
+                closeModal();
+            } else throw new Error(data.message);
+        } catch (error) { toast.error(error.message, { id: toastId }); }
+    };
+
+    const isPastSession = (date, time) => {
+        const sessionDateTime = new Date(`${date}T${time}`);
+        return sessionDateTime < new Date();
+    };
+
+    const renderSesionRow = (sesion) => {
+        const isPast = isPastSession(sesion.Date, sesion.StartTime);
+        
+        const isRejected = sesion.ReviewerStatus === 'Rechazado';
+
+        return (
+            <div key={sesion.SessionID} className="sesion-row" style={{ borderLeft: isRejected ? '5px solid #ef4444' : 'none' }}>
+                <div className="sesion-info">
+                    {isRejected ? (
+                        <span className="sesion-header-tag tag-prox" style={{ backgroundColor: '#fee2e2', color: '#ef4444' }}>Bitácora Rechazada</span>
+                    ) : (
+                        <span className="sesion-header-tag tag-prox">En Progreso</span>
+                    )}
+                    <h3>{sesion.Topic}</h3>
+                    <p><strong>Curso:</strong> {sesion.courseName}</p>
+                    <p><strong>Horario:</strong> {sesion.Date} a las {sesion.StartTime}</p>
+                    <p><strong>Alumnos convocados:</strong> {sesion.studentCount}</p>
+                </div>
+                <div className="sesion-actions">
+                    <button 
+                        onClick={() => openModal('posponer', sesion)} 
+                        className="btn-sesion btn-posponer"
+                        disabled={isPast}
+                        style={isPast ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                    >
+                        Posponer
+                    </button>
+                    <button onClick={() => openModal('cancelar', sesion)} className="btn-sesion btn-cancelar">Cancelar</button>
+                    <a href={sesion.Url} target="_blank" rel="noopener noreferrer" className="btn-sesion btn-sesion-link">Entrar a Sesión</a>
+                    <button onClick={() => openModal('incidencias', sesion)} className="btn-sesion btn-incidencia">Incidentes</button>
+                    <button onClick={() => openModal('bitacora', sesion)} className="btn-sesion btn-bitacora">Bitácora</button>
+                </div>
+            </div>
+        );
+    };
 
     return (
-      <div key={sesion.id} className={`sesion-row ${isUpcoming ? 'prox-sesion' : ''}`}>
-        <div className="sesion-info">
-            {isUpcoming && <span className="sesion-header-tag tag-prox">Próxima Sesión</span>}
-            {isPending && <span className="sesion-header-tag tag-past">Pendiente de Revisión</span>}
-            {isDone && <span className="sesion-header-tag tag-done">Completada</span>}
-            
-            <h3>{sesion.topic}</h3>
-            <p><strong>Alumno:</strong> {sesion.alumno} ({sesion.level} - {sesion.course})</p>
-            <p><strong>Horario:</strong> {sesion.date} a las {sesion.time}</p>
-        </div>
+        <div className="sesiones-manager-container">
+            <div className="sesiones-manager-header">
+                <h2>Gestión de Clases en Curso</h2>
+                <p>Pasa lista, reporta comportamientos inusuales, reagenda y sube tu evidencia al terminar la sesión.</p>
+            </div>
 
-        <div className="sesion-actions">
-            {/* Los botones ahora están alineados horizontalmente */}
-            {!isDone ? (
-                <>
-                    <button onClick={() => openInasistencia(sesion)} className="btn-sesion btn-incidencia">
-                        ⚠️ Registrar Inasistencia
-                    </button>
-                    <button onClick={() => openBitacora(sesion)} className="btn-sesion btn-bitacora">
-                        📝 Llenar Bitácora
-                    </button>
-                </>
-            ) : (
-                <button className="btn-sesion btn-disabled" disabled>
-                    ✅ Gestionada
-                </button>
+            <div className="sesiones-grid">
+                {sesiones.length > 0 ? sesiones.map(renderSesionRow) : <div className="repo-empty-state">No tienes sesiones activas pendientes de cierre.</div>}
+            </div>
+
+            {activeModal === 'incidencias' && selectedSession && (
+                <div className="modal-overlay" onClick={closeModal}>
+                    <div className="modal-content" style={{ maxWidth: '600px' }} onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3>Incidentes y Asistencia</h3>
+                            <button className="close-button" onClick={closeModal}>&times;</button>
+                        </div>
+
+                        <div className="precargado-box" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                            <div>
+                                <strong style={{ fontSize: '0.8rem', color: '#64748b', textTransform: 'uppercase' }}>Curso</strong>
+                                <p style={{ margin: '2px 0 0 0', fontWeight: 600 }}>{selectedSession.courseName}</p>
+                            </div>
+                            <div>
+                                <strong style={{ fontSize: '0.8rem', color: '#64748b', textTransform: 'uppercase' }}>Tema Central</strong>
+                                <p style={{ margin: '2px 0 0 0', fontWeight: 600 }}>{selectedSession.Topic}</p>
+                            </div>
+                        </div>
+                        
+                        <form onSubmit={handleSaveIncidencias}>
+                            <div className="form-group" style={{ marginBottom: '20px' }}>
+                                {asistenciaAlumnos.length > 0 ? asistenciaAlumnos.map((est) => (
+                                    <div key={est.StudentID} style={{ display: 'grid', gridTemplateColumns: '2fr 1.5fr', gap: '10px', marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px dashed #cbd5e1' }}>
+                                        <div>
+                                            <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#1e293b', display: 'block', marginBottom: '5px' }}>{est.Name}</span>
+                                            <select className="select-field" value={est.Attendance} onChange={(e) => handleStudentUpdate(est.StudentID, 'Attendance', e.target.value)}>
+                                                <option value="Presente">Presente</option>
+                                                <option value="Ausente">Ausente</option>
+                                                <option value="Retardo">Retardo</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <span style={{ fontWeight: 600, fontSize: '0.8rem', color: '#64748b', display: 'block', marginBottom: '5px' }}>Detalle / Incidente</span>
+                                            <input className="select-field" type="text" placeholder="Ej. Problemas de internet..." value={est.IncidentReport} onChange={(e) => handleStudentUpdate(est.StudentID, 'IncidentReport', e.target.value)} />
+                                        </div>
+                                    </div>
+                                )) : <p style={{ color: '#ef4444' }}>No hay alumnos registrados.</p>}
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
+                                <button type="submit" className="btn-sesion btn-bitacora" style={{ width: 'auto', padding: '10px 20px', border: 'none' }}>Guardar Cambios</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             )}
 
-            {isUpcoming && (
-                <a href={sesion.meetLink} target="_blank" rel="noopener noreferrer" className="btn-sesion btn-sesion-link">
-                    🎥 Entrar a Sesión
-                </a>
+            {activeModal === 'bitacora' && selectedSession && (
+                <div className="modal-overlay" onClick={closeModal}>
+                    <div className="modal-content" style={{ maxWidth: '600px' }} onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3>Llenar Bitácora</h3>
+                            <button className="close-button" onClick={closeModal}>&times;</button>
+                        </div>
+                        
+                        <div className="precargado-box" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                            <div>
+                                <strong style={{ fontSize: '0.8rem', color: '#64748b', textTransform: 'uppercase' }}>Curso a evaluar</strong>
+                                <p style={{ margin: '2px 0 10px 0', fontWeight: 600 }}>{selectedSession.courseName}</p>
+                                <strong style={{ fontSize: '0.8rem', color: '#64748b', textTransform: 'uppercase' }}>Fecha</strong>
+                                <p style={{ margin: '2px 0 0 0', fontWeight: 600 }}>{selectedSession.Date}</p>
+                            </div>
+                            <div>
+                                <strong style={{ fontSize: '0.8rem', color: '#64748b', textTransform: 'uppercase' }}>Tema Principal</strong>
+                                <p style={{ margin: '2px 0 10px 0', fontWeight: 600 }}>{selectedSession.Topic}</p>
+                                <strong style={{ fontSize: '0.8rem', color: '#64748b', textTransform: 'uppercase' }}>Horario impartido</strong>
+                                <p style={{ margin: '2px 0 0 0', fontWeight: 600 }}>{selectedSession.StartTime} ({selectedSession.Duration} hrs)</p>
+                            </div>
+                        </div>
+
+                        <form onSubmit={handleCompletarSesion}>
+                            <div className="form-group">
+                                <label>Resumen de la Clase (Bitácora)</label>
+                                <textarea 
+                                    rows="3" 
+                                    value={bitacoraData.descripcion} 
+                                    onChange={(e) => setBitacoraData({...bitacoraData, descripcion: e.target.value})} 
+                                    placeholder="Describe qué actividades realizaron y cómo fue el avance general..." 
+                                    required 
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Planeación para la próxima sesión</label>
+                                <textarea 
+                                    rows="2" 
+                                    value={bitacoraData.planeacionSiguiente} 
+                                    onChange={(e) => setBitacoraData({...bitacoraData, planeacionSiguiente: e.target.value})} 
+                                    placeholder="¿Qué temas abordarán en la siguiente clase?" 
+                                    required 
+                                />
+                            </div>
+                            <div className="form-group" style={{ marginBottom: '25px' }}>
+                                <label>Captura de Evidencia</label>
+                                <div className="drag-drop-zone" onClick={() => document.getElementById('file-upload').click()}>
+                                    <input id="file-upload" type="file" accept="image/png, image/jpeg" onChange={handleFileChange} />
+                                    {selectedFile ? <p style={{ margin: 0, color: '#3b82f6', fontWeight: 600 }}>Archivo listo: {selectedFile.name}</p> : <p style={{ margin: 0, color: '#64748b' }}>Haz clic aquí para seleccionar tu captura de pantalla</p>}
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                <button type="submit" className="btn-sesion btn-bitacora" style={{ width: '100%', padding: '14px', fontSize: '1rem', border: 'none', justifyContent: 'center' }}>Cerrar Clase y Enviar a Revisión</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {activeModal === 'posponer' && selectedSession && (
+                <div className="modal-overlay" onClick={closeModal}>
+                    <div className="modal-content" style={{ maxWidth: '450px' }} onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3>Posponer Sesión</h3>
+                            <button className="close-button" onClick={closeModal}>&times;</button>
+                        </div>
+                        <form onSubmit={handlePosponer}>
+                            <div className="form-group">
+                                <label>Nueva Fecha</label>
+                                <input type="date" className="select-field" value={reagendarData.fecha} onChange={(e) => setReagendarData({...reagendarData, fecha: e.target.value})} required />
+                            </div>
+                            <div className="form-group">
+                                <label>Nueva Hora</label>
+                                <input type="time" className="select-field" value={reagendarData.hora} onChange={(e) => setReagendarData({...reagendarData, hora: e.target.value})} required />
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
+                                <button type="submit" className="btn-sesion btn-bitacora" style={{ border: 'none', padding: '10px 20px', width: '100%', justifyContent: 'center' }}>
+                                    Confirmar y Notificar Alumnos
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {activeModal === 'cancelar' && selectedSession && (
+                <div className="modal-overlay" onClick={closeModal}>
+                    <div className="modal-content" style={{ maxWidth: '400px', textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header" style={{ borderBottom: 'none', paddingBottom: '0', justifyContent: 'center' }}>
+                            <h3 style={{ color: '#ef4444' }}>Cancelar Sesión</h3>
+                        </div>
+                        <div style={{ margin: '20px 0' }}>
+                            <p style={{ color: '#475569', fontSize: '0.95rem', lineHeight: '1.5' }}>
+                                ¿Estás seguro de cancelar por completo la sesión de <strong>"{selectedSession.Topic}"</strong>?
+                                <br/><br/>
+                                Esta acción no se puede deshacer y se enviará una notificación automática a los alumnos.
+                            </p>
+                        </div>
+                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '25px' }}>
+                            <button type="button" onClick={closeModal} className="btn-sesion btn-sesion-link" style={{ flex: 1, justifyContent: 'center' }}>
+                                Volver
+                            </button>
+                            <button type="button" onClick={handleCancelar} className="btn-sesion btn-incidencia" style={{ flex: 1, justifyContent: 'center' }}>
+                                Confirmar Cancelación
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
-      </div>
     );
-  };
-
-  return (
-    <div className="sesiones-manager-container">
-      <div className="sesiones-manager-header">
-        <h2>Control de Sesiones</h2>
-        <p>Visualiza tus clases agendadas, llena las bitácoras pendientes y reporta inasistencias.</p>
-      </div>
-
-      {/* Grid ahora funciona como lista de filas */}
-      <div className="sesiones-grid">
-        {sesiones.map(renderSesionRow)}
-      </div>
-
-      {/* ================================================= */}
-      {/* MODAL DE BITÁCORA */}
-      {/* ================================================= */}
-      {activeModal === 'bitacora' && selectedSession && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h3>Bitácora de Sesión</h3>
-              <button className="close-button" onClick={closeModal}>&times;</button>
-            </div>
-            
-            <div className="precargado-box">
-                <p><strong>Alumno:</strong> {selectedSession.alumno}</p>
-                <p><strong>Fecha y Hora:</strong> {selectedSession.date} - {selectedSession.time}</p>
-                <p><strong>Duración:</strong> 1 Hora (Fija)</p>
-            </div>
-
-            <form onSubmit={handleBitacoraSubmit}>
-                <div className="form-group">
-                    <label>Tema Visto</label>
-                    <input type="text" value={bitacoraData.tema} onChange={(e) => setBitacoraData({...bitacoraData, tema: e.target.value})} placeholder="Ej. Modal Verbs" required />
-                </div>
-                <div className="form-group">
-                    <label>Descripción de la sesión (Observaciones)</label>
-                    <textarea value={bitacoraData.descripcion} onChange={(e) => setBitacoraData({...bitacoraData, descripcion: e.target.value})} placeholder="¿Cómo participó el alumno? ¿Hubo dudas?" rows="3" required></textarea>
-                </div>
-                <div className="form-group">
-                    <label>Planeación Siguiente Sesión</label>
-                    <textarea value={bitacoraData.planeacionSiguiente} onChange={(e) => setBitacoraData({...bitacoraData, planeacionSiguiente: e.target.value})} placeholder="¿Qué tema verán en la próxima clase?" rows="2" required></textarea>
-                </div>
-                
-                {/* Zona de Drag & Drop para subir imagen */}
-                <div className="form-group">
-                    <label>Evidencia de Clase (Imagen/Captura)</label>
-                    <div className="drag-drop-zone">
-                        <input type="file" accept="image/png, image/jpeg, image/jpg" onChange={handleFileChange} />
-                        <p>📄 Arrastra tu imagen aquí o haz clic para seleccionar</p>
-                        {selectedFile && <div className="file-name">✅ {selectedFile.name} listo para subir</div>}
-                    </div>
-                </div>
-
-                <div className="modal-actions">
-                    <button type="submit" className="btn-submit green">Guardar Bitácora (1hr)</button>
-                </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ================================================= */}
-      {/* MODAL DE INASISTENCIA */}
-      {/* ================================================= */}
-      {activeModal === 'inasistencia' && selectedSession && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h3>Reporte de Inasistencia</h3>
-              <button className="close-button" onClick={closeModal}>&times;</button>
-            </div>
-            
-            <div className="precargado-box">
-                <p><strong>Motivo:</strong> Inasistencia del Alumno</p>
-                <p><strong>Alumno Ausente:</strong> {selectedSession.alumno}</p>
-                <p><strong>Clase Programada:</strong> {selectedSession.date} a las {selectedSession.time}</p>
-            </div>
-
-            <form onSubmit={handleIncidenciaSubmit}>
-                <p style={{fontSize: '14px', marginBottom: '20px', color: '#4b5563'}}>
-                    Adjunta la evidencia (captura de pantalla) demostrando que tú estuviste presente en la videollamada esperando al alumno.
-                </p>
-                
-                {/* Zona de Drag & Drop para inasistencia */}
-                <div className="form-group">
-                    <div className="drag-drop-zone">
-                        <input type="file" accept="image/png, image/jpeg, image/jpg" onChange={handleFileChange} />
-                        <p>📸 Arrastra tu captura aquí o haz clic para buscar</p>
-                        {selectedFile && <div className="file-name">✅ {selectedFile.name} adjuntado</div>}
-                    </div>
-                </div>
-
-                <div className="modal-actions">
-                    <button type="submit" className="btn-submit red">Registrar Inasistencia</button>
-                </div>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
-  );
 }
