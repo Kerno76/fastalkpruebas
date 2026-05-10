@@ -386,7 +386,13 @@ router.get('/historial-sesiones/:tutorId', async (req, res) => {
             .from('Session')
             .select(`
                 *,
-                Courses ( Name )
+                Courses ( Name ),
+                SessionStudents (
+                    StudentID,
+                    Attendance,
+                    IncidentReport,
+                    UsersProfiles ( Name )
+                )
             `)
             .eq('TutorID', tutorId)
             .order('Date', { ascending: false })
@@ -406,7 +412,12 @@ router.get('/historial-sesiones/:tutorId', async (req, res) => {
             return false;
         }).map(s => ({
             ...s,
-            courseName: s.Courses?.Name || 'N/A'
+            courseName: s.Courses?.Name || 'N/A',
+            estudiantes: s.SessionStudents ? s.SessionStudents.map(st => ({
+                Name: st.UsersProfiles?.Name || 'Alumno',
+                Attendance: st.Attendance,
+                IncidentReport: st.IncidentReport
+            })) : []
         }));
 
         res.status(200).json({ success: true, sesiones: historial });
