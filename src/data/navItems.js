@@ -13,6 +13,7 @@ import tutor from '../assets/user.png'
 import sesiones_icon from '../assets/sesiones.png'
 import tarea_icon from '../assets/clipboard.png'
 import revisar_icon from '../assets/revisar.png'
+import evaluar_icon from '../assets/evaluacion.png'
 
 /* Profile Settings Items */
 import user from '../assets/user.png'
@@ -33,6 +34,7 @@ export const navItems = [
   { icon: tasks, label: "Asignar Tareas", path: "/tareas", roles: ['Tutor', 'Admin'], section: "Tutoría" },
   { icon: register_session, label: "Registro de Sesiones", path: "/registro", roles: ['Tutor', 'Admin'], section: "Tutoría" },
   { icon: session_history, label: "Historial de sesiones", path: "/historial", roles: ['Tutor', 'Admin'], section: "Tutoría" },
+  { icon: evaluar_icon, label: "Calificar Tareas", path: "/calificar", roles: ['Tutor'], section: "Tutoría" },
 
   // --- SECCIÓN ESTUDIANTE (También para Admin) ---
   { icon: dashboard, label: "Dashboard Estudiante", path: "/estudianteDash", roles: ['Student'], section: "Estudiante" },

@@ -93,6 +93,9 @@
   --revisor-infor-aprob: #2c3e50;
   --revisor-course-aprob: #8792a2;
   --revisor-topic-date: #555;
+
+  --task-meta: #64748b;
+  --task-title: #1e293b;
 }
 
 /* Tema oscuro */
@@ -173,6 +176,9 @@
   --revisor-infor-aprob: #ffffff;
   --revisor-course-aprob: #ffffff;
   --revisor-topic-date: #ffffff;
+
+  --task-meta: #ffffff;
+  --task-title: #ffffff;
 }
 
 body{

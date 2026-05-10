@@ -20,6 +20,7 @@ import LoginPage from "./pages/Login/LoginPage"
 import ProtectedRoute from "./components/ProtectedRoute"
 import PublicRoute from "./components/PublicRoute"
 import Cursos from "./pages/Organizador/Cursos"
+import CalificarTareas from "./pages/Tutor/CalificarTareas"
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom' 
 import { Toaster } from 'react-hot-toast';
 import "./styles/App.css"
@@ -62,6 +63,7 @@ function App() {
         <Route path="/tareas" element={<ProtectedRoute allowedRoles={['Tutor', 'Admin']}><AsignarTareas /></ProtectedRoute>} />
         <Route path="/mis-estudiantes" element={<ProtectedRoute allowedRoles={['Tutor', 'Admin']}><MisEstudiantes /></ProtectedRoute>} />
         <Route path="/repositorio" element={<ProtectedRoute allowedRoles={['Tutor', 'Admin']}><Repositorio /></ProtectedRoute>} />
+        <Route path="/calificar" element={<ProtectedRoute allowedRoles={['Tutor']}><CalificarTareas /></ProtectedRoute>} />
 
         {/* --- RUTAS DE ESTUDIANTE --- */}
         <Route path="/estudianteDash" element={<ProtectedRoute allowedRoles={['Student']}><EstudianteDashboard /></ProtectedRoute>} />

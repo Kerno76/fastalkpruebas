@@ -1,0 +1,309 @@
+/* Grid principal */
+.students-tasks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(calc(50% - 15px), 1fr));
+    gap: 30px;
+    margin-top: 20px;
+    align-items: start;
+}
+
+.student-task-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.tasks-container{
+    gap: 20px !important;
+}
+
+/* Estilos barra progreso */
+.students-text{
+    font-size: 0.95rem !important;
+}
+
+/* Avatar del estudiante*/
+.student-header-pill {
+    background-color: #92a4b394 !important; 
+    border-radius: 20px !important; 
+    padding: 12px 16px !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05) !important;
+    flex-wrap: wrap;
+    gap: 16px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.shp-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    flex: 1;
+}
+
+.shp-avatar {
+    width: 45px !important;
+    height: 45px !important;
+    background-color: #f1f5f9 !important;
+}
+
+.shp-name {
+    font-weight: 800 !important;
+    color: var(--text-main) !important;
+    font-size: 1.1rem !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.btn-shp-perfil {
+    background-color: #4b6478;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: 0.2s;
+
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.btn-shp-perfil:hover { 
+    background-color: #3b4f60; 
+}
+
+/* Etiquetas de la cabecera */
+.status-active-light {
+    background-color: #dcfce7;
+    color: #16a34a;
+    border: 1px solid #bbf7d0;
+    border-radius: 10px !important;
+    padding: 5px;
+}
+
+.tag-inglés { 
+    background-color: #fdbab5; 
+    color: #7f1d1d;
+    border-radius: 8px !important;
+    padding: 5px; 
+}
+
+.tag-francés { 
+    background-color: #fcd34d; 
+    color: #78350f; 
+    border-radius: 8px !important;
+    padding: 5px; 
+}
+
+/* Tarjetas de tareas */
+.tasks-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-left: 15px;
+}
+
+.task-card {
+    background-color: var(--student-card) !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 24px !important;
+    padding: 12px 18px !important;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
+    flex-wrap: wrap;
+    color: var(--text-main) !important;
+}
+
+.task-card-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex: 1 1 60%;
+    min-width: 200px;
+}
+
+/* Botones de tarea */
+.task-card-right {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    margin-left: auto;
+}
+
+.task-icon-wrapper {
+    background-color: #f1f5f9;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.task-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.task-title {
+    font-weight: 800 !important;
+    color: var(--task-title) !important;
+    font-size: 0.95rem !important;
+}
+
+.task-meta {
+    font-size: 0.95rem;
+    color: var(--task-meta) !important;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.meta-divider { 
+    color: #cbd5e1; 
+}
+
+.late-tag { 
+    color: #ef4444; 
+    font-weight: 700; 
+}
+
+.task-grade { 
+    font-weight: 800; 
+    color: #334155; 
+    margin-left: 5px; 
+}
+
+/* Status de la tarea */
+.task-status-pill {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 800;
+    white-space: nowrap !important;
+    display: inline-block;
+}
+
+.status-warning { 
+    background-color: #fef08a; 
+    color: #854d0e; 
+}
+
+.status-success { 
+    background-color: #10b981; 
+    color: white; 
+}
+
+/* Responsividad */
+@media (max-width: 1200px) {
+    .students-tasks-grid {
+        grid-template-columns: 1fr; 
+    }
+    
+    .student-header-pill {
+        border-radius: 25px !important; 
+        flex-direction: column; 
+        justify-content: center;
+        text-align: center;
+        padding: 15px !important;
+    }
+    
+    .shp-left {
+        justify-content: center;
+        text-align: center;
+    }
+
+    .btn-shp-perfil {
+        width: auto;
+        margin: 0 auto;
+    }
+}
+
+.btn-task-action {
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    border: none;
+    transition: 0.2s;
+    white-space: nowrap;
+}
+
+.btn-main { 
+    background-color: #3b4f60; 
+    color: white; 
+}
+
+.btn-main:hover { 
+    background-color: #2a3b49; 
+}
+
+.btn-secondary { 
+    background-color: #68899D; 
+    color: white; 
+    border-radius: 40px !important;
+}
+
+.btn-secondary:hover { 
+    background-color: #567283; 
+}
+
+/* Tarjeta Fantasma (para asignar tareas nuevas) */
+.ghost-task-card {
+    border: 2px dashed #92a4b3;
+    border-radius: 20px;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    color: #4b6478;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.2s;
+    background-color: transparent;
+}
+
+.ghost-task-card:hover {
+    background-color: rgba(146, 164, 179, 0.1);
+}
+
+/* Estilos icono de cerrado en el modal de estudiante */
+.close-button {
+    background-color: #ef4444 !important; 
+    color: white !important; /* Hace que el ícono sea blanco */
+    position: absolute !important; 
+    top: 16px;
+    right: 16px;    
+    width: 45px !important;
+    height: 45px !important;
+    
+    /* Transición para el hover */
+    transition: all 0.2s ease-in-out !important;
+    box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3) !important;
+
+    /* Poner el boton encima de ambos divs */
+    z-index: 1000 !important;
+}
+
+.close-button:hover {
+    background-color: #dc2626 !important;
+    transform: scale(1.1); /* Se hace un 10% más grande */
+}
+
+.close-button svg {
+    font-size: 28px !important; 
+}
