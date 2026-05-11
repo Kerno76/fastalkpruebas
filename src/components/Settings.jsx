@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import "../styles/Config.css"
@@ -49,7 +49,6 @@ export function ProfileEditor() {
                 const updatedUser = { ...user, AvatarUrl: data.url };
                 localStorage.setItem('user', JSON.stringify(updatedUser));
                 
-                // Forzamos a que el preview tome la URL real de Supabase
                 setAvatarPreview(data.url);
             } else {
                 toast.error('Error al guardar en BD', { id: loadingToast });
@@ -235,20 +234,41 @@ export function Preferences({ darkMode, toggleTheme }) {
 }
 
 export function Notifications() {
+  const [prefs, setPrefs] = useState(() => {
+    const saved = localStorage.getItem('notifPrefs');
+    return saved ? JSON.parse(saved) : {
+      sesiones: true,
+      tareas: true,
+      alertas: true
+    };
+  });
+
+  const handleToggle = (key) => {
+    const newPrefs = { ...prefs, [key]: !prefs[key] };
+    setPrefs(newPrefs);
+    localStorage.setItem('notifPrefs', JSON.stringify(newPrefs));
+    toast.success("Preferencias actualizadas correctamente");
+  };
+
   return (
     <div className="settingsThings">
       <h3 className="settings-header">Notificaciones</h3>
-      <p className="settings-desc">Controla los avisos que recibes en la plataforma y por correo</p>
+      <p className="settings-desc">Controla qué tipo de avisos deseas recibir en tu panel de actividad.</p>
 
       <div className="settings-toggles-container">
         
         <div className="settings-row border-bottom">
           <div className="settings-label-group">
-            <label htmlFor="session-toggle" className="settings-label-title">Avisos de Sesiones</label>
-            <span className="settings-label-desc">Recibe un correo cuando se publique el link de una nueva clase.</span>
+            <label htmlFor="session-toggle" className="settings-label-title">Agendado de Sesiones</label>
+            <span className="settings-label-desc">Avisos cuando se programe una clase nueva o se actualicen los enlaces de reunión.</span>
           </div>
           <label className="rocker rocker-small">
-              <input id="session-toggle" type="checkbox" defaultChecked />
+              <input 
+                id="session-toggle" 
+                type="checkbox" 
+                checked={prefs.sesiones}
+                onChange={() => handleToggle('sesiones')} 
+              />
               <span className="switch-left">ON</span>
               <span className="switch-right">OFF</span>
           </label>
@@ -256,11 +276,16 @@ export function Notifications() {
 
         <div className="settings-row border-bottom">
           <div className="settings-label-group">
-            <label htmlFor="task-toggle" className="settings-label-title">Gestión de Tareas</label>
-            <span className="settings-label-desc">Notificaciones sobre nuevo material, tareas y calificaciones.</span>
+            <label htmlFor="task-toggle" className="settings-label-title">Centro de Tareas</label>
+            <span className="settings-label-desc">Notificaciones sobre nuevas asignaciones, entregas realizadas y calificaciones del tutor.</span>
           </div>
           <label className="rocker rocker-small">
-              <input id="task-toggle" type="checkbox" defaultChecked />
+              <input 
+                id="task-toggle" 
+                type="checkbox" 
+                checked={prefs.tareas}
+                onChange={() => handleToggle('tareas')} 
+              />
               <span className="switch-left">ON</span>
               <span className="switch-right">OFF</span>
           </label>
@@ -268,11 +293,16 @@ export function Notifications() {
 
         <div className="settings-row">
           <div className="settings-label-group">
-            <label htmlFor="feedback-toggle" className="settings-label-title">Retroalimentación</label>
-            <span className="settings-label-desc">Avisos de la Organización sobre bitácoras.</span>
+            <label htmlFor="feedback-toggle" className="settings-label-title">Reportes e Incidencias</label>
+            <span className="settings-label-desc">Avisos importantes sobre reportes de sesión, ausencias o revisiones administrativas.</span>
           </div>
           <label className="rocker rocker-small">
-              <input id="feedback-toggle" type="checkbox" defaultChecked />
+              <input 
+                id="feedback-toggle" 
+                type="checkbox" 
+                checked={prefs.alertas}
+                onChange={() => handleToggle('alertas')} 
+              />
               <span className="switch-left">ON</span>
               <span className="switch-right">OFF</span>
           </label>

@@ -563,4 +563,255 @@ router.put('/cancelar-sesion', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, message: error.message }); }
 });
 
+
+router.post('/asignar-tarea', async (req, res) => {
+    const { TutorID, StudentIDs, CourseID, Title, Description, Deadline, HelpMaterialLink, fileBase64, fileName, fileType } = req.body;
+
+    try {
+        let fileUrl = null;
+        if (fileBase64) {
+            const buffer = Buffer.from(fileBase64.split(',')[1], 'base64');
+            const cleanFileName = fileName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9.\-_]/g, "");
+            const uniqueName = `material_${Date.now()}_${cleanFileName}`;
+            
+            await supabaseAdmin.storage.from('material-tareas-tutor').upload(`public/${uniqueName}`, buffer, { contentType: fileType });
+            const { data: urlData } = supabaseAdmin.storage.from('material-tareas-tutor').getPublicUrl(`public/${uniqueName}`);
+            fileUrl = urlData.publicUrl;
+        }
+
+        const assignmentsPayload = StudentIDs.map(studentId => ({
+            TutorID, StudentID: studentId, CourseID, Title, Description, 
+            Deadline, HelpMaterialLink, HelpMaterialFile: fileUrl, Status: 'Pending'
+        }));
+
+        const { data: insertedAssignments, error: assignErr } = await supabaseAdmin
+            .from('Assignments').insert(assignmentsPayload).select('AssignmentID, StudentID');
+        if (assignErr) throw assignErr;
+
+        const notificationsPayload = insertedAssignments.map(assignment => ({
+            ReceiverID: assignment.StudentID, SenderID: TutorID, Type: 'AsignacionCurso', 
+            Title: 'Nueva Tarea Asignada', Message: `Tu tutor ha publicado una nueva tarea: "${Title}". Revisa la fecha limite.`,
+            RelatedEntityID: assignment.AssignmentID
+        }));
+        await supabaseAdmin.from('Notifications').insert(notificationsPayload);
+
+        res.status(200).json({ success: true });
+    } catch (error) { res.status(500).json({ success: false, message: error.message }); }
+});
+
+
+router.get('/tareas-calificar/:tutorId', async (req, res) => {
+    const { tutorId } = req.params;
+    try {
+        const { data: allAssignments, error } = await supabaseAdmin
+            .from('Assignments')
+            .select(`*, Courses ( Name, Level )`)
+            .eq('TutorID', tutorId)
+            .order('Deadline', { ascending: false });
+
+        if (error) throw error;
+
+        // Filtro seguro en Javascript
+        const assignments = allAssignments.filter(a => a.Status?.toLowerCase() !== 'canceled');
+
+        const studentIds = [...new Set(assignments.map(a => a.StudentID).filter(Boolean))];
+        let profiles = [];
+        
+        if (studentIds.length > 0) {
+            const { data: profData, error: profErr } = await supabaseAdmin
+                .from('UsersProfiles')
+                .select('ID, Name, Email')
+                .in('ID', studentIds);
+            if (!profErr) profiles = profData;
+        }
+
+        const porEstudiante = assignments.reduce((acc, task) => {
+            const statusNormal = task.Status?.toLowerCase();
+            if (statusNormal === 'pending') return acc; 
+
+            const studentId = task.StudentID;
+            const studentProfile = profiles.find(p => p.ID === studentId);
+
+            if (!acc[studentId]) {
+                acc[studentId] = {
+                    id: studentId, 
+                    name: studentProfile?.Name || 'Alumno',
+                    course: `${task.Courses?.Name || ''} ${task.Courses?.Level || ''}`.trim(), 
+                    tasks: []
+                };
+            }
+
+            let statusText = 'Pendiente por Calificar';
+            if (statusNormal === 'graded') statusText = 'Calificada';
+
+            acc[studentId].tasks.push({
+                id: task.AssignmentID, 
+                title: task.Title, 
+                description: task.Description,
+                date: task.Deadline, 
+                status: statusText, 
+                grade: task.Grade ? `${task.Grade}/100` : null,
+                archivoAlumno: task.StudentFile, 
+                urlAlumno: task.StudentUrl
+            });
+            return acc;
+        }, {});
+
+        const porTarea = assignments.reduce((acc, task) => {
+            const key = `${task.CourseID}_${task.Title}`;
+            if (!acc[key]) {
+                acc[key] = {
+                    CourseID: task.CourseID,
+                    CourseName: task.Courses?.Name || 'Curso', 
+                    Title: task.Title, 
+                    Description: task.Description,
+                    Deadline: task.Deadline, 
+                    HelpMaterialFile: task.HelpMaterialFile, 
+                    HelpMaterialLink: task.HelpMaterialLink, 
+                    AssignmentIDs: [], 
+                    StudentIDs: []
+                };
+            }
+            acc[key].AssignmentIDs.push(task.AssignmentID);
+            acc[key].StudentIDs.push(task.StudentID);
+            return acc;
+        }, {});
+
+        res.status(200).json({ success: true, estudiantes: Object.values(porEstudiante), publicadas: Object.values(porTarea) });
+    } catch (error) { 
+        console.error("Error en GET /tareas-calificar (Tutor):", error.message);
+        res.status(500).json({ success: false, message: error.message }); 
+    }
+});
+
+router.put('/actualizar-deadline', async (req, res) => {
+    const { AssignmentIDs, NewDeadline, Title, TutorID, StudentIDs } = req.body;
+    try {
+        await supabaseAdmin.from('Assignments').update({ Deadline: NewDeadline }).in('AssignmentID', AssignmentIDs);
+
+        const notificaciones = StudentIDs.map(sid => ({
+            ReceiverID: sid, SenderID: TutorID, Type: 'AsignacionCurso',
+            Title: 'Fecha limite actualizada', Message: `Se ha modificado la fecha limite de la tarea "${Title}". Revisa el nuevo plazo.`,
+            RelatedEntityID: null 
+        }));
+        await supabaseAdmin.from('Notifications').insert(notificaciones);
+
+        res.status(200).json({ success: true });
+    } catch (error) { res.status(500).json({ success: false, message: error.message }); }
+});
+
+
+router.put('/cancelar-tarea', async (req, res) => {
+    const { AssignmentIDs, Title, TutorID, StudentIDs } = req.body;
+    try {
+        await supabaseAdmin.from('Assignments').update({ Status: 'Canceled' }).in('AssignmentID', AssignmentIDs);
+
+        const notificaciones = StudentIDs.map(sid => ({
+            ReceiverID: sid, SenderID: TutorID, Type: 'AsignacionCurso',
+            Title: 'Tarea Cancelada', Message: `Tu tutor ha cancelado la tarea "${Title}". Ya no es necesario entregarla.`,
+            RelatedEntityID: null 
+        }));
+        await supabaseAdmin.from('Notifications').insert(notificaciones);
+
+        res.status(200).json({ success: true });
+    } catch (error) { res.status(500).json({ success: false, message: error.message }); }
+});
+
+
+router.put('/calificar-tarea', async (req, res) => {
+    const { AssignmentID, Grade, Feedback, AllowResubmit, StudentID, TutorID, Title } = req.body;
+    
+    try {
+        const { error } = await supabaseAdmin
+            .from('Assignments')
+            .update({ 
+                Grade, 
+                Feedback, 
+                AllowResubmit, 
+                Status: 'Graded' 
+            })
+            .eq('AssignmentID', AssignmentID);
+
+        if (error) throw error;
+
+        let mensajeNotif = `Tu tutor ha calificado tu entrega de "${Title}" con ${Grade}/100.`;
+        if (AllowResubmit) {
+            mensajeNotif += " Además, te ha dado la oportunidad de hacer correcciones y volver a entregarla.";
+        }
+
+        await supabaseAdmin.from('Notifications').insert([{
+            ReceiverID: StudentID,
+            SenderID: TutorID,
+            Type: 'AsignacionCurso', 
+            Title: '¡Tarea Calificada!',
+            Message: mensajeNotif,
+            RelatedEntityID: AssignmentID
+        }]);
+
+        res.status(200).json({ success: true });
+    } catch (error) {
+        console.error("Error al calificar tarea:", error.message);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.put('/editar-tarea-completa', async (req, res) => {
+    const { AssignmentIDs, CurrentStudentIDs, NewStudentIDs, CourseID, TutorID, Title, Description, Deadline, HelpMaterialLink, fileBase64, fileName, fileType, existingFileUrl, removeExistingFile } = req.body;
+
+    try {
+        let fileUrl = removeExistingFile ? null : (existingFileUrl || null);
+        
+        if (fileBase64) {
+            const buffer = Buffer.from(fileBase64.split(',')[1], 'base64');
+            const cleanFileName = fileName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9.\-_]/g, "");
+            const uniqueName = `material_${Date.now()}_${cleanFileName}`;
+            await supabaseAdmin.storage.from('material-tareas-tutor').upload(`public/${uniqueName}`, buffer, { contentType: fileType });
+            const { data: urlData } = supabaseAdmin.storage.from('material-tareas-tutor').getPublicUrl(`public/${uniqueName}`);
+            fileUrl = urlData.publicUrl; 
+        }
+
+        await supabaseAdmin.from('Assignments')
+            .update({ Title, Description, Deadline, HelpMaterialLink, HelpMaterialFile: fileUrl })
+            .in('AssignmentID', AssignmentIDs);
+
+        const studentsToAdd = NewStudentIDs.filter(id => !CurrentStudentIDs.includes(id));
+        const studentsToRemove = CurrentStudentIDs.filter(id => !NewStudentIDs.includes(id));
+
+        if (studentsToRemove.length > 0) {
+            const idsToCancel = AssignmentIDs.filter((_, idx) => studentsToRemove.includes(CurrentStudentIDs[idx]));
+            if (idsToCancel.length > 0) {
+                await supabaseAdmin.from('Assignments').update({ Status: 'Canceled' }).in('AssignmentID', idsToCancel);
+            }
+        }
+
+        if (studentsToAdd.length > 0) {
+            const newAssignments = studentsToAdd.map(studentId => ({
+                TutorID, StudentID: studentId, CourseID, Title, Description,
+                Deadline, HelpMaterialLink, HelpMaterialFile: fileUrl, Status: 'Pending'
+            }));
+            const { data: newInserts } = await supabaseAdmin.from('Assignments').insert(newAssignments).select('AssignmentID, StudentID');
+            
+            if(newInserts) {
+                const notifs = newInserts.map(a => ({
+                    ReceiverID: a.StudentID, SenderID: TutorID, Type: 'AsignacionCurso', 
+                    Title: 'Nueva Tarea Asignada', Message: `Se te ha asignado la tarea: "${Title}".`, RelatedEntityID: a.AssignmentID
+                }));
+                await supabaseAdmin.from('Notifications').insert(notifs);
+            }
+        }
+
+        const studentsToNotifyUpdate = CurrentStudentIDs.filter(id => !studentsToRemove.includes(id));
+        if(studentsToNotifyUpdate.length > 0) {
+            const updateNotifs = studentsToNotifyUpdate.map(sid => ({
+                ReceiverID: sid, SenderID: TutorID, Type: 'AsignacionCurso',
+                Title: 'Actualizacion de Tarea', Message: `El tutor ha modificado detalles o material de la tarea "${Title}".`, RelatedEntityID: null
+            }));
+            await supabaseAdmin.from('Notifications').insert(updateNotifs);
+        }
+
+        res.status(200).json({ success: true });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
 module.exports = router;

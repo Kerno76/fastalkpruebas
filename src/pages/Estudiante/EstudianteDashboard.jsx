@@ -1,25 +1,17 @@
 import { useState, useEffect } from 'react';
-import { studentStats } from "../../data/dataEstudiantes.js";
-import { Box, Typography, Avatar, Paper, Dialog, IconButton, Button } from '@mui/material';
+import { Box, Typography, Avatar, Paper, Dialog, IconButton } from '@mui/material';
 
 import LanguageIcon from '@mui/icons-material/Language'; 
-import MovingIcon from '@mui/icons-material/Moving'; 
 import PersonIcon from '@mui/icons-material/Person'; 
 import InsertInvitationIcon from '@mui/icons-material/InsertInvitation'; 
 import AccountCircleIcon from '@mui/icons-material/AccountCircle'; 
 import EventAvailableIcon from '@mui/icons-material/EventAvailable'; 
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import CloseIcon from '@mui/icons-material/Close';
+import AssignmentIcon from '@mui/icons-material/Assignment'; 
 
 import '../../styles/Estudiante/EstudianteDashboard.css';
 import '../../styles/App.css';
-
-const iconMap = {
-  nivel_actual: <LanguageIcon />,
-  sesions_progress: <MovingIcon />,
-  my_tutor: <PersonIcon />,
-  next_sesion: <InsertInvitationIcon />
-};
 
 const getNotifStyle = (type) => {
     switch(type) {
@@ -34,6 +26,14 @@ export default function EstudianteDashboard() {
 
   const [notificaciones, setNotificaciones] = useState([]);
   const [proximaSesion, setProximaSesion] = useState(null);
+  
+  const [summaryData, setSummaryData] = useState({
+      language: 'Cargando...',
+      level: '...',
+      courseName: '...',
+      tutor: { name: 'Cargando...', career: '...' },
+      pendingTasks: 0
+  });
 
   const [openNotifModal, setOpenNotifModal] = useState(false);
   const [selectedNotif, setSelectedNotif] = useState(null);
@@ -45,9 +45,13 @@ export default function EstudianteDashboard() {
           .then(res => res.json())
           .then(result => { if (result.success) setNotificaciones(result.notificaciones); });
 
-      fetch(`http://localhost:8000/api/tutor/estudiante/proxima-sesion/${studentId}`) 
+      fetch(`http://localhost:8000/api/student/estudiante/proxima-sesion/${studentId}`) 
           .then(res => res.json())
           .then(result => { if (result.success) setProximaSesion(result.proximaSesion); });
+
+      fetch(`http://localhost:8000/api/student/dashboard-summary/${studentId}`)
+          .then(res => res.json())
+          .then(result => { if (result.success) setSummaryData(result.summary); });
 
   }, [studentId]);
 
@@ -65,79 +69,84 @@ export default function EstudianteDashboard() {
 
   return (
     <div className="mainContent">
-      <h2 className="dashboard-title">¡Hola, {user?.Name?.split(' ')[0] || 'Estudiante'}! ¿Listo para tu sesión de hoy?</h2>
-      <p className="dashboard-subtitle">Bienvenido de vuelta. Aquí está un resumen de tu inscripción.</p>
+      <h2 className="dashboard-title">¡Hola, {user?.Name?.split(' ')[0] || 'Estudiante'}! ¿Listo para aprender hoy?</h2>
+      <p className="dashboard-subtitle">Bienvenido de vuelta. Aquí está un resumen de tu inscripción y actividades.</p>
 
       <div className="dashboard-cards-grid">
-        {studentStats.map((stat) => (
-          <div key={stat.id} className="dash-card">
-            <div className="dash-card-header">
-              <h1>{stat.title}</h1>
-              <span className="iconCard">{iconMap[stat.icon]}</span>
+        
+        <div className="dash-card">
+          <div className="dash-card-header">
+            <h1>Nivel actual</h1>
+            <span className="iconCard"><LanguageIcon /></span>
+          </div>
+          <div className="dash-card-body">
+            <div className="language-display">
+                <h2 className="lang-main-title">{summaryData.language}</h2>
+                <p className="lang-level-tag">{summaryData.level}</p>
+                <p className="lang-description" style={{ marginTop: '10px', color: '#64748b' }}>Curso: {summaryData.courseName}</p>
             </div>
+          </div>
+        </div>
 
-            <div className="dash-card-body">
-              {stat.type === 'language' && (
-                <div className="language-display">
-                    <h2 className="lang-main-title">{stat.language}</h2>
-                    <p className="lang-level-tag">{stat.level}</p>
-                    <p className="lang-description">{stat.note}</p>
-                </div>
-              )}
+        <div className="dash-card">
+          <div className="dash-card-header">
+            <h1>Tareas Pendientes</h1>
+            <span className="iconCard"><AssignmentIcon /></span>
+          </div>
+          <div className="dash-card-body" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px 0' }}>
+            <Typography style={{ fontSize: '3.5rem', fontWeight: 'bold', color: summaryData.pendingTasks > 0 ? '#ef4444' : '#10b981', lineHeight: 1 }}>
+                {summaryData.pendingTasks}
+            </Typography>
+            <Typography style={{ color: '#64748b', marginTop: '10px', fontWeight: 600 }}>
+                {summaryData.pendingTasks === 1 ? 'Asignación por entregar' : 'Asignaciones por entregar'}
+            </Typography>
+          </div>
+        </div>
 
-              {stat.type === 'progress' && (
-                <div className="progress-container-student">
-                  <svg className="progress-circle-student" width="120" height="120">
-                    <circle cx="60" cy="60" r="50" className="circle-bg-student" />
-                    <circle cx="60" cy="60" r="50" className="circle-progress-student" style={{ strokeDasharray: 314, strokeDashoffset: 314 - (stat.current / stat.total) * 314 }} />
-                  </svg>
-                  <div className="progress-text-student">
-                    <span className="progress-current-student">{stat.current}</span>
-                    <span className="progress-total-student">/ {stat.total}</span>
-                  </div>
-                </div>
-              )}
-
-              {stat.type === 'tutor' && (
-                <div className="tutor-row-layout">
-                    <Avatar className="student-avatar">
-                        <AccountCircleIcon style={{ fontSize: '60px', color: '#697386' }} />
-                    </Avatar>
-                    <div className="tutor-col-info">
-                        <h3 className="tutor-name-text">{stat.name}</h3>
-                        <div className="tutor-meta-item">
-                            <span className="tutor-meta-label">Carrera</span>
-                            <span className="tutor-meta-value">{stat.career}</span>
-                        </div>
-                        <div className="tutor-meta-item">
-                            <span className="tutor-meta-label">Especialidad</span>
-                            <span className="tutor-meta-value">Inglés Académico</span>
-                        </div>
+        <div className="dash-card">
+          <div className="dash-card-header">
+            <h1>Mi tutor</h1>
+            <span className="iconCard"><PersonIcon /></span>
+          </div>
+          <div className="dash-card-body">
+            <div className="tutor-row-layout">
+                <Avatar className="student-avatar">
+                    <AccountCircleIcon style={{ fontSize: '60px', color: '#697386' }} />
+                </Avatar>
+                <div className="tutor-col-info">
+                    <h3 className="tutor-name-text">{summaryData.tutor.name}</h3>
+                    <div className="tutor-meta-item">
+                        <span className="tutor-meta-label">Carrera</span>
+                        <span className="tutor-meta-value">{summaryData.tutor.career}</span>
                     </div>
                 </div>
-              )}
+            </div>
+          </div>
+        </div>
 
-              {stat.type === 'action' && (
-                <div className="session-details">
-                  {proximaSesion ? (
-                      <>
-                        <p className="session-date" style={{ fontWeight: 'bold' }}>{proximaSesion.Date} a las {proximaSesion.StartTime}</p>
-                        <p className="session-topic">{proximaSesion.Topic}</p>
-                        <button className="start-session-btn" onClick={() => window.open(proximaSesion.Url, '_blank')}>Unirse a Sesión</button>
-                      </>
-                  ) : (
-                      <>
-                        <p className="session-topic" style={{ color: '#94a3b8' }}>No tienes sesiones agendadas</p>
-                        <button className="start-session-btn" disabled style={{ backgroundColor: '#e2e8f0', color: '#94a3b8', cursor: 'not-allowed' }}>Unirse a Sesión</button>
-                      </>
-                  )}
-                </div>
+        <div className="dash-card">
+          <div className="dash-card-header">
+            <h1>Siguiente sesión</h1>
+            <span className="iconCard"><InsertInvitationIcon /></span>
+          </div>
+          <div className="dash-card-body">
+            <div className="session-details">
+              {proximaSesion ? (
+                  <>
+                    <p className="session-date" style={{ fontWeight: 'bold' }}>{proximaSesion.Date} a las {proximaSesion.StartTime}</p>
+                    <p className="session-topic">{proximaSesion.Topic}</p>
+                    <button className="start-session-btn" onClick={() => window.open(proximaSesion.Url, '_blank')}>Unirse a Sesión</button>
+                  </>
+              ) : (
+                  <>
+                    <p className="session-topic" style={{ color: '#94a3b8' }}>No tienes sesiones agendadas para hoy.</p>
+                    <button className="start-session-btn" disabled style={{ backgroundColor: '#e2e8f0', color: '#94a3b8', cursor: 'not-allowed' }}>Unirse a Sesión</button>
+                  </>
               )}
             </div>
-            
-            {stat.footer && <p className="card-footer-text">{stat.footer}</p>}
           </div>
-        ))}
+        </div>
+
       </div>
 
       <div className="bottomSection-student" style={{ marginTop: '30px' }}>
@@ -149,6 +158,7 @@ export default function EstudianteDashboard() {
                   const style = getNotifStyle(item.Type);
                   const localDate = new Date(item.CreatedAt.replace(' ', 'T') + 'Z');
                   const timeString = localDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                  const dateString = localDate.toLocaleDateString([], { day: '2-digit', month: '2-digit', year: 'numeric' });
 
                   return (
                       <Paper key={item.NotificationID} className={`activity-card ${!item.IsRead ? 'unread' : ''}`} elevation={0} onClick={() => handleOpenNotification(item)}>
@@ -159,7 +169,10 @@ export default function EstudianteDashboard() {
                               <Typography className="activity-title">{item.Title}</Typography>
                               <Typography className="activity-desc">{item.Message}</Typography>
                           </Box>
-                          <Typography className="activity-time">{timeString}</Typography>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                              <Typography className="activity-time" style={{ fontWeight: 600 }}>{timeString}</Typography>
+                              <Typography style={{ fontSize: '0.75rem', color: '#64748b' }}>{dateString}</Typography>
+                          </div>
                           {!item.IsRead && <div className="unread-dot"></div>}
                       </Paper>
                   );
@@ -180,9 +193,7 @@ export default function EstudianteDashboard() {
                       </Avatar>
                       <Typography variant="h6" style={{ fontWeight: 800, color: '#1e293b', lineHeight: 1.2 }}>{selectedNotif.Title}</Typography>
                   </div>
-                  
                   <span className="notif-modal-date">{new Date(selectedNotif.CreatedAt.replace(' ', 'T') + 'Z').toLocaleString()}</span>
-                  
                   <Typography variant="body1" style={{ color: '#475569', lineHeight: 1.6, marginBottom: '25px', backgroundColor: '#f8fafc', padding: '15px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
                       {selectedNotif.Message}
                   </Typography>

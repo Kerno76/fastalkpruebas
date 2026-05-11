@@ -1,3 +1,4 @@
+import { useEffect } from 'react'; 
 import Sidebar from "./components/Sidebar"
 import Dashboard from "./pages/Organizador/Dashboard"
 import Settings from "./pages/Config"
@@ -28,6 +29,15 @@ import "./styles/App.css"
 function App() {
   const location = useLocation();
   const isLoginPage = location.pathname === '/login';
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme === "dark") {
+      document.body.classList.add("dark");
+    } else {
+      document.body.classList.remove("dark");
+    }
+  }, []);
 
   return (
     <div className={isLoginPage ? "" : "dashboard"}>
@@ -77,7 +87,6 @@ function App() {
         {/* --- RUTAS COMPARTIDAS --- */}
         <Route path="/settings" element={<ProtectedRoute allowedRoles={['Admin', 'Tutor', 'Student', 'Reviewer']}><Settings/></ProtectedRoute>} />
 
-        {/* --- CATCH ALL (Cualquier URL incorrecta manda al login) --- */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </div>
