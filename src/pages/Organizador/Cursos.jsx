@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Typography, Button, IconButton, Paper, Dialog, Select, MenuItem, FormControl, Box, Chip, OutlinedInput, Checkbox, ListItemText, Divider, Avatar, List, ListItem, ListItemAvatar, ListItemText as MuiListItemText } from '@mui/material';
+import { Typography, Button, IconButton, Paper, Dialog, Select, MenuItem, FormControl, Box, Chip, OutlinedInput, Checkbox, ListItemText, Divider, Avatar, List, ListItem, ListItemAvatar, ListItemText as MuiListItemText, TextField, InputAdornment } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
-import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import CloseIcon from '@mui/icons-material/Close';
-import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1';
 import GroupsIcon from '@mui/icons-material/Groups';
 import EventIcon from '@mui/icons-material/Event';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import SearchIcon from '@mui/icons-material/Search'; 
 import toast from 'react-hot-toast';
 import ModalCursos from '../../components/Modals/ModalCursos';
 
@@ -35,6 +34,7 @@ export default function ControlCursos() {
     const [alumnosNuevos, setAlumnosNuevos] = useState([]);
 
     const [filtros, setFiltros] = useState({ anio: 'Todos', idioma: 'Todos', nivel: 'Todos', estado: 'Todos' });
+    const [searchTerm, setSearchTerm] = useState(''); 
 
     const fetchCursos = async () => {
         try {
@@ -112,9 +112,17 @@ export default function ControlCursos() {
                 return status === filtros.estado;
             });
         }
+
+        if (searchTerm.trim() !== '') {
+            const busqueda = searchTerm.toLowerCase();
+            filtrados = filtrados.filter(c => 
+                c.Name?.toLowerCase().includes(busqueda) || 
+                c.tutorName?.toLowerCase().includes(busqueda)
+            );
+        }
         
         setTimelineData(formatData(filtrados));
-    }, [filtros, rawCursos]);
+    }, [filtros, rawCursos, searchTerm]); 
 
     const handleFilterChange = (e) => setFiltros({ ...filtros, [e.target.name]: e.target.value });
 
@@ -231,12 +239,29 @@ export default function ControlCursos() {
 
             <hr className="divisor"/>
 
-            <div className="filters-container">
+            <div className="filters-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', alignItems: 'center' }}>
+                
+                <TextField 
+                    placeholder="Buscar por curso o tutor..."
+                    variant="outlined"
+                    size="small"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    InputProps={{
+                        startAdornment: (
+                            <InputAdornment position="start">
+                                <SearchIcon style={{ color: '#64748b' }} />
+                            </InputAdornment>
+                        ),
+                        style: { borderRadius: '10px', backgroundColor: '#fff', minWidth: '280px' }
+                    }}
+                />
+
                 {['anio', 'idioma', 'nivel', 'estado'].map((f) => (
                     <div key={f} style={{ display: 'flex', alignItems: 'center' }}>
-                        <span className="filter-label">{f.charAt(0).toUpperCase() + f.slice(1)}:</span>
+                        <span className="filter-label" style={{ marginRight: '8px' }}>{f.charAt(0).toUpperCase() + f.slice(1)}:</span>
                         <FormControl size="small" style={{ minWidth: 100 }}>
-                            <Select name={f} value={filtros[f]} onChange={handleFilterChange} sx={{ borderRadius: '10px' }}>
+                            <Select name={f} value={filtros[f]} onChange={handleFilterChange} sx={{ borderRadius: '10px', backgroundColor: '#fff' }}>
                                 <MenuItem value="Todos">Todos</MenuItem>
                                 {f === 'anio' && aniosDisponibles.map(a => <MenuItem key={a} value={a}>{a}</MenuItem>)}
                                 {f === 'idioma' && ['INGLÉS', 'FRANCÉS'].map(i => <MenuItem key={i} value={i}>{i.charAt(0) + i.slice(1).toLowerCase()}</MenuItem>)}
@@ -251,7 +276,7 @@ export default function ControlCursos() {
             <div className="cursos-timeline">
                 {timelineData.length === 0 ? (
                     <Typography variant="body1" color="textSecondary" align="center" style={{ marginTop: '40px' }}>
-                        No se encontraron cursos con los filtros seleccionados o faltan datos.
+                        No se encontraron cursos con los filtros o búsqueda seleccionada.
                     </Typography>
                 ) : (
                     timelineData.map((yearBlock) => (

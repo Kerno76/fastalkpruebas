@@ -5,6 +5,16 @@ const { supabaseAdmin } = require('../config/supabase');
 router.get('/notificaciones/:userId', async (req, res) => {
     const { userId } = req.params;
     try {
+        const { data: perfil, error: perfilError } = await supabaseAdmin
+            .from('UsersProfiles')
+            .select('ID')
+            .eq('ID', userId)
+            .single(); 
+
+        if (perfilError || !perfil) {
+            return res.status(404).json({ success: false, message: "Usuario no encontrado" });
+        }
+
         const { data, error } = await supabaseAdmin
             .from('Notifications')
             .select('*')

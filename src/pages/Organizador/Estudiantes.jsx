@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Box, Typography, Avatar, Paper, Button, IconButton, Dialog, Chip, Select, MenuItem, OutlinedInput, FormControl } from '@mui/material';
+import { Box, Typography, Avatar, Paper, Button, IconButton, Dialog, Chip, Select, MenuItem, OutlinedInput, FormControl, TextField, InputAdornment } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import UploadFileIcon from '@mui/icons-material/UploadFile';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import BlockIcon from '@mui/icons-material/Block';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'; 
 import CloseIcon from '@mui/icons-material/Close';
 import ClassIcon from '@mui/icons-material/Class';
+import SearchIcon from '@mui/icons-material/Search'; 
 import toast from 'react-hot-toast'; 
 import ModalEstudiante from '../../components/Modals/ModalEstudiante';
 
@@ -20,6 +20,8 @@ export default function ControlEstudiantes() {
     const [estudiantes, setEstudiantes] = useState([]);
     const [cursosDisponibles, setCursosDisponibles] = useState([]);
     const [openModal, setOpenModal] = useState(false);
+
+    const [searchTerm, setSearchTerm] = useState('');
 
     const [openDetalles, setOpenDetalles] = useState(false);
     const [openAsignar, setOpenAsignar] = useState(false);
@@ -126,99 +128,204 @@ export default function ControlEstudiantes() {
     const courseColors = { 'Inglés': 'bg-ingles', 'Francés': 'bg-frances' };
 
     const estudianteRaw = estudianteSeleccionado?.Students;
-    const estData = Array.isArray(estudianteRaw) ? estudianteRaw[0] : (estudianteRaw || {});
-    const estIdioma = estData.Language || '';
-    const estNivel = estData.CurrentLevel || '';
+    const estData = Array.isArray(estudianteRaw) ? (estudianteRaw[0] || {}) : (estudianteRaw || {});
+    const estIdioma = estData?.Language || '';
+    const estNivel = estData?.CurrentLevel || '';
 
     const cursosCompatibles = cursosDisponibles.filter(c => 
         c.Language?.toUpperCase() === estIdioma.toUpperCase() && c.Level === estNivel
     );
 
+    const estudiantesFiltrados = estudiantes.filter((item) => {
+        const busqueda = searchTerm.toLowerCase();
+        return (
+            item.Name?.toLowerCase().includes(busqueda) || 
+            item.Email?.toLowerCase().includes(busqueda)
+        );
+    }).sort((a, b) => {
+        const estadoA = a.State || 'Active';
+        const estadoB = b.State || 'Active';
+        
+        if (estadoA === 'Active' && estadoB === 'Inactive') return -1;
+        if (estadoA === 'Inactive' && estadoB === 'Active') return 1;
+        return (a.Name || '').localeCompare(b.Name || '');
+    });
+
+    const totalEstudiantes = estudiantes.length;
+    const activosCount = estudiantes.filter(e => (e.State || 'Active') === 'Active').length;
+    const inactivosCount = totalEstudiantes - activosCount;
+
     return (
         <div className='mainContent'>
-            <div className="header-container">
-                <h2 className="dashboard-title">Gestión de Estudiantes</h2>
-                <div className="header-actions">
+            <div className="header-container" style={{ margin: '0 0 20px 0', alignItems: 'center', width: '100%', display: 'flex', justifyContent: 'space-between', flexWrap: 'nowrap' }}>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'nowrap' }}>
+                    <h2 className="dashboard-title" style={{ fontSize: '1.8rem', fontWeight: 800, color: '#1e293b', whiteSpace: 'nowrap', lineHeight: 1, margin: 0 }}>
+                        Gestión de Estudiantes
+                    </h2>
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', borderLeft: '2px solid #e2e8f0', paddingLeft: '20px', height: '35px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#ffffff', display: 'flex', justifyContent: 'center', alignItems: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                                <Typography style={{ fontWeight: 800, fontSize: '0.95rem', color: '#1e293b' }}>{totalEstudiantes}</Typography>
+                            </div>
+                            <Typography style={{ fontWeight: 800, color: '#64748b', fontSize: '0.85rem', letterSpacing: '0.5px' }}>TOTAL</Typography>
+                        </div>
+                        
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#dcfce7', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                <Typography style={{ fontWeight: 800, fontSize: '0.95rem', color: '#15803d' }}>{activosCount}</Typography>
+                            </div>
+                            <Typography style={{ fontWeight: 800, color: '#166534', fontSize: '0.85rem', letterSpacing: '0.5px' }}>ACTIVOS</Typography>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#fee2e2', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                <Typography style={{ fontWeight: 800, fontSize: '0.95rem', color: '#b91c1c' }}>{inactivosCount}</Typography>
+                            </div>
+                            <Typography style={{ fontWeight: 800, color: '#991b1b', fontSize: '0.85rem', letterSpacing: '0.5px' }}>INACTIVOS</Typography>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     {isAdmin && (
-                        <Button onClick={() => setOpenModal(true)} variant="contained" startIcon={<AddIcon />} className="btn-primary"> 
+                        <Button 
+                            onClick={() => setOpenModal(true)} 
+                            variant="contained" 
+                            startIcon={<AddIcon />} 
+                            style={{ backgroundColor: '#68899D', textTransform: 'none', borderRadius: '8px', fontWeight: 600, padding: '8px 16px', boxShadow: 'none', whiteSpace: 'nowrap' }}
+                        > 
                             Registrar nuevo estudiante 
                         </Button>
                     )}
                     <ModalEstudiante open={openModal} onClose={() => { setOpenModal(false); fetchEstudiantes(); }} />
-                    <IconButton className="btn-secondary"> <UploadFileIcon style={{ fontSize: '40px' }} /> </IconButton>
                 </div>
             </div>
 
-            <hr className="divisor"/>
-            <div className='actions'></div>
+            <hr className="divisor" style={{ marginBottom: '20px', border: 'none', borderTop: '1px solid #e2e8f0' }}/>
+            
+            <div className='actions' style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: '25px' }}>
+                <TextField 
+                    placeholder="Buscar estudiante por nombre o correo..."
+                    variant="outlined"
+                    size="small"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    InputProps={{
+                        startAdornment: (
+                            <InputAdornment position="start">
+                                <SearchIcon style={{ color: '#64748b' }} />
+                            </InputAdornment>
+                        ),
+                        style: { borderRadius: '12px', backgroundColor: '#fff', width: '350px' }
+                    }}
+                />
+            </div>
 
             <div className='cards-grid'>
-                {estudiantes.map((item) => {
-                    const rawStudent = item.Students || {};
-                    const studentData = Array.isArray(rawStudent) ? rawStudent[0] : rawStudent; 
-                    
-                    const idioma = studentData.Language || 'N/A';
-                    const nivel = studentData.CurrentLevel || 'N/A';
-                    const tutorAsignado = item.tutorAsignado || 'Sin asignar'; 
-                    const estado = item.State || 'Active'; 
-                    const estaEnrolado = !!item.cursoData;
+                {estudiantesFiltrados.length > 0 ? (
+                    estudiantesFiltrados.map((item) => {
+                        // Protección en el listado
+                        const rawStudentList = item.Students || {};
+                        const studentDataList = Array.isArray(rawStudentList) ? (rawStudentList[0] || {}) : rawStudentList; 
+                        
+                        const idioma = studentDataList?.Language || 'N/A';
+                        const nivel = studentDataList?.CurrentLevel || 'N/A';
+                        const tutorAsignado = item.tutorAsignado || 'Sin asignar'; 
+                        const estado = item.State || 'Active'; 
+                        const estaEnrolado = !!item.cursoData;
 
-                    return (
-                        <Paper key={item.ID} className="student-card" elevation={0}>
-                            <div className="card-top" style={{ alignItems: 'flex-start' }}>
-                                <Avatar className="student-avatar">
-                                    <AccountCircleIcon style={{ fontSize: '60px', color: '#697386' }} />
-                                </Avatar>
-
-                                <div className="student-data">
-                                    <div className='header-container-card'>
-                                        <Typography className="student-name-title">{item.Name}</Typography>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-                                            <span className={`status ${estado === 'Inactive' ? 'status-inactive' : ''}`}>{estado}</span>
-                                            {isAdmin && (
-                                                <IconButton size="small" style={{ color: estado === 'Active' ? '#ef4444' : '#10b981', padding: '2px' }} onClick={() => handleToggleEstado(item.ID, estado, tutorAsignado)}>
-                                                    {estado === 'Active' ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
-                                                </IconButton>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className="info-grid">
-                                        <div className="info-row-card">
-                                            <div className="info-item">
-                                                <span className="label">Nivel</span>
-                                                <span className="cont-level">{nivel}</span>
-                                            </div>
-                                            <div className="info-item">
-                                                <span className="label">Curso</span>
-                                                <span className={`cont-course ${courseColors[idioma] || 'bg-default'}`}>{idioma}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="tutor-row" style={{ marginTop: '0' }}>
-                                        <Typography variant="body2" style={{ color: '#4f566b' }}>
-                                            Tutor Asignado: <strong>{tutorAsignado}</strong>
-                                        </Typography>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="bottom-actions" style={{ flexDirection: 'column', gap: '8px', marginTop: '5px' }}>
-                                <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
-                                    <button className="details" style={{ flex: 1, padding: '8px', fontSize: '0.85rem' }} onClick={() => handleAbrirDetalles(item)}>Ver Detalles</button>
+                        return (
+                            <Paper 
+                                key={item.ID} 
+                                className="student-card" 
+                                elevation={0}
+                                style={{ 
+                                    backgroundColor: estado === 'Inactive' ? '#f8fafc' : '#ffffff',
+                                    border: estado === 'Inactive' ? '1px solid #e2e8f0' : '1px solid #e0e4e8',
+                                    transition: 'all 0.3s ease'
+                                }}
+                            >
+                                <div className="card-top" style={{ alignItems: 'flex-start' }}>
                                     
-                                    {estaEnrolado ? (
-                                        <button className="assign" style={{ flex: 1, padding: '8px', fontSize: '0.85rem', backgroundColor: '#f9fafb', color: '#4f566b', border: '1px solid #e0e4e8' }} onClick={() => handleAbrirVerCurso(item)}>Ver Curso</button>
-                                    ) : (
-                                        <button className="assign" style={{ flex: 1, padding: '8px', fontSize: '0.85rem' }} onClick={() => handleAbrirAsignar(item)}>Asignar Curso</button>
-                                    )}
+                                    <Avatar className="student-avatar" style={{ opacity: estado === 'Inactive' ? 0.4 : 1, filter: estado === 'Inactive' ? 'grayscale(100%)' : 'none' }}>
+                                        <AccountCircleIcon style={{ fontSize: '60px', color: '#697386' }} />
+                                    </Avatar>
+
+                                    <div className="student-data">
+                                        <div className='header-container-card'>
+                                            
+                                            <Typography className="student-name-title" style={{ 
+                                                textDecoration: estado === 'Inactive' ? 'line-through' : 'none', 
+                                                color: estado === 'Inactive' ? '#94a3b8' : '#1e293b' 
+                                            }}>
+                                                {item.Name}
+                                            </Typography>
+
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                                                <span className={`status ${estado === 'Inactive' ? 'status-inactive' : ''}`}>{estado}</span>
+                                                
+                                                {isAdmin && (
+                                                    <IconButton 
+                                                        size="small" 
+                                                        style={{ 
+                                                            color: estado === 'Active' ? '#ef4444' : '#10b981', 
+                                                            backgroundColor: estado === 'Active' ? 'transparent' : '#dcfce7',
+                                                            padding: '4px' 
+                                                        }} 
+                                                        onClick={() => handleToggleEstado(item.ID, estado, tutorAsignado)}
+                                                    >
+                                                        {estado === 'Active' ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
+                                                    </IconButton>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div style={{ opacity: estado === 'Inactive' ? 0.5 : 1, filter: estado === 'Inactive' ? 'grayscale(100%)' : 'none' }}>
+                                            <div className="info-grid">
+                                                <div className="info-row-card">
+                                                    <div className="info-item">
+                                                        <span className="label">Nivel</span>
+                                                        <span className="cont-level">{nivel}</span>
+                                                    </div>
+                                                    <div className="info-item">
+                                                        <span className="label">Curso</span>
+                                                        <span className={`cont-course ${courseColors[idioma] || 'bg-default'}`}>{idioma}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="tutor-row" style={{ marginTop: '0' }}>
+                                                <Typography variant="body2" style={{ color: '#4f566b' }}>
+                                                    Tutor Asignado: <strong>{tutorAsignado}</strong>
+                                                </Typography>
+                                            </div>
+                                        </div>
+
+                                    </div>
                                 </div>
-                                <button className="assign" style={{ width: '100%', padding: '10px' }}>Asignar Calificación</button>
-                            </div>
-                        </Paper>
-                    );
-                })}
+
+                                <div className="bottom-actions" style={{ flexDirection: 'column', gap: '8px', marginTop: '5px' }}>
+                                    <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                                        <button className="details" style={{ flex: 1, padding: '8px', fontSize: '0.85rem' }} onClick={() => handleAbrirDetalles(item)}>Ver Detalles</button>
+                                        
+                                        {estaEnrolado ? (
+                                            <button className="assign" style={{ flex: 1, padding: '8px', fontSize: '0.85rem', backgroundColor: '#f9fafb', color: '#4f566b', border: '1px solid #e0e4e8', opacity: estado === 'Inactive' ? 0.5 : 1 }} disabled={estado === 'Inactive'} onClick={() => handleAbrirVerCurso(item)}>Ver Curso</button>
+                                        ) : (
+                                            <button className="assign" style={{ flex: 1, padding: '8px', fontSize: '0.85rem', opacity: estado === 'Inactive' ? 0.5 : 1 }} onClick={() => handleAbrirAsignar(item)} disabled={estado === 'Inactive'}>Asignar Curso</button>
+                                        )}
+                                    </div>
+                                    <button className="assign" style={{ width: '100%', padding: '10px', opacity: estado === 'Inactive' ? 0.5 : 1 }} disabled={estado === 'Inactive'}>Asignar Calificación</button>
+                                </div>
+                            </Paper>
+                        );
+                    })
+                ) : (
+                    <Typography style={{ gridColumn: '1 / -1', textAlign: 'center', marginTop: '20px', color: '#64748b', fontStyle: 'italic' }}>
+                        No se encontraron estudiantes con ese nombre o correo.
+                    </Typography>
+                )}
             </div>
 
             <Dialog open={openDetalles} onClose={() => setOpenDetalles(false)} maxWidth="sm" fullWidth PaperProps={{ className: 'modal-container' }}>
@@ -233,18 +340,18 @@ export default function ControlEstudiantes() {
                                 <div>
                                     <Typography variant="h5" style={{ fontWeight: 800, color: '#1e293b' }}>{estudianteSeleccionado.Name}</Typography>
                                     <Typography variant="body2" style={{ color: '#64748b', fontWeight: 600, marginBottom: '8px' }}>{estudianteSeleccionado.Email}</Typography>
-                                    <Chip label={estudianteSeleccionado.State} size="small" style={{ backgroundColor: estudianteSeleccionado.State === 'Active' ? '#dcfce7' : '#fee2e2', color: estudianteSeleccionado.State === 'Active' ? '#166534' : '#991b1b', fontWeight: 700 }} />
+                                    <Chip label={estudianteSeleccionado.State || 'Active'} size="small" style={{ backgroundColor: estudianteSeleccionado.State === 'Inactive' ? '#fee2e2' : '#dcfce7', color: estudianteSeleccionado.State === 'Inactive' ? '#991b1b' : '#166534', fontWeight: 700 }} />
                                 </div>
                             </div>
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                                 <Paper elevation={0} style={{ padding: '15px', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
                                     <Typography variant="caption" style={{ fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Teléfono</Typography>
-                                    <Typography variant="body1" style={{ fontWeight: 700, color: '#334155' }}>{estData.Phone || 'N/A'}</Typography>
+                                    <Typography variant="body1" style={{ fontWeight: 700, color: '#334155' }}>{estData?.Phone || 'N/A'}</Typography>
                                 </Paper>
                                 <Paper elevation={0} style={{ padding: '15px', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
                                     <Typography variant="caption" style={{ fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Fecha de Nacimiento</Typography>
-                                    <Typography variant="body1" style={{ fontWeight: 700, color: '#334155' }}>{estudianteSeleccionado.BirthDate || 'N/A'}</Typography>
+                                    <Typography variant="body1" style={{ fontWeight: 700, color: '#334155' }}>{estudianteSeleccionado?.BirthDate || 'N/A'}</Typography>
                                 </Paper>
                                 <Paper elevation={0} style={{ padding: '15px', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
                                     <Typography variant="caption" style={{ fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Idioma Inscrito</Typography>
@@ -278,8 +385,8 @@ export default function ControlEstudiantes() {
                                 <Typography variant="body2" style={{ color: '#0369a1', fontWeight: 700 }}>Asignando a:</Typography>
                                 <Typography variant="h6" style={{ color: '#0c4a6e', fontWeight: 800 }}>{estudianteSeleccionado.Name}</Typography>
                                 <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                                    <Chip label={estIdioma} size="small" style={{ backgroundColor: '#e0f2fe', color: '#0284c7', fontWeight: 600 }} />
-                                    <Chip label={`Nivel ${estNivel}`} size="small" style={{ backgroundColor: '#e0f2fe', color: '#0284c7', fontWeight: 600 }} />
+                                    <Chip label={estIdioma || 'N/A'} size="small" style={{ backgroundColor: '#e0f2fe', color: '#0284c7', fontWeight: 600 }} />
+                                    <Chip label={`Nivel ${estNivel || 'N/A'}`} size="small" style={{ backgroundColor: '#e0f2fe', color: '#0284c7', fontWeight: 600 }} />
                                 </div>
                             </div>
 
@@ -319,8 +426,8 @@ export default function ControlEstudiantes() {
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f0fdf4', padding: '20px', borderRadius: '16px', border: '1px solid #bbf7d0' }}>
                                 <div>
                                     <Typography variant="body2" style={{ color: '#166534', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Inscrito en:</Typography>
-                                    <Typography variant="h5" style={{ color: '#15803d', fontWeight: 800 }}>{estudianteSeleccionado.cursoData.Name}</Typography>
-                                    <Typography variant="body2" style={{ color: '#166534', fontWeight: 600 }}>Periodo: {estudianteSeleccionado.cursoData.Period || 'N/A'}</Typography>
+                                    <Typography variant="h5" style={{ color: '#15803d', fontWeight: 800 }}>{estudianteSeleccionado.cursoData?.Name || 'N/A'}</Typography>
+                                    <Typography variant="body2" style={{ color: '#166534', fontWeight: 600 }}>Periodo: {estudianteSeleccionado.cursoData?.Period || 'N/A'}</Typography>
                                 </div>
                                 <ClassIcon style={{ color: '#22c55e', fontSize: '40px' }} />
                             </div>
@@ -328,11 +435,11 @@ export default function ControlEstudiantes() {
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                                 <Paper elevation={0} style={{ padding: '15px', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
                                     <Typography variant="caption" style={{ fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Tutor Titular</Typography>
-                                    <Typography variant="body1" style={{ fontWeight: 700, color: '#334155' }}>{estudianteSeleccionado.cursoData.tutorName}</Typography>
+                                    <Typography variant="body1" style={{ fontWeight: 700, color: '#334155' }}>{estudianteSeleccionado.cursoData?.tutorName || 'N/A'}</Typography>
                                 </Paper>
                                 <Paper elevation={0} style={{ padding: '15px', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
                                     <Typography variant="caption" style={{ fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Estado del Curso</Typography>
-                                    <Typography variant="body1" style={{ fontWeight: 700, color: '#334155' }}>{estudianteSeleccionado.cursoData.Status}</Typography>
+                                    <Typography variant="body1" style={{ fontWeight: 700, color: '#334155' }}>{estudianteSeleccionado.cursoData?.Status || 'N/A'}</Typography>
                                 </Paper>
                             </div>
                         </div>

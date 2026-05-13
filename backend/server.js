@@ -2,6 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 
+const startAccountCleaner = require('./accountCleaner');
+
 const app = express();
 app.use(cors());
 
@@ -13,6 +15,8 @@ app.use('/api/admin', require('./routes/admin.routes'));
 app.use('/api/tutor', require('./routes/tutor.routes'));
 app.use('/api/revisor', require('./routes/reviewer.routes'));
 app.use('/api/student', require('./routes/student.routes'));
+
+startAccountCleaner();
 
 app.listen(process.env.PORT || 8000, () => {
     console.log(`Servidor de FasTalk corriendo en puerto 8000`);

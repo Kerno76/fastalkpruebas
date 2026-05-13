@@ -43,13 +43,43 @@ router.post('/registrar', async (req, res) => {
     const passwordTemporal = '12345678';
 
     try {
+        const { data: existingUsers, error: checkError } = await supabaseAdmin
+            .from('UsersProfiles')
+            .select('Name, Email')
+            .or(`Email.eq.${email},Name.eq.${nombre}`);
+
+        if (checkError) throw checkError;
+
+        if (existingUsers && existingUsers.length > 0) {
+            const emailDuplicado = existingUsers.find(u => u.Email.toLowerCase() === email.toLowerCase());
+            if (emailDuplicado) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: `El correo ${email} ya está registrado en otra cuenta.` 
+                });
+            }
+
+            const nombreDuplicado = existingUsers.find(u => u.Name.toLowerCase() === nombre.toLowerCase());
+            if (nombreDuplicado) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: `Ya existe un usuario llamado "${nombre}". Favor de agregar un apellido para diferenciarlo.` 
+                });
+            }
+        }
+
         const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
             email,
             password: passwordTemporal,
             email_confirm: true
         });
 
-        if (authError) throw authError;
+        if (authError) {
+            if (authError.message.includes('already registered')) {
+                return res.status(400).json({ success: false, message: 'Este correo ya está registrado en el sistema de autenticación.' });
+            }
+            throw authError;
+        }
 
         const userId = authUser.user.id;
 

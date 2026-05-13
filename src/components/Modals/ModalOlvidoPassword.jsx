@@ -12,84 +12,84 @@ export default function ModalOlvidoPassword({ open, onClose }) {
     const [confirmPassword, setConfirmPassword] = useState('');
 
     const handleAction = async () => {
-    if (step === 1) {
-        if (!email) return toast.error("Ingresa tu correo");
-        
-        const loading = toast.loading('Enviando código...');
-        try {
-            const res = await fetch("http://localhost:8000/api/auth/forgot-password", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email })
-            });
-            const data = await res.json();
+        const cleanEmail = email.trim().toLowerCase();
+
+        if (step === 1) {
+            if (!email) return toast.error("Ingresa tu correo");
             
-            if (data.success) {
-                toast.success('¡Código enviado!', { id: loading });
-                setStep(2);
-            } else {
-                throw new Error(data.message || "Error al enviar");
+            const loading = toast.loading('Enviando código...');
+            try {
+                const res = await fetch("http://localhost:8000/api/auth/forgot-password", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email: cleanEmail })
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    toast.success('¡Código enviado!', { id: loading });
+                    setStep(2);
+                } else {
+                    throw new Error(data.message || "Error al enviar");
+                }
+            } catch (err) {
+                toast.error(err.message, { id: loading });
             }
-        } catch (err) {
-            toast.error(err.message, { id: loading });
+            return; 
         }
-        return; 
-    }
 
-    // --- PASO 2: VERIFICAR OTP ---
-    if (step === 2) {
-        if (otp.length < 6) return toast.error("Ingresa el código completo");
+        if (step === 2) {
+            if (otp.length < 6) return toast.error("Ingresa el código completo");
 
-        const loading = toast.loading('Verificando...');
-        try {
-            const res = await fetch("http://localhost:8000/api/auth/verify-otp", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, token: otp })
-            });
-            const data = await res.json();
+            const loading = toast.loading('Verificando...');
+            try {
+                const res = await fetch("http://localhost:8000/api/auth/verify-otp", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email: cleanEmail, token: otp })
+                });
+                const data = await res.json();
 
-            if (data.success) {
-                toast.success('Código verificado', { id: loading });
-                setStep(3);
-            } else {
-                throw new Error(data.message || "Código incorrecto");
+                if (data.success) {
+                    toast.success('Código verificado', { id: loading });
+                    setStep(3);
+                } else {
+                    throw new Error(data.message || "Código incorrecto");
+                }
+            } catch (err) {
+                toast.error(err.message, { id: loading });
             }
-        } catch (err) {
-            toast.error(err.message, { id: loading });
-        }
-        return; 
-    }
-
-    // --- PASO 3: NUEVA PASSWORD ---
-    if (step === 3) {
-        if (newPassword.length < 6) {
-            return toast.error("La contraseña debe tener al menos 6 caracteres");
-        }
-        if (newPassword !== confirmPassword) {
-            return toast.error("Las contraseñas no coinciden");
+            return; 
         }
 
-        const loading = toast.loading('Actualizando contraseña...');
-        try {
-            const res = await fetch("http://localhost:8000/api/auth/update-password", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password: newPassword })
-            });
-            const data = await res.json();
-
-            if (data.success) {
-                toast.success('Contraseña restablecida', { id: loading, icon: '🔒' });
-                handleReset(); 
-            } else {
-                throw new Error(data.message);
+        if (step === 3) {
+            if (newPassword.length < 6) {
+                return toast.error("La contraseña debe tener al menos 6 caracteres");
             }
-        } catch (err) {
-            toast.error(err.message, { id: loading });
+            if (newPassword !== confirmPassword) {
+                return toast.error("Las contraseñas no coinciden");
+            }
+
+            const loading = toast.loading('Actualizando contraseña...');
+            try {
+                const res = await fetch("http://localhost:8000/api/auth/update-password", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email: cleanEmail, password: newPassword })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    toast.success('Contraseña restablecida', { id: loading, icon: '🔒' });
+                    handleReset(); 
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (err) {
+                toast.error(err.message, { id: loading });
+            }
         }
-    }
-};
+    };
 
     const handleReset = () => {
         onClose();
@@ -115,7 +115,12 @@ export default function ModalOlvidoPassword({ open, onClose }) {
                     {step === 1 && (
                         <div className="form-group">
                             <label>Introduce tu correo institucional</label>
-                            <TextField fullWidth placeholder="ejemplo@tec.mx" value={email} onChange={(e) => setEmail(e.target.value)}/>
+                            <TextField 
+                                fullWidth 
+                                placeholder="ejemplo@tec.mx" 
+                                value={email} 
+                                onChange={(e) => setEmail(e.target.value)}
+                            />
                             <p className="modal-info-text">Te enviaremos un código de seguridad.</p>
                         </div>
                     )}
@@ -128,9 +133,12 @@ export default function ModalOlvidoPassword({ open, onClose }) {
                                 onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))} 
                                 fullWidth 
                                 placeholder="000000" 
-                                inputProps={{ maxLength: 6, style: { textAlign: 'center', letterSpacing: '10px', fontSize: '20px' } }} 
+                                inputProps={{ 
+                                    maxLength: 6, 
+                                    style: { textAlign: 'center', letterSpacing: '10px', fontSize: '20px' } 
+                                }} 
                             />
-                            <p className="modal-info-text">Enviado a: {email}</p>
+                            <p className="modal-info-text">Enviado a: {email.toLowerCase()}</p>
                         </div>
                     )}
 

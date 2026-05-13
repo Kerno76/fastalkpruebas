@@ -16,6 +16,7 @@ import '../../styles/App.css';
 const getNotifStyle = (type) => {
     switch(type) {
         case 'SessionAgendada': return { icon: <EventAvailableIcon />, bg: '#e0f2fe', color: '#0284c7' };
+        case 'AlertaAdmin': return { icon: <NotificationsActiveIcon />, bg: '#fee2e2', color: '#ef4444' };
         default: return { icon: <NotificationsActiveIcon />, bg: '#f1f5f9', color: '#475569' };
     }
 };

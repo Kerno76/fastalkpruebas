@@ -20,6 +20,7 @@ const getNotifStyle = (type) => {
         case 'ReporteIncidencia': return { icon: <AssignmentTurnedInIcon />, bg: '#fee2e2', color: '#ef4444' };
         case 'SesionRevisada': return { icon: <CheckCircleIcon />, bg: '#dcfce7', color: '#16a34a' };
         case 'MaterialSubido': return { icon: <CloudUploadIcon />, bg: '#f3e8ff', color: '#9333ea' };
+        case 'AlertaAdmin': return { icon: <NotificationsActiveIcon />, bg: '#fee2e2', color: '#ef4444' };
         default: return { icon: <NotificationsActiveIcon />, bg: '#f1f5f9', color: '#475569' };
     }
 };
@@ -38,13 +39,26 @@ export default function TutorDashboard() {
 
   useEffect(() => {
       if (!tutorId) return;
-      fetch(`http://localhost:8000/api/tutor/dashboard/${tutorId}`)
-          .then(res => res.json())
-          .then(result => { if (result.success) setDashData(result.data); });
 
-      fetch(`http://localhost:8000/api/tutor/notificaciones/${tutorId}`)
-          .then(res => res.json())
-          .then(result => { if (result.success) setNotificaciones(result.notificaciones); });
+      const fetchData = () => {
+          fetch(`http://localhost:8000/api/tutor/dashboard/${tutorId}`)
+              .then(res => res.json())
+              .then(result => { if (result.success) setDashData(result.data); })
+              .catch(err => console.error(err));
+
+          fetch(`http://localhost:8000/api/tutor/notificaciones/${tutorId}`)
+              .then(res => res.json())
+              .then(result => { if (result.success) setNotificaciones(result.notificaciones); })
+              .catch(err => console.error(err));
+      };
+
+      // Llamada inicial
+      fetchData();
+
+      // Intervalo de 30 segundos para actualizar las notificaciones visualmente
+      const intervalId = setInterval(fetchData, 30000);
+
+      return () => clearInterval(intervalId);
   }, [tutorId]);
 
   const handleOpenNotification = async (notif) => {

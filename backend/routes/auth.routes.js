@@ -3,6 +3,14 @@ const router = express.Router();
 const { supabase, supabaseAdmin } = require('../config/supabase');
 const nodemailer = require('nodemailer');
 
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    }
+});
+
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
@@ -19,7 +27,7 @@ router.post('/login', async (req, res) => {
         const { data: profileData, error: profileError } = await supabaseAdmin
             .from('UsersProfiles')
             .select('*')
-            .eq('Email', email)
+            .ilike('Email', email)
             .single();
 
         if (profileError || !profileData) {
@@ -46,7 +54,6 @@ router.post('/login', async (req, res) => {
         }
 
         const completeUser = { ...profileData, Phone: phone };
-
         res.json({ success: true, message: "¡Sesión iniciada!", user: completeUser });
 
     } catch (err) {
@@ -122,85 +129,107 @@ router.post('/upload-avatar', async (req, res) => {
     }
 });
 
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    }
-});
-
-// Ruta para enviar el código
 router.post('/forgot-password', async (req, res) => {
     const { email } = req.body;
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
     try {
+        const { data: userExist, error: searchError } = await supabaseAdmin
+            .from('UsersProfiles')
+            .select('ID, Email')
+            .ilike('Email', email)
+            .single();
+
+        if (searchError || !userExist) {
+            return res.status(404).json({ success: false, message: "El correo no está registrado en el sistema." });
+        }
+
         const { error: dbError } = await supabaseAdmin
             .from('PasswordResets')
-            .insert([{ Email: email, Token: otp }]);
+            .insert([{ 
+                ID: userExist.ID, 
+                Email: userExist.Email, 
+                Token: otp 
+            }]);
 
         if (dbError) throw dbError;
 
         const mailOptions = {
             from: `"FasTalk Portal" <${process.env.EMAIL_USER}>`,
-            to: email,
+            to: userExist.Email,
             subject: 'Código de recuperación - FasTalk',
             html: `
-                <div style="font-family: sans-serif; padding: 20px;">
-                    <h2>Recuperación de Contraseña</h2>
+                <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+                    <h2 style="color: #1e293b;">Recuperación de Contraseña</h2>
+                    <p>Hola, hemos recibido una solicitud para restablecer tu contraseña.</p>
                     <p>Tu código de seguridad es:</p>
-                    <h1 style="color: #c89f70; letter-spacing: 5px;">${otp}</h1>
-                    <p>Este código expira en 10 minutos.</p>
+                    <div style="background: #f8fafc; padding: 15px; text-align: center; border-radius: 8px;">
+                        <h1 style="color: #68899D; letter-spacing: 8px; margin: 0;">${otp}</h1>
+                    </div>
+                    <p style="font-size: 0.85rem; color: #64748b; margin-top: 20px;">Este código expirará en breve. Si no solicitaste esto, ignora este correo.</p>
                 </div>
             `
         };
 
         await transporter.sendMail(mailOptions);
-        res.json({ success: true });
+        res.json({ success: true, message: "Código enviado" });
 
     } catch (error) {
-        console.error("Error completo:", error); 
+        console.error("Error en forgot-password:", error); 
         res.status(500).json({ success: false, message: error.message });
     }
 });
 
-// 2. VERIFICAR CÓDIGO MANUALMENTE
 router.post('/verify-otp', async (req, res) => {
     const { email, token } = req.body;
 
-    const { data, error } = await supabaseAdmin
-        .from('PasswordResets')
-        .select('*')
-        .eq('Email', email)
-        .eq('Token', token)
-        .order('CreatedAt', { ascending: false })
-        .limit(1);
+    try {
+        const { data, error } = await supabaseAdmin
+            .from('PasswordResets')
+            .select('*')
+            .ilike('Email', email)
+            .eq('Token', token)
+            .order('CreatedAt', { ascending: false })
+            .limit(1);
 
-    if (data && data.length > 0) {
-        res.json({ success: true });
-    } else {
-        res.status(400).json({ success: false, message: "Código incorrecto" });
+        if (data && data.length > 0) {
+            res.json({ success: true });
+        } else {
+            res.status(400).json({ success: false, message: "El código es incorrecto o ha expirado" });
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Error al verificar el código" });
     }
 });
 
-// 3. CAMBIAR CONTRASEÑA (MANUAL)
 router.post('/update-password', async (req, res) => {
     const { email, password } = req.body;
 
     try {
+        const { data: user, error: userError } = await supabaseAdmin
+            .from('UsersProfiles')
+            .select('ID')
+            .ilike('Email', email)
+            .single();
         
-        const { data: user } = await supabaseAdmin.from('UsersProfiles').select('ID').eq('Email', email).single();
-        
-        const { error } = await supabaseAdmin.auth.admin.updateUserById(user.ID, { password: password });
+        if (!user || userError) {
+            return res.status(404).json({ success: false, message: "No se encontró el perfil del usuario para actualizar la contraseña." });
+        }
 
-        if (error) throw error;
-        
-        await supabaseAdmin.from('PasswordResets').delete().eq('Email', email);
+        const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(
+            user.ID, 
+            { password: password }
+        );
 
-        res.json({ success: true });
+        if (authError) throw authError;
+        
+        await supabaseAdmin.from('PasswordResets').delete().ilike('Email', email);
+
+        res.json({ success: true, message: "Contraseña actualizada con éxito" });
+
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        console.error("Error en update-password:", error);
+        res.status(500).json({ success: false, message: "No se pudo actualizar la contraseña" });
     }
 });
 

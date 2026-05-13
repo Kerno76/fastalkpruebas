@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Typography, Avatar, Paper, Button, IconButton, Dialog, Chip, List, ListItem, ListItemAvatar, ListItemText as MuiListItemText, Divider, Select, MenuItem, OutlinedInput, Checkbox, Box } from '@mui/material';
+import { Typography, Avatar, Paper, Button, IconButton, Dialog, Chip, List, ListItem, ListItemAvatar, ListItemText as MuiListItemText, Divider, Select, MenuItem, OutlinedInput, Checkbox, Box, TextField, InputAdornment } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import UploadFileIcon from '@mui/icons-material/UploadFile';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import BlockIcon from '@mui/icons-material/Block';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'; 
 import CloseIcon from '@mui/icons-material/Close';
 import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
+import SearchIcon from '@mui/icons-material/Search'; 
 import toast from 'react-hot-toast'; 
 import ModalRevisor from '../../components/Modals/ModalRevisor';
 
@@ -26,6 +26,8 @@ export default function ControlRevisores() {
     const [revisores, setRevisores] = useState([]);
     const [openModal, setOpenModal] = useState(false);
     
+    const [searchTerm, setSearchTerm] = useState('');
+
     const [openDetalles, setOpenDetalles] = useState(false);
     const [openTutores, setOpenTutores] = useState(false);
     const [revisorSeleccionado, setRevisorSeleccionado] = useState(null);
@@ -137,84 +139,186 @@ export default function ControlRevisores() {
         }
     };
 
+    const revisoresFiltrados = revisores.filter((item) => {
+        const busqueda = searchTerm.toLowerCase();
+        return (
+            item.Name?.toLowerCase().includes(busqueda) || 
+            item.Email?.toLowerCase().includes(busqueda)
+        );
+    }).sort((a, b) => {
+        const estadoA = a.State || 'Active';
+        const estadoB = b.State || 'Active';
+        
+        if (estadoA === 'Active' && estadoB === 'Inactive') return -1;
+        if (estadoA === 'Inactive' && estadoB === 'Active') return 1;
+        
+        return (a.Name || '').localeCompare(b.Name || '');
+    });
+
+    const totalRevisores = revisores.length;
+    const activosCount = revisores.filter(r => (r.State || 'Active') === 'Active').length;
+    const inactivosCount = totalRevisores - activosCount;
+
     return (
         <div className='mainContent'>
-            <div className="header-container">
-                <h2 className="dashboard-title">Gestión de Revisores</h2>
-                <div className="header-actions">
+            <div className="header-container" style={{ margin: '0 0 20px 0', alignItems: 'center', width: '100%', display: 'flex', justifyContent: 'space-between', flexWrap: 'nowrap' }}>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'nowrap' }}>
+                    <h2 className="dashboard-title" style={{ fontSize: '1.8rem', fontWeight: 800, color: '#1e293b', whiteSpace: 'nowrap', lineHeight: 1, margin: 0 }}>
+                        Gestión de Revisores
+                    </h2>
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', borderLeft: '2px solid #e2e8f0', paddingLeft: '20px', height: '35px' }}>
+                        
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#ffffff', display: 'flex', justifyContent: 'center', alignItems: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                                <Typography style={{ fontWeight: 800, fontSize: '0.95rem', color: '#1e293b' }}>{totalRevisores}</Typography>
+                            </div>
+                            <Typography style={{ fontWeight: 800, color: '#64748b', fontSize: '0.85rem', letterSpacing: '0.5px' }}>TOTAL</Typography>
+                        </div>
+                        
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#dcfce7', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                <Typography style={{ fontWeight: 800, fontSize: '0.95rem', color: '#15803d' }}>{activosCount}</Typography>
+                            </div>
+                            <Typography style={{ fontWeight: 800, color: '#166534', fontSize: '0.85rem', letterSpacing: '0.5px' }}>ACTIVOS</Typography>
+                        </div>
+
+                        {/* Inactivos */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#fee2e2', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                                <Typography style={{ fontWeight: 800, fontSize: '0.95rem', color: '#b91c1c' }}>{inactivosCount}</Typography>
+                            </div>
+                            <Typography style={{ fontWeight: 800, color: '#991b1b', fontSize: '0.85rem', letterSpacing: '0.5px' }}>INACTIVOS</Typography>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     {isAdmin && (
-                        <Button onClick={() => setOpenModal(true)} variant="contained" startIcon={<AddIcon />} className="btn-primary"> 
+                        <Button 
+                            onClick={() => setOpenModal(true)} 
+                            variant="contained" 
+                            startIcon={<AddIcon />} 
+                            style={{ backgroundColor: '#68899D', textTransform: 'none', borderRadius: '8px', fontWeight: 600, padding: '8px 16px', boxShadow: 'none', whiteSpace: 'nowrap' }}
+                        > 
                             Registrar nuevo revisor 
                         </Button>
                     )}
                     <ModalRevisor open={openModal} onClose={() => { setOpenModal(false); fetchRevisores(); }} />
-                    <IconButton className="btn-secondary"> 
-                        <UploadFileIcon style={{ fontSize: '40px' }} /> 
-                    </IconButton>                
                 </div>
             </div>
 
-            <hr className="divisor"/>
+            <hr className="divisor" style={{ marginBottom: '20px', border: 'none', borderTop: '1px solid #e2e8f0' }}/>
+
+            <div className='actions' style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: '25px' }}>
+                <TextField 
+                    placeholder="Buscar revisor por nombre o correo..."
+                    variant="outlined"
+                    size="small"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    InputProps={{
+                        startAdornment: (
+                            <InputAdornment position="start">
+                                <SearchIcon style={{ color: '#64748b' }} />
+                            </InputAdornment>
+                        ),
+                        style: { borderRadius: '12px', backgroundColor: '#fff', width: '350px' }
+                    }}
+                />
+            </div>
 
             <div className='cards-grid'>
-                {revisores.map((item) => {
-                    const rawReviewer = item.Reviewer || {};
-                    const revData = Array.isArray(rawReviewer) ? rawReviewer[0] : rawReviewer; 
-                    
-                    const carrera = revData.Career || 'N/A';
-                    const tutoresAsig = revData.AsignedTutors || '0';
-                    const validaciones = revData.ValidationsCompleted || '0'; 
-                    const estado = item.State || 'Active'; 
+                {revisoresFiltrados.length > 0 ? (
+                    revisoresFiltrados.map((item) => {
+                        const rawReviewer = item.Reviewer || {};
+                        const revData = Array.isArray(rawReviewer) ? rawReviewer[0] : rawReviewer; 
+                        
+                        const carrera = revData.Career || 'N/A';
+                        const tutoresAsig = revData.AsignedTutors || '0';
+                        const validaciones = revData.ValidationsCompleted || '0'; 
+                        const estado = item.State || 'Active'; 
 
-                    return (
-                        <Paper key={item.ID} className="revisor-card" elevation={0}>
-                            <div className="card-top" style={{ alignItems: 'flex-start' }}>
-                                <Avatar className="revisor-avatar">
-                                    <AccountCircleIcon style={{ fontSize: '60px', color: '#697386' }} />
-                                </Avatar>
+                        return (
+                            <Paper 
+                                key={item.ID} 
+                                className="revisor-card" 
+                                elevation={0}
+                                style={{ 
+                                    backgroundColor: estado === 'Inactive' ? '#f8fafc' : '#ffffff',
+                                    border: estado === 'Inactive' ? '1px solid #e2e8f0' : '1px solid #e0e4e8',
+                                    transition: 'all 0.3s ease'
+                                }}
+                            >
+                                <div className="card-top" style={{ alignItems: 'flex-start' }}>
+                                    <Avatar className="revisor-avatar" style={{ opacity: estado === 'Inactive' ? 0.4 : 1, filter: estado === 'Inactive' ? 'grayscale(100%)' : 'none' }}>
+                                        <AccountCircleIcon style={{ fontSize: '60px', color: '#697386' }} />
+                                    </Avatar>
 
-                                <div className="revisor-data">
-                                    <div className='header-container-card'>
-                                        <Typography className="revisor-name-title">{item.Name}</Typography>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-                                            <span className={`status ${estado === 'Inactive' ? 'status-inactive' : ''}`}>{estado}</span>
-                                            {isAdmin && (
-                                                <IconButton size="small" style={{ color: estado === 'Active' ? '#ef4444' : '#10b981', padding: '2px' }} onClick={() => handleToggleEstado(item.ID, estado, tutoresAsig)}>
-                                                    {estado === 'Active' ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
-                                                </IconButton>
-                                            )}
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="info-grid">
-                                        <div className="info-row-card">
-                                            <div className="info-item">
-                                                <span className="label">Carrera</span>
-                                                <span className="cont-career">{carrera}</span>
+                                    <div className="revisor-data">
+                                        <div className='header-container-card'>
+                                            <Typography className="revisor-name-title" style={{ 
+                                                textDecoration: estado === 'Inactive' ? 'line-through' : 'none', 
+                                                color: estado === 'Inactive' ? '#94a3b8' : '#1e293b' 
+                                            }}>
+                                                {item.Name}
+                                            </Typography>
+                                            
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                                                <span className={`status ${estado === 'Inactive' ? 'status-inactive' : ''}`}>{estado}</span>
+                                                {isAdmin && (
+                                                    <IconButton 
+                                                        size="small" 
+                                                        style={{ 
+                                                            color: estado === 'Active' ? '#ef4444' : '#10b981', 
+                                                            backgroundColor: estado === 'Active' ? 'transparent' : '#dcfce7',
+                                                            padding: '4px' 
+                                                        }} 
+                                                        onClick={() => handleToggleEstado(item.ID, estado, tutoresAsig)}
+                                                    >
+                                                        {estado === 'Active' ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
+                                                    </IconButton>
+                                                )}
                                             </div>
-                                            <div className="info-item">
-                                                <span className="label">Tutores Asignados</span>
-                                                <span className="cont-horasA">{tutoresAsig}</span>
-                                            </div>
                                         </div>
-                                        <div className="info-row-card">
-                                            <div className="info-item">
-                                                <span className="label">Validaciones</span>
-                                                <span className="cont-completedV">{validaciones}</span>
+                                        
+                                        <div style={{ opacity: estado === 'Inactive' ? 0.5 : 1, filter: estado === 'Inactive' ? 'grayscale(100%)' : 'none' }}>
+                                            <div className="info-grid">
+                                                <div className="info-row-card">
+                                                    <div className="info-item">
+                                                        <span className="label">Carrera</span>
+                                                        <span className="cont-career">{carrera}</span>
+                                                    </div>
+                                                    <div className="info-item">
+                                                        <span className="label">Tutores Asignados</span>
+                                                        <span className="cont-horasA">{tutoresAsig}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="info-row-card">
+                                                    <div className="info-item">
+                                                        <span className="label">Validaciones</span>
+                                                        <span className="cont-completedV">{validaciones}</span>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <div className="bottom-actions" style={{ marginTop: '5px' }}>
-                                <button className="details" onClick={() => handleAbrirDetalles(item)}>Ver Detalles</button>
-                                <button className="details" onClick={() => handleAbrirTutores(item)}>Ver Tutores</button>
-                                <button className="assign">Ver cola de trabajo</button>
-                            </div>
-                        </Paper>
-                    );
-                })}
+                                <div className="bottom-actions" style={{ marginTop: '5px' }}>
+                                    <button className="details" onClick={() => handleAbrirDetalles(item)}>Ver Detalles</button>
+                                    <button className="details" onClick={() => handleAbrirTutores(item)}>Ver Tutores</button>
+                                    <button className="assign">Ver cola de trabajo</button>
+                                </div>
+                            </Paper>
+                        );
+                    })
+                ) : (
+                    <Typography style={{ gridColumn: '1 / -1', textAlign: 'center', marginTop: '20px', color: '#64748b', fontStyle: 'italic' }}>
+                        No se encontraron revisores con ese nombre o correo.
+                    </Typography>
+                )}
             </div>
 
             <Dialog open={openDetalles} onClose={() => setOpenDetalles(false)} maxWidth="sm" fullWidth PaperProps={{ className: 'modal-container' }}>

@@ -2,6 +2,49 @@ const express = require('express');
 const router = express.Router();
 const { supabaseAdmin } = require('../config/supabase');
 
+router.get('/notificaciones/:userId', async (req, res) => {
+    const { userId } = req.params;
+    try {
+        const { data: perfil, error: perfilError } = await supabaseAdmin
+            .from('UsersProfiles')
+            .select('ID')
+            .eq('ID', userId)
+            .single(); 
+
+        if (perfilError || !perfil) {
+            return res.status(404).json({ success: false, message: "Usuario no encontrado" });
+        }
+
+        const { data, error } = await supabaseAdmin
+            .from('Notifications')
+            .select('*')
+            .eq('ReceiverID', userId)
+            .order('CreatedAt', { ascending: false })
+            .limit(10);
+
+        if (error) throw error;
+        res.status(200).json({ success: true, notificaciones: data });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.put('/notificaciones/leer/:notifId', async (req, res) => {
+    const { notifId } = req.params;
+    try {
+        const { error } = await supabaseAdmin
+            .from('Notifications')
+            .update({ IsRead: true })
+            .eq('NotificationID', notifId);
+
+        if (error) throw error;
+        res.status(200).json({ success: true });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+
 router.get('/bitacoras/:reviewerId', async (req, res) => {
     const { reviewerId } = req.params;
     try {

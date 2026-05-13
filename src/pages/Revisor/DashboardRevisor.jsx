@@ -17,6 +17,7 @@ const getNotifStyle = (type) => {
     switch(type) {
         case 'SessionAgendada': return { icon: <EventAvailableIcon />, bg: '#e0f2fe', color: '#0284c7' };
         case 'MaterialSubido': return { icon: <CloudUploadIcon />, bg: '#f3e8ff', color: '#9333ea' };
+        case 'AlertaAdmin': return { icon: <NotificationsActiveIcon />, bg: '#fee2e2', color: '#ef4444' };
         default: return { icon: <NotificationsActiveIcon />, bg: '#f1f5f9', color: '#475569' };
     }
 };
@@ -45,13 +46,17 @@ export default function DashboardRevisor() {
         } catch (err) { console.error("Error cargando bitácoras:", err); }
 
         try {
-            const resNotif = await fetch(`http://localhost:8000/api/tutor/notificaciones/${reviewerId}`);
+            const resNotif = await fetch(`http://localhost:8000/api/revisor/notificaciones/${reviewerId}`);
             const dataNotif = await resNotif.json();
             if (dataNotif.success) setNotificaciones(dataNotif.notificaciones);
         } catch (err) { console.error("Error cargando notificaciones:", err); }
     };
 
-    useEffect(() => { fetchData(); }, [reviewerId]);
+    useEffect(() => { 
+        fetchData(); 
+        const intervalId = setInterval(fetchData, 30000);
+        return () => clearInterval(intervalId);
+    }, [reviewerId]);
 
     const handleEvaluar = async (row, nuevoEstado) => {
         try {
@@ -79,7 +84,7 @@ export default function DashboardRevisor() {
         setOpenNotifModal(true);
         if (!notif.IsRead) {
             try {
-                await fetch(`http://localhost:8000/api/tutor/notificaciones/leer/${notif.NotificationID}`, { method: 'PUT' });
+                await fetch(`http://localhost:8000/api/revisor/notificaciones/leer/${notif.NotificationID}`, { method: 'PUT' });
                 setNotificaciones(prev => prev.map(n => n.NotificationID === notif.NotificationID ? { ...n, IsRead: true } : n));
             } catch (error) { console.error(error); }
         }
