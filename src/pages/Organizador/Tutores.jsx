@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Typography, Avatar, Paper, Button, IconButton, Dialog, Chip, List, ListItem, ListItemText, Divider, TextField, InputAdornment } from '@mui/material';
+import { Typography, Avatar, Paper, Button, IconButton, Dialog, Chip, List, ListItem, ListItemText, Divider, TextField, InputAdornment, FormControl, Select, MenuItem } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import BlockIcon from '@mui/icons-material/Block'; 
@@ -23,6 +23,7 @@ export default function ControlTutores() {
     const [openModalRevisor, setOpenModalRevisor] = useState(false);
     
     const [searchTerm, setSearchTerm] = useState('');
+    const [filtroEstado, setFiltroEstado] = useState('Todos');
 
     const [openDetalles, setOpenDetalles] = useState(false);
     const [openCursos, setOpenCursos] = useState(false);
@@ -108,10 +109,12 @@ export default function ControlTutores() {
 
     const tutoresFiltrados = tutores.filter((item) => {
         const busqueda = searchTerm.toLowerCase();
-        return (
-            item.Name?.toLowerCase().includes(busqueda) || 
-            item.Email?.toLowerCase().includes(busqueda)
-        );
+        const matchesSearch = item.Name?.toLowerCase().includes(busqueda) || item.Email?.toLowerCase().includes(busqueda);
+        
+        const estadoActual = item.State || 'Active';
+        const matchesEstado = filtroEstado === 'Todos' || estadoActual === filtroEstado;
+
+        return matchesSearch && matchesEstado;
     }).sort((a, b) => {
         const estadoA = a.State || 'Active';
         const estadoB = b.State || 'Active';
@@ -178,7 +181,7 @@ export default function ControlTutores() {
 
             <hr className="divisor" style={{ marginBottom: '20px', border: 'none', borderTop: '1px solid #e2e8f0' }}/>
 
-            <div className='actions' style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: '25px' }}>
+            <div className='actions' style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: '25px', gap: '15px' }}>
                 <TextField 
                     placeholder="Buscar tutor por nombre o correo..."
                     variant="outlined"
@@ -194,6 +197,19 @@ export default function ControlTutores() {
                         style: { borderRadius: '12px', backgroundColor: '#fff', width: '350px' }
                     }}
                 />
+
+                <FormControl size="small" style={{ minWidth: 180 }}>
+                    <Select
+                        value={filtroEstado}
+                        onChange={(e) => setFiltroEstado(e.target.value)}
+                        displayEmpty
+                        style={{ borderRadius: '12px', backgroundColor: '#fff' }}
+                    >
+                        <MenuItem value="Todos">Todos los estados</MenuItem>
+                        <MenuItem value="Active">Activos</MenuItem>
+                        <MenuItem value="Inactive">Inactivos</MenuItem>
+                    </Select>
+                </FormControl>
             </div>
 
             <div className='cards-grid'>
@@ -300,12 +316,11 @@ export default function ControlTutores() {
                     })
                 ) : (
                     <Typography style={{ gridColumn: '1 / -1', textAlign: 'center', marginTop: '20px', color: '#64748b', fontStyle: 'italic' }}>
-                        No se encontraron tutores con ese nombre o correo.
+                        No se encontraron tutores con esos criterios.
                     </Typography>
                 )}
             </div>
 
-            {/* Modales - Se mantienen intactos */}
             <Dialog open={openDetalles} onClose={() => setOpenDetalles(false)} maxWidth="sm" fullWidth PaperProps={{ className: 'modal-container' }}>
                 <IconButton onClick={() => setOpenDetalles(false)} className="close-button"><CloseIcon /></IconButton>
                 <div className="modal-content">

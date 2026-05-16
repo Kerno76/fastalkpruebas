@@ -16,7 +16,8 @@ export default function ModalEstudiante({ open, onClose }) {
     Language: '',
     CurrentLevel: '', 
     Email: '',
-    Phone: ''
+    Phone: '',
+    Notes: ''
   });
 
   const handleChange = (e) => {
@@ -24,7 +25,7 @@ export default function ModalEstudiante({ open, onClose }) {
   };
 
   const handleRegistrar = async () => {
-    if (!formData.Name || !formData.Email || !formData.Language || !formData.BirthDate || !formData.CurrentLevel) {
+    if (!formData.Name || !formData.Email || !formData.Language || !formData.BirthDate || !formData.CurrentLevel || !formData.Phone) {
       toast.error("Todos los campos obligatorios deben llenarse.");
       return;
     }
@@ -42,7 +43,8 @@ export default function ModalEstudiante({ open, onClose }) {
           BirthDate: formData.BirthDate,
           language: formData.Language,
           CurrentLevel: formData.CurrentLevel, 
-          rol: "Student"
+          rol: "Student",
+          notes: formData.Notes
         })
       });
 
@@ -50,7 +52,7 @@ export default function ModalEstudiante({ open, onClose }) {
 
       if (data.success) {
         toast.success('¡Estudiante registrado con éxito!', { id: loadingToast, icon: '🎓' });
-        setFormData({ Name: '', BirthDate: '', Language: '', CurrentLevel: '', Email: '', Phone: '' });
+        setFormData({ Name: '', BirthDate: '', Language: '', CurrentLevel: '', Email: '', Phone: '', Notes: '' });
         onClose();
       } else {
         toast.error(data.message || 'Error al registrar', { id: loadingToast });
@@ -117,6 +119,13 @@ export default function ModalEstudiante({ open, onClose }) {
             <div className="form-group">
               <label>Número Telefónico</label>
               <TextField fullWidth placeholder="55 1234 5678" name="Phone" value={formData.Phone} onChange={handleChange} inputProps={{ maxLength: 10 }} />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group" style={{ width: '100%' }}>
+              <label>Notas (Opcional)</label>
+              <TextField fullWidth multiline rows={2} placeholder="Información adicional del estudiante..." variant="outlined" name="Notes" value={formData.Notes} onChange={handleChange} />
             </div>
           </div>
 

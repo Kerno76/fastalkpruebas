@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Chip, Snackbar, Alert, Select, MenuItem, Box, Avatar, Dialog, IconButton, Grid } from '@mui/material';
+import { Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Chip, Snackbar, Alert, Box, Avatar, Dialog, IconButton, Grid, TextField, InputAdornment, FormControlLabel, Checkbox } from '@mui/material';
 
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
@@ -8,6 +8,9 @@ import AssignmentIcon from '@mui/icons-material/Assignment';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import EventAvailableIcon from '@mui/icons-material/EventAvailable'; 
 import CloudUploadIcon from '@mui/icons-material/CloudUpload'; 
+import SearchIcon from '@mui/icons-material/Search';
+import HistoryIcon from '@mui/icons-material/History';
+import PendingActionsIcon from '@mui/icons-material/PendingActions';
 
 import '../../styles/App.css';
 import '../../styles/Tutor/RegistroSesiones.css'; 
@@ -22,12 +25,30 @@ const getNotifStyle = (type) => {
     }
 };
 
+const getCleanComment = (comments) => {
+    if (!comments) return 'Sin comentarios adicionales.';
+    const split = comments.split('Comentarios: ');
+    return split.length > 1 ? split[1] : comments;
+};
+
+const getEvaluador = (comments) => {
+    if (!comments) return '-';
+    const match = comments.match(/Evaluado por: (.*?)\n/);
+    return match ? match[1] : '-';
+};
+
 export default function DashboardRevisor() {
     const user = JSON.parse(localStorage.getItem('user'));
-    const reviewerId = user?.ID;
+    const isReviewer = user?.Rol === 'Reviewer';
+    const isAdmin = user?.Rol === 'Admin';
+    const userId = user?.ID;
 
     const [evidencias, setEvidencias] = useState([]);
-    const [filtro, setFiltro] = useState('Pendiente');
+    const [viewMode, setViewMode] = useState('Pendientes'); 
+    const [searchTerm, setSearchTerm] = useState('');
+    
+    // Estado para guardar los comentarios escritos directamente en la tabla
+    const [inlineComments, setInlineComments] = useState({});
     
     const [openAlert, setOpenAlert] = useState({ show: false, message: '', type: 'success' });
     const [notificaciones, setNotificaciones] = useState([]);
@@ -37,16 +58,23 @@ export default function DashboardRevisor() {
     const [openDetailsModal, setOpenDetailsModal] = useState(false);
     const [sessionDetails, setSessionDetails] = useState(null);
 
+    const [evalModal, setEvalModal] = useState({ open: false, row: null, status: '', comments: '', allowResubmit: true });
+
     const fetchData = async () => {
-        if (!reviewerId) return;
+        if (!userId) return;
+
         try {
-            const resBit = await fetch(`http://localhost:8000/api/revisor/bitacoras/${reviewerId}`);
+            const apiUrl = isAdmin 
+                ? `http://localhost:8000/api/admin/todas-bitacoras`
+                : `http://localhost:8000/api/revisor/bitacoras/${userId}`;
+
+            const resBit = await fetch(apiUrl);
             const dataBit = await resBit.json();
             if (dataBit.success) setEvidencias(dataBit.bitacoras);
         } catch (err) { console.error("Error cargando bitácoras:", err); }
 
         try {
-            const resNotif = await fetch(`http://localhost:8000/api/revisor/notificaciones/${reviewerId}`);
+            const resNotif = await fetch(`http://localhost:8000/api/revisor/notificaciones/${userId}`);
             const dataNotif = await resNotif.json();
             if (dataNotif.success) setNotificaciones(dataNotif.notificaciones);
         } catch (err) { console.error("Error cargando notificaciones:", err); }
@@ -56,9 +84,20 @@ export default function DashboardRevisor() {
         fetchData(); 
         const intervalId = setInterval(fetchData, 30000);
         return () => clearInterval(intervalId);
-    }, [reviewerId]);
+    }, [userId, isAdmin]);
 
-    const handleEvaluar = async (row, nuevoEstado) => {
+    // Cuando abrimos el modal de confirmación, tomamos el comentario que haya escrito en la tabla
+    const openEvalModalDialog = (row, status) => {
+        const rowComment = inlineComments[row.id] || '';
+        setEvalModal({ open: true, row, status, comments: rowComment, allowResubmit: true });
+    };
+
+    const closeEvalModal = () => {
+        setEvalModal({ open: false, row: null, status: '', comments: '', allowResubmit: true });
+    };
+
+    const handleEvaluarSubmit = async () => {
+        const { row, status, comments, allowResubmit } = evalModal;
         try {
             const res = await fetch("http://localhost:8000/api/revisor/evaluar-bitacora", {
                 method: "PUT",
@@ -66,14 +105,25 @@ export default function DashboardRevisor() {
                 body: JSON.stringify({
                     SessionID: row.id,
                     TutorID: row.tutorId,
-                    ReviewerID: reviewerId,
-                    NewStatus: nuevoEstado,
-                    Topic: row.topic
+                    ReviewerID: userId, 
+                    NewStatus: status,
+                    Topic: row.topic,
+                    ReviewerComments: comments,
+                    allowResubmit: allowResubmit
                 })
             });
             const data = await res.json();
             if (data.success) {
-                setOpenAlert({ show: true, message: `Sesión marcada como ${nuevoEstado}`, type: nuevoEstado === 'Aprobado' ? 'success' : 'error' });
+                setOpenAlert({ show: true, message: `Sesión marcada como ${status}`, type: status === 'Aprobado' ? 'success' : 'error' });
+                
+                // Limpiamos el comentario de la tabla para esa fila
+                setInlineComments(prev => {
+                    const next = { ...prev };
+                    delete next[row.id];
+                    return next;
+                });
+                
+                closeEvalModal();
                 fetchData();
             }
         } catch (err) { console.error(err); }
@@ -95,29 +145,79 @@ export default function DashboardRevisor() {
         setOpenDetailsModal(true);
     };
 
-    const evidenciasMostradas = evidencias.filter(item => item.status === filtro);
+    let evidenciasMostradas = evidencias.filter(item => {
+        if (viewMode === 'Pendientes') return item.status === 'Pendiente';
+        return item.status !== 'Pendiente'; 
+    });
+
+    if (searchTerm.trim() !== '') {
+        const busqueda = searchTerm.toLowerCase();
+        evidenciasMostradas = evidenciasMostradas.filter(e => 
+            e.tutor.toLowerCase().includes(busqueda) || 
+            e.topic.toLowerCase().includes(busqueda) ||
+            e.course.toLowerCase().includes(busqueda)
+        );
+    }
 
     return (
         <div className='mainContent' style={{ paddingBottom: '50px' }}>
             
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <h2 style={{ margin: 0, fontSize: '1.8rem', fontWeight: 'bold', color: 'var(--text-main)' }}>Aprobaciones Pendientes</h2>
+                    <h2 style={{ margin: 0, fontSize: '1.8rem', fontWeight: 'bold', color: 'var(--text-main)' }}>
+                        {isAdmin ? 'Gestión Global de Bitácoras' : 'Aprobaciones Pendientes'}
+                    </h2>
                     <p className='--subtitle-main' style={{ margin: 0, fontSize: '0.95rem' }}>
-                        Revisa las bitacoras enviadas por tus tutores asignados para acreditar sus horas.
+                        {isAdmin 
+                            ? 'Monitorea el trabajo de todos los tutores y el estatus de sus revisiones.' 
+                            : 'Revisa las bitácoras enviadas por tus tutores asignados.'}
                     </p>
                 </div>
 
-                <Select 
-                    value={filtro} 
-                    onChange={(e) => setFiltro(e.target.value)} 
-                    size="small" 
-                    style={{ backgroundColor: 'white', minWidth: '160px', borderRadius: '8px' }}
-                >
-                    <MenuItem value="Pendiente">Pendientes</MenuItem>
-                    <MenuItem value="Aprobado">Aprobadas</MenuItem>
-                    <MenuItem value="Rechazado">Rechazadas</MenuItem>
-                </Select>
+                <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                    {isAdmin && (
+                        <TextField 
+                            placeholder="Buscar tutor, curso o tema..."
+                            variant="outlined"
+                            size="small"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <SearchIcon style={{ color: '#64748b' }} />
+                                    </InputAdornment>
+                                ),
+                                style: { borderRadius: '10px', backgroundColor: '#fff', width: '250px' }
+                            }}
+                        />
+                    )}
+
+                    <div style={{ display: 'flex', backgroundColor: '#e2e8f0', borderRadius: '10px', padding: '4px' }}>
+                        <Button 
+                            startIcon={<PendingActionsIcon />}
+                            onClick={() => setViewMode('Pendientes')}
+                            style={{ 
+                                backgroundColor: viewMode === 'Pendientes' ? '#fff' : 'transparent',
+                                color: viewMode === 'Pendientes' ? '#0f172a' : '#64748b',
+                                textTransform: 'none', fontWeight: 600, borderRadius: '8px', boxShadow: viewMode === 'Pendientes' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                            }}
+                        >
+                            Pendientes
+                        </Button>
+                        <Button 
+                            startIcon={<HistoryIcon />}
+                            onClick={() => setViewMode('Historial')}
+                            style={{ 
+                                backgroundColor: viewMode === 'Historial' ? '#fff' : 'transparent',
+                                color: viewMode === 'Historial' ? '#0f172a' : '#64748b',
+                                textTransform: 'none', fontWeight: 600, borderRadius: '8px', boxShadow: viewMode === 'Historial' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                            }}
+                        >
+                            Historial
+                        </Button>
+                    </div>
+                </div>
             </div>
 
             <hr className="divisor" style={{ marginBottom: '25px', borderTop: '1px solid #e0e4e8' }} />
@@ -130,6 +230,17 @@ export default function DashboardRevisor() {
                             <TableCell style={{ fontWeight: 'bold', color: '#4f566b' }}>Fecha</TableCell>
                             <TableCell style={{ fontWeight: 'bold', color: '#4f566b' }}>Tema y Resumen</TableCell>
                             <TableCell style={{ fontWeight: 'bold', color: '#4f566b', textAlign: 'center' }}>Estatus</TableCell>
+                            
+                            {/* Columna de Comentarios SOLO en Pendientes */}
+                            {viewMode === 'Pendientes' && (
+                                <TableCell style={{ fontWeight: 'bold', color: '#4f566b', width: '25%' }}>Comentarios</TableCell>
+                            )}
+
+                            {/* Columna de Evaluador SOLO en Historial */}
+                            {viewMode === 'Historial' && (
+                                <TableCell style={{ fontWeight: 'bold', color: '#4f566b', textAlign: 'center' }}>Evaluador</TableCell>
+                            )}
+                            
                             <TableCell style={{ fontWeight: 'bold', color: '#4f566b', textAlign: 'center' }}>Acciones</TableCell>
                         </TableRow>
                     </TableHead>
@@ -141,12 +252,17 @@ export default function DashboardRevisor() {
                                 <TableCell>
                                     <Typography className='tut-info' style={{ fontWeight: 'bold', fontSize: '0.95rem' }}>{row.tutor}</Typography>
                                     <Typography className='course-aprob' style={{ fontSize: '0.85rem', color: '#64748b' }}>{row.course}</Typography>
-                                    <Typography style={{ fontSize: '0.8rem', color: '#3b82f6', fontWeight: 'bold', marginTop: '4px' }}>{row.duration} horas</Typography>
+                                    {isAdmin && viewMode === 'Historial' && (
+                                        <Typography style={{ fontSize: '0.75rem', color: '#8b5cf6', fontWeight: 'bold', marginTop: '4px' }}>Rev Asignado: {row.revisorName}</Typography>
+                                    )}
                                 </TableCell>
                                 
-                                <TableCell className='topic-date'>{row.date}</TableCell>
+                                <TableCell className='topic-date'>
+                                    {row.date}
+                                    <Typography style={{ fontSize: '0.8rem', color: '#3b82f6', fontWeight: 'bold', marginTop: '4px' }}>{row.duration} hrs</Typography>
+                                </TableCell>
                                 
-                                <TableCell style={{ maxWidth: '300px' }}>
+                                <TableCell style={{ maxWidth: '250px' }}>
                                     <Typography style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#1e293b' }}>{row.topic}</Typography>
                                     <Typography style={{ fontSize: '0.8rem', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                         {row.description}
@@ -158,6 +274,36 @@ export default function DashboardRevisor() {
                                     {row.status === 'Aprobado' && <Chip label="Aprobado" size="small" style={{ backgroundColor: '#dcfce3', color: '#16a34a', fontWeight: 'bold' }} />}
                                     {row.status === 'Rechazado' && <Chip label="Rechazado" size="small" style={{ backgroundColor: '#fee2e2', color: '#ef4444', fontWeight: 'bold' }} />}
                                 </TableCell>
+
+                                {/* Celda de Comentarios en línea para calificación rápida */}
+                                {viewMode === 'Pendientes' && (
+                                    <TableCell>
+                                        <TextField
+                                            fullWidth
+                                            multiline
+                                            rows={2}
+                                            placeholder="Notas de evaluación..."
+                                            size="small"
+                                            value={inlineComments[row.id] || ''}
+                                            onChange={(e) => setInlineComments({ ...inlineComments, [row.id]: e.target.value })}
+                                            sx={{ 
+                                                backgroundColor: '#f8fafc', 
+                                                borderRadius: '8px', 
+                                                '& fieldset': { borderColor: '#e2e8f0' },
+                                                '& .MuiInputBase-input': { fontSize: '0.85rem' }
+                                            }}
+                                        />
+                                    </TableCell>
+                                )}
+
+                                {/* Datos de Evaluación Visibles SOLO en Historial */}
+                                {viewMode === 'Historial' && (
+                                    <TableCell align="center">
+                                        <Typography style={{ fontSize: '0.85rem', color: '#475569', fontWeight: 600 }}>
+                                            {getEvaluador(row.reviewerComments)}
+                                        </Typography>
+                                    </TableCell>
+                                )}
                                 
                                 <TableCell align="center">
                                     <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
@@ -183,11 +329,11 @@ export default function DashboardRevisor() {
                                         </Button>
                                         
                                         {row.status === 'Pendiente' && (
-                                            <>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                                 <Button 
                                                     variant="contained" 
                                                     size="small" 
-                                                    onClick={() => handleEvaluar(row, 'Aprobado')}
+                                                    onClick={() => openEvalModalDialog(row, 'Aprobado')}
                                                     style={{ textTransform: 'none', borderRadius: '6px', backgroundColor: '#10b981', boxShadow: 'none', minWidth: '40px', padding: '4px' }}
                                                 >
                                                     <CheckIcon fontSize="small"/>
@@ -195,12 +341,12 @@ export default function DashboardRevisor() {
                                                 <Button 
                                                     variant="contained" 
                                                     size="small" 
-                                                    onClick={() => handleEvaluar(row, 'Rechazado')}
+                                                    onClick={() => openEvalModalDialog(row, 'Rechazado')}
                                                     style={{ textTransform: 'none', borderRadius: '6px', backgroundColor: '#ef4444', boxShadow: 'none', minWidth: '40px', padding: '4px' }}
                                                 >
                                                     <CloseIcon fontSize="small"/>
                                                 </Button>
-                                            </>
+                                            </div>
                                         )}
                                     </div>
                                 </TableCell>
@@ -212,7 +358,7 @@ export default function DashboardRevisor() {
 
                 {evidenciasMostradas.length === 0 && (
                     <div style={{ padding: '40px', textAlign: 'center', color: '#8792a2' }}>
-                        No hay bitacoras en esta seccion.
+                        No hay bitácoras en esta sección.
                     </div>
                 )}
             </TableContainer>
@@ -240,11 +386,55 @@ export default function DashboardRevisor() {
                                 </Paper>
                             );
                         }) : (
-                            <p style={{ textAlign: 'center', color: '#94a3b8', padding: '20px', backgroundColor: '#f8fafc', borderRadius: '12px' }}>Aun no tienes notificaciones.</p>
+                            <p style={{ textAlign: 'center', color: '#94a3b8', padding: '20px', backgroundColor: '#f8fafc', borderRadius: '12px' }}>Aún no tienes notificaciones.</p>
                         )}
                     </div>
                 </div>
             </div>
+
+            {/* MODAL DE EVALUACIÓN Y COMENTARIOS */}
+            <Dialog open={evalModal.open} onClose={closeEvalModal} maxWidth="xs" fullWidth PaperProps={{ style: { borderRadius: '16px', padding: '10px' } }}>
+                <Box p={2}>
+                    <Typography variant="h6" style={{ fontWeight: 800, color: '#1e293b', marginBottom: '10px' }}>
+                        Confirmar Evaluación ({evalModal.status})
+                    </Typography>
+                    <Typography variant="body2" style={{ color: '#64748b', marginBottom: '20px' }}>
+                        Verifica tus comentarios antes de enviarlos. {evalModal.status === 'Rechazado' ? 'Este campo es altamente recomendado para rechazos.' : '(Opcional)'}
+                    </Typography>
+                    <TextField
+                        fullWidth
+                        multiline
+                        rows={4}
+                        variant="outlined"
+                        placeholder="Escribe tus comentarios aquí..."
+                        value={evalModal.comments}
+                        onChange={(e) => setEvalModal({ ...evalModal, comments: e.target.value })}
+                        style={{ marginBottom: '20px' }}
+                    />
+                    
+                    {evalModal.status === 'Rechazado' && (
+                        <FormControlLabel
+                            control={<Checkbox checked={evalModal.allowResubmit} onChange={(e) => setEvalModal({...evalModal, allowResubmit: e.target.checked})} />}
+                            label={<Typography variant="body2" style={{ fontWeight: 600, color: '#1e293b' }}>Permitir que el tutor reenvíe la bitácora corregida</Typography>}
+                            style={{ marginBottom: '20px', backgroundColor: '#f8fafc', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', width: '100%', margin: '0 0 20px 0' }}
+                        />
+                    )}
+
+                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                        <Button variant="outlined" onClick={closeEvalModal} style={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, color: '#64748b', borderColor: '#cbd5e1' }}>
+                            Cancelar
+                        </Button>
+                        <Button 
+                            variant="contained" 
+                            color={evalModal.status === 'Aprobado' ? 'success' : 'error'} 
+                            onClick={handleEvaluarSubmit} 
+                            style={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, boxShadow: 'none' }}
+                        >
+                            {evalModal.status === 'Aprobado' ? 'Aprobar Bitácora' : 'Rechazar Bitácora'}
+                        </Button>
+                    </div>
+                </Box>
+            </Dialog>
 
             <Dialog open={openDetailsModal} onClose={() => setOpenDetailsModal(false)} maxWidth="md" fullWidth PaperProps={{ style: { borderRadius: '16px' } }}>
                 {sessionDetails && (
@@ -336,6 +526,22 @@ export default function DashboardRevisor() {
                             </Table>
                         </TableContainer>
 
+                        {sessionDetails.reviewerComments && (
+                            <>
+                                <Typography style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '16px', color: '#0f172a', marginTop: '32px' }}>Notas de Evaluación</Typography>
+                                <div style={{ backgroundColor: sessionDetails.status === 'Rechazado' ? '#fee2e2' : '#f1f5f9', padding: '24px', borderRadius: '12px', border: sessionDetails.status === 'Rechazado' ? '1px solid #fca5a5' : '1px solid #cbd5e1', marginBottom: '32px' }}>
+                                    
+                                    <Typography style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#475569', marginBottom: '10px' }}>
+                                        {getEvaluador(sessionDetails.reviewerComments)}
+                                    </Typography>
+                                    
+                                    <Typography style={{ fontSize: '0.95rem', lineHeight: 1.6, whiteSpace: 'pre-wrap', color: sessionDetails.status === 'Rechazado' ? '#991b1b' : '#334155' }}>
+                                        {getCleanComment(sessionDetails.reviewerComments)}
+                                    </Typography>
+                                </div>
+                            </>
+                        )}
+
                         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                             <Button variant="outlined" onClick={() => setOpenDetailsModal(false)} style={{ color: '#475569', borderColor: '#cbd5e1', textTransform: 'none', fontWeight: 600, padding: '8px 24px', borderRadius: '8px' }}>
                                 Cerrar Detalles
@@ -344,39 +550,6 @@ export default function DashboardRevisor() {
                     </div>
                 )}
             </Dialog>
-
-            <Dialog open={openNotifModal} onClose={() => setOpenNotifModal(false)} maxWidth="xs" fullWidth PaperProps={{ style: { borderRadius: '16px', padding: '10px' } }}>
-                {selectedNotif && (
-                    <div style={{ padding: '20px', position: 'relative' }}>
-                        <IconButton onClick={() => setOpenNotifModal(false)} style={{ position: 'absolute', right: 10, top: 10 }}>
-                            <CloseIcon />
-                        </IconButton>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
-                            <Avatar style={{ backgroundColor: getNotifStyle(selectedNotif.Type).bg, color: getNotifStyle(selectedNotif.Type).color, width: 50, height: 50 }}>
-                                {getNotifStyle(selectedNotif.Type).icon}
-                            </Avatar>
-                            <Typography variant="h6" style={{ fontWeight: 800, color: '#1e293b', lineHeight: 1.2 }}>{selectedNotif.Title}</Typography>
-                        </div>
-                        
-                        <span className="notif-modal-date">{new Date(selectedNotif.CreatedAt.replace(' ', 'T') + 'Z').toLocaleString()}</span>
-                        
-                        <Typography variant="body1" style={{ color: '#475569', lineHeight: 1.6, marginBottom: '25px', backgroundColor: '#f8fafc', padding: '15px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                            {selectedNotif.Message}
-                        </Typography>
-                    </div>
-                )}
-            </Dialog>
-
-            <Snackbar 
-                open={openAlert.show} 
-                autoHideDuration={3000} 
-                onClose={() => setOpenAlert({ ...openAlert, show: false })}
-                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-            >
-                <Alert onClose={() => setOpenAlert({ ...openAlert, show: false })} severity={openAlert.type} sx={{ width: '100%', borderRadius: '8px' }}>
-                    {openAlert.message}
-                </Alert>
-            </Snackbar>
 
         </div>
     );

@@ -22,6 +22,7 @@ export default function ControlEstudiantes() {
     const [openModal, setOpenModal] = useState(false);
 
     const [searchTerm, setSearchTerm] = useState('');
+    const [filtroEstado, setFiltroEstado] = useState('Todos');
 
     const [openDetalles, setOpenDetalles] = useState(false);
     const [openAsignar, setOpenAsignar] = useState(false);
@@ -35,7 +36,7 @@ export default function ControlEstudiantes() {
             const data = await response.json();
             if (Array.isArray(data)) setEstudiantes(data);
         } catch (error) {
-            console.error("Error al obtener estudiantes:", error);
+            console.error(error);
         }
     };
 
@@ -45,7 +46,7 @@ export default function ControlEstudiantes() {
             const data = await response.json();
             if (data.success) setCursosDisponibles(data.cursos);
         } catch (error) {
-            console.error("Error al obtener cursos:", error);
+            console.error(error);
         }
     };
 
@@ -133,15 +134,17 @@ export default function ControlEstudiantes() {
     const estNivel = estData?.CurrentLevel || '';
 
     const cursosCompatibles = cursosDisponibles.filter(c => 
-        c.Language?.toUpperCase() === estIdioma.toUpperCase() && c.Level === estNivel
+        c.Language?.toUpperCase() === estIdioma.toUpperCase()
     );
 
     const estudiantesFiltrados = estudiantes.filter((item) => {
         const busqueda = searchTerm.toLowerCase();
-        return (
-            item.Name?.toLowerCase().includes(busqueda) || 
-            item.Email?.toLowerCase().includes(busqueda)
-        );
+        const matchesSearch = item.Name?.toLowerCase().includes(busqueda) || item.Email?.toLowerCase().includes(busqueda);
+        
+        const estadoActual = item.State || 'Active';
+        const matchesEstado = filtroEstado === 'Todos' || estadoActual === filtroEstado;
+
+        return matchesSearch && matchesEstado;
     }).sort((a, b) => {
         const estadoA = a.State || 'Active';
         const estadoB = b.State || 'Active';
@@ -205,7 +208,7 @@ export default function ControlEstudiantes() {
 
             <hr className="divisor" style={{ marginBottom: '20px', border: 'none', borderTop: '1px solid #e2e8f0' }}/>
             
-            <div className='actions' style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: '25px' }}>
+            <div className='actions' style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: '25px', gap: '15px' }}>
                 <TextField 
                     placeholder="Buscar estudiante por nombre o correo..."
                     variant="outlined"
@@ -221,12 +224,24 @@ export default function ControlEstudiantes() {
                         style: { borderRadius: '12px', backgroundColor: '#fff', width: '350px' }
                     }}
                 />
+                
+                <FormControl size="small" style={{ minWidth: 180 }}>
+                    <Select
+                        value={filtroEstado}
+                        onChange={(e) => setFiltroEstado(e.target.value)}
+                        displayEmpty
+                        style={{ borderRadius: '12px', backgroundColor: '#fff' }}
+                    >
+                        <MenuItem value="Todos">Todos los estados</MenuItem>
+                        <MenuItem value="Active">Activos</MenuItem>
+                        <MenuItem value="Inactive">Inactivos</MenuItem>
+                    </Select>
+                </FormControl>
             </div>
 
             <div className='cards-grid'>
                 {estudiantesFiltrados.length > 0 ? (
                     estudiantesFiltrados.map((item) => {
-                        // Protección en el listado
                         const rawStudentList = item.Students || {};
                         const studentDataList = Array.isArray(rawStudentList) ? (rawStudentList[0] || {}) : rawStudentList; 
                         
@@ -244,16 +259,19 @@ export default function ControlEstudiantes() {
                                 style={{ 
                                     backgroundColor: estado === 'Inactive' ? '#f8fafc' : '#ffffff',
                                     border: estado === 'Inactive' ? '1px solid #e2e8f0' : '1px solid #e0e4e8',
-                                    transition: 'all 0.3s ease'
+                                    transition: 'all 0.3s ease',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    height: '100%'
                                 }}
                             >
-                                <div className="card-top" style={{ alignItems: 'flex-start' }}>
+                                <div className="card-top" style={{ alignItems: 'flex-start', flexGrow: 1 }}>
                                     
                                     <Avatar className="student-avatar" style={{ opacity: estado === 'Inactive' ? 0.4 : 1, filter: estado === 'Inactive' ? 'grayscale(100%)' : 'none' }}>
                                         <AccountCircleIcon style={{ fontSize: '60px', color: '#697386' }} />
                                     </Avatar>
 
-                                    <div className="student-data">
+                                    <div className="student-data" style={{ width: '100%' }}>
                                         <div className='header-container-card'>
                                             
                                             <Typography className="student-name-title" style={{ 
@@ -306,24 +324,21 @@ export default function ControlEstudiantes() {
                                     </div>
                                 </div>
 
-                                <div className="bottom-actions" style={{ flexDirection: 'column', gap: '8px', marginTop: '5px' }}>
-                                    <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
-                                        <button className="details" style={{ flex: 1, padding: '8px', fontSize: '0.85rem' }} onClick={() => handleAbrirDetalles(item)}>Ver Detalles</button>
-                                        
-                                        {estaEnrolado ? (
-                                            <button className="assign" style={{ flex: 1, padding: '8px', fontSize: '0.85rem', backgroundColor: '#f9fafb', color: '#4f566b', border: '1px solid #e0e4e8', opacity: estado === 'Inactive' ? 0.5 : 1 }} disabled={estado === 'Inactive'} onClick={() => handleAbrirVerCurso(item)}>Ver Curso</button>
-                                        ) : (
-                                            <button className="assign" style={{ flex: 1, padding: '8px', fontSize: '0.85rem', opacity: estado === 'Inactive' ? 0.5 : 1 }} onClick={() => handleAbrirAsignar(item)} disabled={estado === 'Inactive'}>Asignar Curso</button>
-                                        )}
-                                    </div>
-                                    <button className="assign" style={{ width: '100%', padding: '10px', opacity: estado === 'Inactive' ? 0.5 : 1 }} disabled={estado === 'Inactive'}>Asignar Calificación</button>
+                                <div className="bottom-actions" style={{ display: 'flex', gap: '8px', marginTop: 'auto', width: '100%', paddingTop: '15px' }}>
+                                    <button className="details" style={{ flex: 1, padding: '8px', fontSize: '0.85rem' }} onClick={() => handleAbrirDetalles(item)}>Ver Detalles</button>
+                                    
+                                    {estaEnrolado ? (
+                                        <button className="assign" style={{ flex: 1, padding: '8px', fontSize: '0.85rem', backgroundColor: '#f9fafb', color: '#4f566b', border: '1px solid #e0e4e8', opacity: estado === 'Inactive' ? 0.5 : 1 }} disabled={estado === 'Inactive'} onClick={() => handleAbrirVerCurso(item)}>Ver Curso</button>
+                                    ) : (
+                                        <button className="assign" style={{ flex: 1, padding: '8px', fontSize: '0.85rem', opacity: estado === 'Inactive' ? 0.5 : 1 }} onClick={() => handleAbrirAsignar(item)} disabled={estado === 'Inactive'}>Asignar Curso</button>
+                                    )}
                                 </div>
                             </Paper>
                         );
                     })
                 ) : (
                     <Typography style={{ gridColumn: '1 / -1', textAlign: 'center', marginTop: '20px', color: '#64748b', fontStyle: 'italic' }}>
-                        No se encontraron estudiantes con ese nombre o correo.
+                        No se encontraron estudiantes con esos criterios.
                     </Typography>
                 )}
             </div>
@@ -361,6 +376,14 @@ export default function ControlEstudiantes() {
                                     <Typography variant="caption" style={{ fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Nivel Actual</Typography>
                                     <Typography variant="body1" style={{ fontWeight: 700, color: '#334155' }}>{estNivel || 'N/A'}</Typography>
                                 </Paper>
+                                <Paper elevation={0} style={{ padding: '15px', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
+                                    <Typography variant="caption" style={{ fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Fecha de Registro</Typography>
+                                    <Typography variant="body1" style={{ fontWeight: 700, color: '#334155' }}>{estData?.DateJoined || 'N/A'}</Typography>
+                                </Paper>
+                                <Paper elevation={0} style={{ padding: '15px', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
+                                    <Typography variant="caption" style={{ fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Notas</Typography>
+                                    <Typography variant="body1" style={{ fontWeight: 700, color: '#334155' }}>{estData?.Notes || 'Sin notas'}</Typography>
+                                </Paper>
                             </div>
 
                             <Paper elevation={0} style={{ padding: '15px', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
@@ -386,22 +409,22 @@ export default function ControlEstudiantes() {
                                 <Typography variant="h6" style={{ color: '#0c4a6e', fontWeight: 800 }}>{estudianteSeleccionado.Name}</Typography>
                                 <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
                                     <Chip label={estIdioma || 'N/A'} size="small" style={{ backgroundColor: '#e0f2fe', color: '#0284c7', fontWeight: 600 }} />
-                                    <Chip label={`Nivel ${estNivel || 'N/A'}`} size="small" style={{ backgroundColor: '#e0f2fe', color: '#0284c7', fontWeight: 600 }} />
+                                    <Chip label={`Nivel Real: ${estNivel || 'N/A'}`} size="small" style={{ backgroundColor: '#e0f2fe', color: '#0284c7', fontWeight: 600 }} />
                                 </div>
                             </div>
 
                             <div className="form-group" style={{ width: '100%' }}>
-                                <label>Cursos Compatibles Disponibles</label>
+                                <label>Cursos Compatibles Disponibles (Mismo Idioma)</label>
                                 <FormControl fullWidth>
                                     <Select displayEmpty value={cursoElegido} onChange={(e) => setCursoElegido(e.target.value)} input={<OutlinedInput sx={{ borderRadius: '12px' }} />}>
                                         <MenuItem value="" disabled>Selecciona un curso</MenuItem>
                                         {cursosCompatibles.map((c) => (
                                             <MenuItem key={c.CourseID} value={c.CourseID}>
-                                                {c.Name} {c.Period ? `(${c.Period})` : ''} - Tutor: {c.tutorName}
+                                                {c.Name} {c.Period ? `(${c.Period})` : ''} - Nivel: {c.Level} - Tutor: {c.tutorName}
                                             </MenuItem>
                                         ))}
                                         {cursosCompatibles.length === 0 && (
-                                            <MenuItem disabled>No hay cursos de {estIdioma} Nivel {estNivel} disponibles.</MenuItem>
+                                            <MenuItem disabled>No hay cursos de {estIdioma} disponibles.</MenuItem>
                                         )}
                                     </Select>
                                 </FormControl>

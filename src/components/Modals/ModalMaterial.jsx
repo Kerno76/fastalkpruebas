@@ -7,6 +7,7 @@ import '../../styles/Modals/Modales.css';
 
 export default function ModalMaterial({ open, onClose, onSuccess }) {
   const user = JSON.parse(localStorage.getItem('user'));
+  const isAdmin = user?.Rol === 'Admin';
   
   const [formData, setFormData] = useState({
     Topic: '',
@@ -21,7 +22,11 @@ export default function ModalMaterial({ open, onClose, onSuccess }) {
     if (open && user?.ID) {
       const fetchCursos = async () => {
         try {
-          const res = await fetch(`http://localhost:8000/api/tutor/tutor-cursos/${user.ID}`);
+          const url = isAdmin 
+            ? "http://localhost:8000/api/admin/cursos-list" 
+            : `http://localhost:8000/api/tutor/tutor-cursos/${user.ID}`;
+            
+          const res = await fetch(url);
           const data = await res.json();
           if (data.success) setCursos(data.cursos);
         } catch (error) {
@@ -33,7 +38,7 @@ export default function ModalMaterial({ open, onClose, onSuccess }) {
       setFormData({ Topic: '', Level: '', Language: '', CourseID: '' });
       setFile(null);
     }
-  }, [open, user?.ID]);
+  }, [open, user?.ID, isAdmin]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -129,7 +134,9 @@ export default function ModalMaterial({ open, onClose, onSuccess }) {
               <label>Asignar a Curso</label>
               <FormControl fullWidth>
                 <Select name="CourseID" value={formData.CourseID} onChange={handleCourseChange} displayEmpty disabled={cursos.length === 0}>
-                  <MenuItem value="" disabled>{cursos.length === 0 ? 'No tienes cursos activos' : 'Selecciona el curso'}</MenuItem>
+                  <MenuItem value="" disabled>
+                    {cursos.length === 0 ? (isAdmin ? 'No hay cursos registrados' : 'No tienes cursos activos') : 'Selecciona el curso'}
+                  </MenuItem>
                   {cursos.map(c => (
                     <MenuItem key={c.CourseID} value={c.CourseID}>
                       {c.Name} ({c.Language} - Nivel {c.Level})

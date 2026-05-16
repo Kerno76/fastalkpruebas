@@ -118,12 +118,13 @@ router.get('/estudiantes-curso/:courseId', async (req, res) => {
 router.get('/materiales/:tutorId', async (req, res) => {
     const { tutorId } = req.params;
     try {
-        const { data: materiales } = await supabaseAdmin.from('Repository').select('*').order('Rating', { ascending: false });
+        const { data: materiales } = await supabaseAdmin.from('Repository').select('*, Courses(Name)').order('Rating', { ascending: false });
         const { data: profiles } = await supabaseAdmin.from('UsersProfiles').select('ID, Name');
         const { data: misVotos } = await supabaseAdmin.from('MaterialRatings').select('MaterialID, Score').eq('TutorID', tutorId);
 
         const formatData = materiales.map(m => ({
             ...m,
+            courseName: m.Courses?.Name || 'Material General',
             tutorName: profiles.find(p => p.ID === m.TutorID)?.Name || 'Desconocido',
             miVoto: misVotos.find(v => v.MaterialID === m.MaterialID)?.Score || 0
         }));
@@ -361,16 +362,37 @@ router.put('/completar-sesion', async (req, res) => {
 
         const { data: sesionData } = await supabaseAdmin.from('Session').select('ReviewerID, Topic, TutorID').eq('SessionID', SessionID).single();
         const { data: tutorProfile } = await supabaseAdmin.from('UsersProfiles').select('Name').eq('ID', sesionData.TutorID).single();
+        
+        const { data: admins } = await supabaseAdmin.from('UsersProfiles').select('ID').eq('Rol', 'Admin');
+
+        let notificaciones = [];
 
         if (sesionData && sesionData.ReviewerID) {
-            await supabaseAdmin.from('Notifications').insert([{
+            notificaciones.push({
                 ReceiverID: sesionData.ReviewerID,
                 SenderID: sesionData.TutorID,
                 Type: 'MaterialSubido', 
-                Title: 'Bitacora enviada para revision',
-                Message: `El tutor ${tutorProfile?.Name || 'asignado'} ha enviado la bitacora de la clase "${sesionData.Topic}".`,
+                Title: 'Bitácora enviada para revisión',
+                Message: `El tutor ${tutorProfile?.Name || 'asignado'} ha enviado la bitácora de la clase "${sesionData.Topic}".`,
                 RelatedEntityID: SessionID
-            }]);
+            });
+        }
+
+        if (admins && admins.length > 0) {
+            for (let admin of admins) {
+                notificaciones.push({
+                    ReceiverID: admin.ID,
+                    SenderID: sesionData.TutorID,
+                    Type: 'MaterialSubido', 
+                    Title: 'Sesión Completada',
+                    Message: `El tutor ${tutorProfile?.Name || ''} cerró la sesión y entregó la bitácora de "${sesionData.Topic}".`,
+                    RelatedEntityID: SessionID
+                });
+            }
+        }
+
+        if (notificaciones.length > 0) {
+            await supabaseAdmin.from('Notifications').insert(notificaciones);
         }
 
         res.status(200).json({ success: true });

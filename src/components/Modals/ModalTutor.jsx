@@ -17,7 +17,8 @@ export default function ModalTutor({ open, onClose }) {
     email: '',
     telefono: '',
     hobbies: '',
-    career: ''
+    career: '',
+    notes: ''
   });
 
   const handleChange = (e) => {
@@ -25,8 +26,8 @@ export default function ModalTutor({ open, onClose }) {
   };
 
   const handleRegistrar = async () => {
-    if (!formData.nombre || !formData.email || !formData.language || !formData.BirthDate) {
-      toast.error("Nombre, correo, idioma y fecha de nacimiento son obligatorios.");
+    if (!formData.nombre || !formData.email || !formData.language || !formData.BirthDate || !formData.telefono || !formData.hobbies || !formData.career) {
+      toast.error("Todos los campos (excepto Notas) son obligatorios.");
       return;
     }
 
@@ -44,6 +45,7 @@ export default function ModalTutor({ open, onClose }) {
           language: formData.language,
           hobbies: formData.hobbies,
           career: formData.career,
+          notes: formData.notes,
           rol: "Tutor" 
         })
       });
@@ -52,7 +54,7 @@ export default function ModalTutor({ open, onClose }) {
 
       if (data.success) {
         toast.success('¡Tutor registrado con éxito!', { id: loadingToast, duration: 3000, icon: '🎓' });
-        setFormData({ nombre: '', BirthDate: '', language: '', email: '', telefono: '', hobbies: '', career: '' });
+        setFormData({ nombre: '', BirthDate: '', language: '', email: '', telefono: '', hobbies: '', career: '', notes: '' });
         onClose();
       } else {
         toast.error(data.message || 'Error al registrar el tutor', { id: loadingToast });
@@ -121,6 +123,13 @@ export default function ModalTutor({ open, onClose }) {
           <div className="form-group">
             <label>Hobbies (Tags)</label>
             <TextField fullWidth placeholder="Añadir hobbies..." name="hobbies" value={formData.hobbies} onChange={handleChange} />
+          </div>
+
+          <div className="form-row" style={{ marginTop: '15px' }}>
+            <div className="form-group" style={{ width: '100%' }}>
+              <label>Notas (Opcional)</label>
+              <TextField fullWidth multiline rows={2} placeholder="Información adicional del tutor..." variant="outlined" name="notes" value={formData.notes} onChange={handleChange} />
+            </div>
           </div>
 
           <div className="modal-actions">

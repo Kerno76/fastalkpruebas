@@ -212,11 +212,12 @@ export default function ControlCursos() {
         } catch (error) { toast.error(error.message || 'Error de conexión', { id: loadingToast }); }
     };
 
+    // MODIFICADO: Ahora solo filtra por idioma, ignorando el nivel
     const estudiantesFiltrados = cursoSeleccionado && Array.isArray(estudiantesDisponibles) 
         ? estudiantesDisponibles.filter(est => {
             const estLang = est.Language ? est.Language.toUpperCase() : '';
             const curLang = cursoSeleccionado.raw?.Language ? cursoSeleccionado.raw.Language.toUpperCase() : '';
-            return estLang === curLang && est.CurrentLevel === cursoSeleccionado.level;
+            return estLang === curLang;
         }) 
         : [];
 
@@ -233,7 +234,6 @@ export default function ControlCursos() {
                 <div className="header-actions">
                     <Button onClick={() => setOpenModalCursos(true)} variant="contained" startIcon={<AddIcon />} className="btn-primary">Registrar Nuevo Curso</Button>
                     <ModalCursos open={openModalCursos} onClose={() => { setOpenModalCursos(false); fetchCursos(); fetchEstudiantesDisp(); }} />
-                    <IconButton className="btn-secondary"><UploadFileIcon style={{ fontSize: '30px', color: '#68899D' }} /></IconButton>
                 </div>
             </div>
 
@@ -388,8 +388,9 @@ export default function ControlCursos() {
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                 <Typography variant="body2" style={{ fontWeight: 800, color: '#1e293b' }}>Integrar nuevos alumnos</Typography>
                                 <Select multiple fullWidth displayEmpty value={alumnosNuevos} onChange={(e) => setAlumnosNuevos(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)} input={<OutlinedInput sx={{ borderRadius: '12px' }} />} renderValue={(selected) => selected.length === 0 ? <em>Selecciona alumnos disponibles</em> : <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>{selected.map(v => <Chip key={v} label={estudiantesFiltrados.find(s => s.ID === v)?.Name || 'Alumno'} size="small" color="primary" />)}</Box>} MenuProps={MenuProps}>
-                                    {estudiantesFiltrados.map((s) => <MenuItem key={s.ID} value={s.ID}><Checkbox checked={alumnosNuevos.indexOf(s.ID) > -1} /><ListItemText primary={s.Name} /></MenuItem>)}
-                                    {estudiantesFiltrados.length === 0 && <MenuItem disabled>No hay más alumnos de este nivel disponibles</MenuItem>}
+                                    {/* MODIFICADO: Agregué el "Nivel Real" para identificar más fácil a los alumnos */}
+                                    {estudiantesFiltrados.map((s) => <MenuItem key={s.ID} value={s.ID}><Checkbox checked={alumnosNuevos.indexOf(s.ID) > -1} /><ListItemText primary={`${s.Name} (Nivel Real: ${s.CurrentLevel})`} /></MenuItem>)}
+                                    {estudiantesFiltrados.length === 0 && <MenuItem disabled>No hay alumnos de este idioma disponibles</MenuItem>}
                                 </Select>
                             </div>
 

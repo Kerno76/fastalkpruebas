@@ -2,16 +2,27 @@ import React, { useState, useEffect } from 'react';
 import '../../styles/Tutor/HistorialSesiones.css';
 import '../../styles/App.css';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Box, IconButton, Chip, Dialog, Typography, Grid, Button } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
+import DescriptionIcon from '@mui/icons-material/Description';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import CloseIcon from '@mui/icons-material/Close';
+
+const getEvaluador = (comments) => {
+    if (!comments) return '-';
+    const match = comments.match(/Evaluado por: (.*?)\n/);
+    return match ? match[1] : '-';
+};
+
+const getCleanComment = (comments) => {
+    if (!comments) return 'Sin comentarios adicionales.';
+    const split = comments.split('Comentarios: ');
+    return split.length > 1 ? split[1] : comments;
+};
 
 export default function HistorialSesiones() {
     const user = JSON.parse(localStorage.getItem('user'));
     const isAdmin = user?.Rol === 'Admin';
     const [historial, setHistorial] = useState([]);
     
-    // Estados para el Modal de Detalles
     const [openDetailsModal, setOpenDetailsModal] = useState(false);
     const [sessionDetails, setSessionDetails] = useState(null);
 
@@ -62,6 +73,7 @@ export default function HistorialSesiones() {
                                 <TableCell className='headerText'>Duración</TableCell>
                                 <TableCell className='headerText'>Estado</TableCell>
                                 <TableCell className='headerText'>Revisión</TableCell>
+                                <TableCell className='headerText' align="center">Evaluador</TableCell>
                                 <TableCell className='headerText' align="center">Acciones</TableCell>
                             </TableRow>
                         </TableHead>
@@ -85,6 +97,11 @@ export default function HistorialSesiones() {
                                         </span>
                                     </TableCell>
                                     <TableCell align="center">
+                                        <Typography style={{ fontSize: '0.85rem', color: '#475569', fontWeight: 600 }}>
+                                            {getEvaluador(row.ReviewerComments)}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell align="center">
                                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                                             <Button 
                                                 variant="outlined" 
@@ -95,15 +112,16 @@ export default function HistorialSesiones() {
                                             >
                                                 Detalles
                                             </Button>
-                                            <IconButton color="primary" onClick={() => row.EvidencePhoto ? window.open(row.EvidencePhoto, '_blank') : alert("Sin evidencia adjunta")}>
-                                                <SearchIcon />
+                                            
+                                            <IconButton color="primary" onClick={() => row.EvidencePhoto ? window.open(row.EvidencePhoto, '_blank') : alert("Sin evidencia adjunta")} title="Ver Evidencia">
+                                                <DescriptionIcon />
                                             </IconButton>
                                         </div>
                                     </TableCell>
                                 </TableRow>
                             )) : (
                                 <TableRow>
-                                    <TableCell colSpan={7} align="center" style={{ padding: '30px' }}>No hay registros en el historial.</TableCell>
+                                    <TableCell colSpan={8} align="center" style={{ padding: '30px' }}>No hay registros en el historial.</TableCell>
                                 </TableRow>
                             )}
                         </TableBody>
@@ -111,7 +129,6 @@ export default function HistorialSesiones() {
                 </TableContainer>
             </Box>
 
-            {/* MODAL DETALLES COMPLETOS DE LA SESIÓN */}
             <Dialog open={openDetailsModal} onClose={() => setOpenDetailsModal(false)} maxWidth="md" fullWidth PaperProps={{ style: { borderRadius: '16px' } }}>
                 {sessionDetails && (
                     <div style={{ padding: '32px', position: 'relative', color: '#1e293b' }}>
@@ -121,7 +138,6 @@ export default function HistorialSesiones() {
                         
                         <Typography variant="h5" style={{ fontWeight: 800, marginBottom: '24px', color: '#0f172a' }}>Detalles de Sesión</Typography>
                         
-                        {/* 1. SECCIÓN DE INFORMACIÓN GENERAL */}
                         <Grid container spacing={3} style={{ marginBottom: '24px' }}>
                             <Grid item xs={6} sm={4} md={2.5}>
                                 <Typography style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>Curso</Typography>
@@ -143,7 +159,6 @@ export default function HistorialSesiones() {
 
                         <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '0 0 24px 0' }} />
 
-                        {/* 2. SECCIÓN DE DESARROLLO DE LA CLASE */}
                         <Typography style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '16px', color: '#0f172a' }}>Desarrollo de la Clase</Typography>
                         
                         <div style={{ backgroundColor: '#f8fafc', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '32px' }}>
@@ -158,7 +173,6 @@ export default function HistorialSesiones() {
                             </Typography>
                         </div>
 
-                        {/* 3. SECCIÓN DE ASISTENCIA */}
                         <Typography style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '16px', color: '#0f172a' }}>Asistencia e Incidentes</Typography>
                         
                         <TableContainer component={Paper} elevation={0} style={{ border: '1px solid #e2e8f0', borderRadius: '8px', marginBottom: '24px' }}>
@@ -200,6 +214,22 @@ export default function HistorialSesiones() {
                                 </TableBody>
                             </Table>
                         </TableContainer>
+
+                        {sessionDetails.ReviewerComments && (
+                            <>
+                                <Typography style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '16px', color: '#0f172a', marginTop: '32px' }}>Notas de Evaluación</Typography>
+                                <div style={{ backgroundColor: sessionDetails.ReviewerStatus === 'Rechazado' ? '#fee2e2' : '#f1f5f9', padding: '24px', borderRadius: '12px', border: sessionDetails.ReviewerStatus === 'Rechazado' ? '1px solid #fca5a5' : '1px solid #cbd5e1', marginBottom: '32px' }}>
+                                    
+                                    <Typography style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#475569', marginBottom: '10px' }}>
+                                        {getEvaluador(sessionDetails.ReviewerComments)}
+                                    </Typography>
+
+                                    <Typography style={{ fontSize: '0.95rem', lineHeight: 1.6, whiteSpace: 'pre-wrap', color: sessionDetails.ReviewerStatus === 'Rechazado' ? '#991b1b' : '#334155' }}>
+                                        {getCleanComment(sessionDetails.ReviewerComments)}
+                                    </Typography>
+                                </div>
+                            </>
+                        )}
 
                         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                             <Button variant="outlined" onClick={() => setOpenDetailsModal(false)} style={{ color: '#475569', borderColor: '#cbd5e1', textTransform: 'none', fontWeight: 600, padding: '8px 24px', borderRadius: '8px' }}>

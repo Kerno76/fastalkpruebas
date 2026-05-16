@@ -11,13 +11,13 @@ import '../../styles/Modals/Modales.css';
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
 const MenuProps = {
-  PaperProps: {
-    style: {
-      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
-      width: 250,
+    PaperProps: {
+        style: {
+        maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+        width: 250,
+        },
     },
-  },
-};
+    };
 
 export default function ModalCursos({ open, onClose }) {
     const [formData, setFormData] = useState({
@@ -68,27 +68,31 @@ export default function ModalCursos({ open, onClose }) {
                 newState.StudentIDs = [];
                 newState.TutorID = ''; 
             }
-            if (name === 'Level') {
-                newState.StudentIDs = [];
-            }
+            
             
             return newState;
         });
     };
 
     const handleRegistrar = async () => {
-        if (!formData.Name || !formData.Language || !formData.Level || !formData.StartDate || !formData.EndDate || !formData.Period) {
+        if (!formData.Name || !formData.Language || !formData.Level || !formData.Period) {
             toast.error("Por favor, llena todos los campos obligatorios.");
             return;
         }
 
         const loadingToast = toast.loading('Creando curso y enrolando alumnos...');
 
+        const payload = {
+            ...formData,
+            StartDate: formData.StartDate || '2026-02-14',
+            EndDate: formData.EndDate || '2026-06-15'
+        };
+
         try {
             const response = await fetch("http://localhost:8000/api/admin/cursos", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(payload)
             });
 
             const data = await response.json();
@@ -105,7 +109,7 @@ export default function ModalCursos({ open, onClose }) {
     };
 
     const filteredStudents = availableStudents.filter(student => 
-        student.Language === formData.Language && student.CurrentLevel === formData.Level
+        student.Language === formData.Language
     );
 
     const filteredTutors = tutors.filter(tutor => {
@@ -180,6 +184,7 @@ export default function ModalCursos({ open, onClose }) {
                     <div className="form-row">
                         <div className="form-group" style={{ width: '100%' }}>
                             <label>Asignar Alumnos Disponibles (Sin Curso)</label>
+                            {/* MODIFICADO: Ahora solo evalúa si hay un idioma seleccionado */}
                             <Select
                                 labelId="mutiple-student-label"
                                 multiple
@@ -189,10 +194,10 @@ export default function ModalCursos({ open, onClose }) {
                                 value={formData.StudentIDs}
                                 onChange={handleChange}
                                 input={<OutlinedInput />}
-                                disabled={!formData.Language || !formData.Level}
+                                disabled={!formData.Language}
                                 renderValue={(selected) => {
                                     if (selected.length === 0) {
-                                        return <em>{(!formData.Language || !formData.Level) ? 'Selecciona Idioma y Nivel primero' : 'Selecciona alumnos'}</em>;
+                                        return <em>{!formData.Language ? 'Selecciona un Idioma primero' : 'Selecciona alumnos'}</em>;
                                     }
                                     return (
                                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
@@ -209,12 +214,13 @@ export default function ModalCursos({ open, onClose }) {
                                     filteredStudents.map((student) => (
                                         <MenuItem key={student.ID} value={student.ID}>
                                             <Checkbox checked={formData.StudentIDs.indexOf(student.ID) > -1} />
-                                            <ListItemText primary={`${student.Name} (${student.CurrentLevel})`} />
+                                            {/* Aquí sí mostramos el nivel del alumno para que el Admin sepa su nivel real */}
+                                            <ListItemText primary={`${student.Name} (Nivel Real: ${student.CurrentLevel})`} />
                                         </MenuItem>
                                     ))
                                 ) : (
                                     <MenuItem disabled>
-                                        <em>No hay alumnos de {formData.Language} {formData.Level} disponibles</em>
+                                        <em>No hay alumnos de {formData.Language} disponibles</em>
                                     </MenuItem>
                                 )}
                             </Select>

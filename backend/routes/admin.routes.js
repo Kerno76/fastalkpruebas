@@ -90,6 +90,7 @@ router.post('/registrar', async (req, res) => {
         if (profileError) throw profileError;
 
         if (rol === 'Tutor') {
+            const localISOTime = new Date(Date.now() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0];
             const { error: tutorError } = await supabaseAdmin
                 .from('Tutors')
                 .insert([{
@@ -97,17 +98,22 @@ router.post('/registrar', async (req, res) => {
                     Phone: Phone,
                     Language: language,
                     Hobbies: hobbies,
-                    Career: career 
+                    Career: career,
+                    Notes: notes,
+                    DateJoined: localISOTime
                 }]);
             if (tutorError) throw tutorError;
         } else if (rol === 'Student') {
+            const localISOTime = new Date(Date.now() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0];
             const { error: studentError } = await supabaseAdmin
                 .from('Students')
                 .insert([{ 
                     ID: userId, 
                     Phone: Phone,
                     Language: language,
-                    CurrentLevel: CurrentLevel
+                    CurrentLevel: CurrentLevel,
+                    Notes: notes,
+                    DateJoined: localISOTime
                 }]);
             if (studentError) throw studentError;
         } else if (rol === 'Reviewer') {
@@ -151,7 +157,6 @@ router.post('/registrar', async (req, res) => {
         res.status(200).json({ success: true, message: 'Usuario registrado y correo enviado.' });
 
     } catch (error) {
-        console.error(error);
         res.status(500).json({ success: false, message: error.message });
     }
 });
@@ -162,7 +167,7 @@ router.get('/tutores', async (req, res) => {
             .from('UsersProfiles')
             .select(`
                 ID, Name, Email, Rol, State, BirthDate,
-                Tutors ( Phone, Language, Hobbies, Career, TotalHours ) 
+                Tutors ( Phone, Language, Hobbies, Career, TotalHours, DateJoined, Notes ) 
             `) 
             .eq('Rol', 'Tutor');
 
@@ -182,7 +187,6 @@ router.get('/tutores', async (req, res) => {
 
         res.status(200).json(tutoresCompletos);
     } catch (error) {
-        console.error("Error al obtener tutores:", error.message);
         res.status(500).json({ error: error.message });
     }
 });
@@ -193,7 +197,7 @@ router.get('/estudiantes', async (req, res) => {
             .from('UsersProfiles')
             .select(`
                 ID, Name, Email, Rol, State, BirthDate,
-                Students ( Phone, Language, CurrentLevel ) 
+                Students ( Phone, Language, CurrentLevel, Notes, DateJoined ) 
             `) 
             .eq('Rol', 'Student');
 
@@ -210,14 +214,13 @@ router.get('/revisores', async (req, res) => {
             .from('UsersProfiles')
             .select(`
                 ID, Name, Email, Rol, State, BirthDate,
-                Reviewer ( Phone, Career, AsignedTutors, ValidationsCompleted ) 
+                Reviewer ( Phone, Career, AsignedTutors, ValidationsCompleted, Notes ) 
             `) 
             .eq('Rol', 'Reviewer');
 
         if (error) throw error;
         res.status(200).json(data);
     } catch (error) {
-        console.error("Error al jalar revisores:", error.message);
         res.status(500).json({ error: error.message });
     }
 });
@@ -235,7 +238,6 @@ router.put('/cambiar-estado', async (req, res) => {
 
         res.status(200).json({ success: true, message: 'Estado actualizado correctamente.' });
     } catch (error) {
-        console.error("Error al cambiar estado:", error.message);
         res.status(500).json({ success: false, message: error.message });
     }
 });
@@ -270,7 +272,6 @@ router.post('/asignar-revisor', async (req, res) => {
         res.status(200).json({ success: true, message: 'Revisor asignado correctamente en la BD.' });
 
     } catch (error) {
-        console.error("Error al asignar revisor:", error.message);
         res.status(500).json({ success: false, message: error.message });
     }
 });
@@ -308,7 +309,6 @@ router.get('/estudiantes-disponibles', async (req, res) => {
 
         res.status(200).json(formated);
     } catch (error) {
-        console.error("Error al obtener estudiantes:", error.message);
         res.status(500).json({ error: error.message });
     }
 });
@@ -340,7 +340,6 @@ router.post('/cursos', async (req, res) => {
 
         res.status(200).json({ success: true, message: 'Curso creado y alumnos enrolados.' });
     } catch (error) {
-        console.error("Error al crear curso:", error.message);
         res.status(500).json({ success: false, message: error.message });
     }
 });
@@ -375,7 +374,6 @@ router.get('/cursos-list', async (req, res) => {
 
         res.status(200).json({ success: true, cursos: cursosConConteo });
     } catch (error) {
-        console.error("Error en cursos-list:", error.message);
         res.status(500).json({ success: false, message: error.message });
     }
 });
@@ -399,7 +397,6 @@ router.post('/enroll-students', async (req, res) => {
 
         res.status(200).json({ success: true, message: 'Alumnos añadidos exitosamente al curso.' });
     } catch (error) {
-        console.error("Error al enrolar alumnos extras:", error.message);
         res.status(500).json({ success: false, message: error.message });
     }
 });
@@ -428,10 +425,10 @@ router.get('/curso-alumnos/:courseId', async (req, res) => {
 
         res.status(200).json({ success: true, alumnos });
     } catch (error) {
-        console.error("Error en curso-alumnos:", error.message);
         res.status(500).json({ success: false, message: error.message });
     }
 });
+
 router.get('/tutor-cursos/:tutorId', async (req, res) => {
     const { tutorId } = req.params;
     try {
@@ -536,7 +533,7 @@ router.get('/estudiantes-list', async (req, res) => {
     try {
         const { data: students, error: studErr } = await supabaseAdmin
             .from('UsersProfiles')
-            .select('ID, Name, Email, State, BirthDate, Students (Phone, Language, CurrentLevel)')
+            .select('ID, Name, Email, State, BirthDate, Students (Phone, Language, CurrentLevel, Notes, DateJoined)')
             .eq('Rol', 'Student');
         if (studErr) throw studErr;
 
@@ -572,8 +569,145 @@ router.get('/estudiantes-list', async (req, res) => {
 
         res.status(200).json(estudiantesCompletos);
     } catch (error) {
-        console.error("Error en estudiantes-list:", error.message);
         res.status(500).json({ error: error.message });
     }
 });
+
+router.get('/dashboard-summary', async (req, res) => {
+    try {
+        const { count: countEstudiantes } = await supabaseAdmin
+            .from('UsersProfiles')
+            .select('*', { count: 'exact', head: true })
+            .eq('Rol', 'Student')
+            .eq('State', 'Active');
+            
+        const { count: countTutores } = await supabaseAdmin
+            .from('UsersProfiles')
+            .select('*', { count: 'exact', head: true })
+            .eq('Rol', 'Tutor')
+            .eq('State', 'Active');
+            
+        const { count: countCursos } = await supabaseAdmin
+            .from('Courses')
+            .select('*', { count: 'exact', head: true })
+            .eq('Status', 'Active');
+        
+        res.status(200).json({
+            success: true,
+            stats: [
+                { title: "Estudiantes Activos", amount: countEstudiantes || 0 },
+                { title: "Tutores Activos", amount: countTutores || 0 },
+                { title: "Cursos Activos", amount: countCursos || 0 }
+            ]
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.get('/notificaciones/:userId', async (req, res) => {
+    const { userId } = req.params;
+    try {
+        const { data: perfil, error: perfilError } = await supabaseAdmin
+            .from('UsersProfiles')
+            .select('ID')
+            .eq('ID', userId)
+            .single(); 
+
+        if (perfilError || !perfil) {
+            return res.status(404).json({ success: false, message: "Usuario no encontrado" });
+        }
+
+        const { data, error } = await supabaseAdmin
+            .from('Notifications')
+            .select('*')
+            .eq('ReceiverID', userId)
+            .order('CreatedAt', { ascending: false })
+            .limit(10);
+
+        if (error) throw error;
+        res.status(200).json({ success: true, notificaciones: data });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.put('/notificaciones/leer/:notifId', async (req, res) => {
+    const { notifId } = req.params;
+    try {
+        const { error } = await supabaseAdmin
+            .from('Notifications')
+            .update({ IsRead: true })
+            .eq('NotificationID', notifId);
+
+        if (error) throw error;
+        res.status(200).json({ success: true });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.get('/todas-bitacoras', async (req, res) => {
+    try {
+        const { data: sesiones, error: sesErr } = await supabaseAdmin
+            .from('Session')
+            .select(`
+                *, 
+                Courses ( Name ),
+                SessionStudents (
+                    StudentID, Attendance, IncidentReport, UsersProfiles ( Name )
+                )
+            `)
+            .eq('Status', 'Completed') 
+            .order('Date', { ascending: false });
+
+        if (sesErr) throw sesErr;
+
+        if (!sesiones || sesiones.length === 0) {
+            return res.status(200).json({ success: true, bitacoras: [] });
+        }
+
+        const tutorIds = [...new Set(sesiones.map(s => s.TutorID).filter(Boolean))];
+        const reviewerIds = [...new Set(sesiones.map(s => s.ReviewerID).filter(Boolean))];
+        const allUserIds = [...new Set([...tutorIds, ...reviewerIds])];
+
+        const { data: perfiles, error: profErr } = await supabaseAdmin
+            .from('UsersProfiles')
+            .select('ID, Name')
+            .in('ID', allUserIds);
+
+        if (profErr) throw profErr;
+
+        const formateadas = sesiones.map(s => {
+            const tutor = perfiles.find(p => p.ID === s.TutorID);
+            const revisor = perfiles.find(p => p.ID === s.ReviewerID);
+            return {
+                id: s.SessionID,
+                tutor: tutor ? tutor.Name : 'Desconocido',
+                tutorId: s.TutorID,
+                revisorName: revisor ? revisor.Name : 'Sin asignar',
+                course: s.Courses?.Name || 'N/A',
+                date: s.Date,
+                startTime: s.StartTime, 
+                topic: s.Topic,
+                duration: s.Duration,
+                status: s.ReviewerStatus || 'Pendiente',
+                evidenceLink: s.EvidencePhoto,
+                description: s.Description,
+                nextSession: s.NextSession,
+                reviewerComments: s.ReviewerComments || '',
+                estudiantes: s.SessionStudents ? s.SessionStudents.map(st => ({
+                    Name: st.UsersProfiles?.Name || 'Alumno',
+                    Attendance: st.Attendance,
+                    IncidentReport: st.IncidentReport
+                })) : []
+            };
+        });
+
+        res.status(200).json({ success: true, bitacoras: formateadas });
+    } catch (error) { 
+        res.status(500).json({ success: false, message: error.message }); 
+    }
+});
+
 module.exports = router;

@@ -93,6 +93,7 @@ router.get('/bitacoras/:reviewerId', async (req, res) => {
                 evidenceLink: s.EvidencePhoto,
                 description: s.Description,
                 nextSession: s.NextSession,
+                reviewerComments: s.ReviewerComments || '', // <- Agregamos el campo de comentarios
                 estudiantes: s.SessionStudents ? s.SessionStudents.map(st => ({
                     Name: st.UsersProfiles?.Name || 'Alumno',
                     Attendance: st.Attendance,
@@ -109,10 +110,31 @@ router.get('/bitacoras/:reviewerId', async (req, res) => {
 
 
 router.put('/evaluar-bitacora', async (req, res) => {
-    const { SessionID, TutorID, ReviewerID, NewStatus, Topic } = req.body;
+    // Agregamos 'allowResubmit' que vendrá del frontend
+    const { SessionID, TutorID, ReviewerID, NewStatus, Topic, ReviewerComments, allowResubmit } = req.body;
     try {
+        // 1. Identificamos quién está calificando
+        const { data: evaluator } = await supabaseAdmin.from('UsersProfiles').select('Name, Rol').eq('ID', ReviewerID).single();
+        const evaluatorName = evaluator?.Name || 'Usuario';
+        const evaluatorRol = evaluator?.Rol || 'Reviewer';
+
+        // 2. Construimos la firma y el comentario final para guardarlo en la BD
+        const firma = evaluatorRol === 'Admin' ? `Administrador (${evaluatorName})` : `Revisor (${evaluatorName})`;
+        const finalComments = ReviewerComments && ReviewerComments.trim() !== '' ? ReviewerComments : 'Sin comentarios adicionales.';
+        
+        // Estructura oculta que el frontend leerá
+        let comentarioBD = `Evaluado por: ${firma}\n`;
+        if (NewStatus === 'Rechazado') {
+            comentarioBD += `Permite Reenvío: ${allowResubmit ? 'Sí' : 'No'}\n`;
+        }
+        comentarioBD += `Comentarios: ${finalComments}`;
+
+        // 3. Actualizamos el estado y guardamos la firma en la sesión
         const { error: updateErr } = await supabaseAdmin.from('Session')
-            .update({ ReviewerStatus: NewStatus })
+            .update({ 
+                ReviewerStatus: NewStatus,
+                ReviewerComments: comentarioBD
+            })
             .eq('SessionID', SessionID);
 
         if (updateErr) throw updateErr;
@@ -120,47 +142,53 @@ router.put('/evaluar-bitacora', async (req, res) => {
         let mensajeExtra = "";
 
         if (NewStatus === 'Aprobado') {
-            const { data: sessionData, error: sesErr } = await supabaseAdmin
-                .from('Session')
-                .select('Duration')
-                .eq('SessionID', SessionID)
-                .single();
-            
-            if (sesErr) throw sesErr;
+            const { data: sessionData } = await supabaseAdmin.from('Session').select('Duration').eq('SessionID', SessionID).single();
             const horasASumar = sessionData.Duration || 0;
 
-            const { data: tutorData, error: tutErr } = await supabaseAdmin
-                .from('Tutors')
-                .select('TotalHours')
-                .eq('ID', TutorID)
-                .single();
-            
-            if (tutErr) throw tutErr;
+            const { data: tutorData } = await supabaseAdmin.from('Tutors').select('TotalHours').eq('ID', TutorID).single();
             const horasActuales = tutorData.TotalHours || 0;
 
-            const { error: finalTutErr } = await supabaseAdmin
-                .from('Tutors')
-                .update({ TotalHours: horasActuales + horasASumar })
-                .eq('ID', TutorID);
-            
-            if (finalTutErr) throw finalTutErr;
-
-            mensajeExtra = ` Se han sumado ${horasASumar} horas a tu conteo total de servicio social.`;
+            await supabaseAdmin.from('Tutors').update({ TotalHours: horasActuales + horasASumar }).eq('ID', TutorID);
+            mensajeExtra = ` Se han sumado ${horasASumar} horas a tu conteo total.`;
         }
 
-        const titNotif = NewStatus === 'Rechazado' ? 'Bitacora rechazada' : 'Bitacora aprobada';
-        const msgNotif = NewStatus === 'Rechazado' 
-            ? `Tu bitacora de la sesion "${Topic}" ha sido rechazada. Por favor, corrigela en tu panel de Registro de Sesiones.`
-            : `Tu bitacora de la sesion "${Topic}" ha sido aprobada con exito.${mensajeExtra}`;
+        let notificaciones = [];
+        const titNotif = NewStatus === 'Rechazado' ? 'Bitácora rechazada' : 'Bitácora aprobada';
+        
+        let msgNotifTutor = NewStatus === 'Rechazado' 
+            ? `Tu bitácora de la sesión "${Topic}" ha sido rechazada por el ${firma}.`
+            : `Tu bitácora de la sesión "${Topic}" ha sido aprobada con éxito por el ${firma}.${mensajeExtra}`;
 
-        await supabaseAdmin.from('Notifications').insert([{
+        if (NewStatus === 'Rechazado' && allowResubmit) {
+            msgNotifTutor += `\n\nSe te ha habilitado la opción de corregirla y reenviarla desde tu panel.`;
+        }
+
+        notificaciones.push({
             ReceiverID: TutorID,
             SenderID: ReviewerID,
             Type: 'SesionRevisada',
             Title: titNotif,
-            Message: msgNotif,
+            Message: msgNotifTutor,
             RelatedEntityID: SessionID
-        }]);
+        });
+
+        if (evaluatorRol === 'Admin') {
+            const { data: sesionData } = await supabaseAdmin.from('Session').select('ReviewerID').eq('SessionID', SessionID).single();
+            if (sesionData && sesionData.ReviewerID && sesionData.ReviewerID !== ReviewerID) {
+                notificaciones.push({
+                    ReceiverID: sesionData.ReviewerID,
+                    SenderID: ReviewerID, 
+                    Type: 'SesionRevisada',
+                    Title: 'Bitácora evaluada por Administrador',
+                    Message: `El ${firma} ha ${NewStatus === 'Aprobado' ? 'aprobado' : 'rechazado'} la bitácora de la sesión "${Topic}" de uno de tus tutores.`,
+                    RelatedEntityID: SessionID
+                });
+            }
+        }
+
+        if (notificaciones.length > 0) {
+            await supabaseAdmin.from('Notifications').insert(notificaciones);
+        }
 
         res.status(200).json({ success: true });
     } catch (error) { 

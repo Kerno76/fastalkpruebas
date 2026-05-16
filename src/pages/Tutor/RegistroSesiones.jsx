@@ -2,6 +2,19 @@ import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import '../../styles/Tutor/RegistroSesiones.css';
 
+// Función para verificar si se permite el reenvío leyendo la BD oculta
+const canResubmit = (comments) => {
+    if (!comments) return false;
+    return comments.includes('Permite Reenvío: Sí');
+};
+
+// Función para extraer el comentario limpio de la BD oculta
+const getCleanComment = (comments) => {
+    if (!comments) return '';
+    const split = comments.split('Comentarios: ');
+    return split.length > 1 ? split[1] : comments;
+};
+
 export default function RegistroSesiones() {
     const user = JSON.parse(localStorage.getItem('user'));
     
@@ -20,7 +33,16 @@ export default function RegistroSesiones() {
         try {
             const res = await fetch(`http://localhost:8000/api/tutor/sesiones-pendientes/${user.ID}`);
             const data = await res.json();
-            if (data.success) setSesiones(data.sesiones);
+            if (data.success) {
+                // Filtramos: Si está rechazada pero el revisor puso "Permite Reenvío: No", se oculta de esta pantalla
+                const filtradas = data.sesiones.filter(s => {
+                    if (s.ReviewerStatus === 'Rechazado') {
+                        return canResubmit(s.ReviewerComments);
+                    }
+                    return true;
+                });
+                setSesiones(filtradas);
+            }
         } catch (error) {
             console.error(error);
         }
@@ -82,61 +104,61 @@ export default function RegistroSesiones() {
     };
 
     const handleCompletarSesion = async (e) => {
-            e.preventDefault();
+        e.preventDefault();
 
-            if (!bitacoraData.descripcion || bitacoraData.descripcion.trim() === '') {
-                return toast.error("El resumen de la clase es obligatorio.");
-            }
+        if (!bitacoraData.descripcion || bitacoraData.descripcion.trim() === '') {
+            return toast.error("El resumen de la clase es obligatorio.");
+        }
+        
+        if (!bitacoraData.planeacionSiguiente || bitacoraData.planeacionSiguiente.trim() === '') {
+            return toast.error("La planeación de la próxima clase es obligatoria.");
+        }
+
+        if (!selectedFile) {
+            return toast.error("La captura de evidencia es obligatoria.");
+        }
+
+        const toastId = toast.loading("Cerrando sesión y enviando a revisión...");
+        
+        try {
+            const fileBase64 = await fileToBase64(selectedFile);
             
-            if (!bitacoraData.planeacionSiguiente || bitacoraData.planeacionSiguiente.trim() === '') {
-                return toast.error("La planeación de la próxima clase es obligatoria.");
-            }
+            const estudiantesPorDefecto = asistenciaAlumnos.map(est => ({
+                StudentID: est.StudentID,
+                Attendance: est.Attendance || 'Presente',
+                IncidentReport: est.IncidentReport || ''
+            }));
 
-            if (!selectedFile) {
-                return toast.error("La captura de evidencia es obligatoria.");
-            }
+            const payload = {
+                SessionID: selectedSession.SessionID,
+                Status: 'Completed',
+                Description: bitacoraData.descripcion.trim(),
+                NextSession: bitacoraData.planeacionSiguiente.trim(),
+                fileBase64,
+                fileName: selectedFile.name,
+                fileType: selectedFile.type,
+                estudiantesData: estudiantesPorDefecto 
+            };
 
-            const toastId = toast.loading("Cerrando sesión y enviando a revisión...");
+            const res = await fetch("http://localhost:8000/api/tutor/completar-sesion", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
             
-            try {
-                const fileBase64 = await fileToBase64(selectedFile);
-                
-                const estudiantesPorDefecto = (selectedSession.estudiantes || []).map(est => ({
-                    StudentID: est.StudentID,
-                    Attendance: est.Attendance || 'Presente',
-                    IncidentReport: est.IncidentReport || ''
-                }));
-
-                const payload = {
-                    SessionID: selectedSession.SessionID,
-                    Status: 'Completed',
-                    Description: bitacoraData.descripcion.trim(),
-                    NextSession: bitacoraData.planeacionSiguiente.trim(),
-                    fileBase64,
-                    fileName: selectedFile.name,
-                    fileType: selectedFile.type,
-                    estudiantesData: estudiantesPorDefecto 
-                };
-
-                const res = await fetch("http://localhost:8000/api/tutor/completar-sesion", {
-                    method: "PUT",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
-                });
-                
-                const data = await res.json();
-                
-                if (data.success) {
-                    toast.success("Bitácora enviada exitosamente", { id: toastId });
-                    fetchSesionesPendientes();
-                    closeModal();
-                } else {
-                    throw new Error(data.message);
-                }
-            } catch (error) { 
-                toast.error(error.message || "Ocurrió un error al enviar la bitácora", { id: toastId }); 
+            const data = await res.json();
+            
+            if (data.success) {
+                toast.success("Bitácora enviada exitosamente", { id: toastId });
+                fetchSesionesPendientes();
+                closeModal();
+            } else {
+                throw new Error(data.message);
             }
-        };
+        } catch (error) { 
+            toast.error(error.message || "Ocurrió un error al enviar la bitácora", { id: toastId }); 
+        }
+    };
 
     const handlePosponer = async (e) => {
         e.preventDefault();
@@ -192,36 +214,54 @@ export default function RegistroSesiones() {
 
     const renderSesionRow = (sesion) => {
         const isPast = isPastSession(sesion.Date, sesion.StartTime);
-        
         const isRejected = sesion.ReviewerStatus === 'Rechazado';
+        const cleanComment = getCleanComment(sesion.ReviewerComments);
 
         return (
-            <div key={sesion.SessionID} className="sesion-row" style={{ borderLeft: isRejected ? '5px solid #ef4444' : 'none' }}>
-                <div className="sesion-info">
-                    {isRejected ? (
-                        <span className="sesion-header-tag tag-prox" style={{ backgroundColor: '#fee2e2', color: '#ef4444' }}>Bitácora Rechazada</span>
-                    ) : (
-                        <span className="sesion-header-tag tag-prox">En Progreso</span>
-                    )}
-                    <h3>{sesion.Topic}</h3>
-                    <p><strong>Curso:</strong> {sesion.courseName}</p>
-                    <p><strong>Horario:</strong> {sesion.Date} a las {sesion.StartTime}</p>
-                    <p><strong>Alumnos convocados:</strong> {sesion.studentCount}</p>
+            <div key={sesion.SessionID} className="sesion-row" style={{ borderLeft: isRejected ? '5px solid #ef4444' : 'none', flexDirection: 'column' }}>
+                
+                <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div className="sesion-info">
+                        {isRejected ? (
+                            <span className="sesion-header-tag tag-prox" style={{ backgroundColor: '#fee2e2', color: '#ef4444' }}>Requiere Corrección</span>
+                        ) : (
+                            <span className="sesion-header-tag tag-prox">En Progreso</span>
+                        )}
+                        <h3>{sesion.Topic}</h3>
+                        <p><strong>Curso:</strong> {sesion.courseName}</p>
+                        <p><strong>Horario:</strong> {sesion.Date} a las {sesion.StartTime}</p>
+                        <p><strong>Alumnos convocados:</strong> {sesion.studentCount}</p>
+                    </div>
+                    
+                    <div className="sesion-actions">
+                        <button 
+                            onClick={() => openModal('posponer', sesion)} 
+                            className="btn-sesion btn-posponer"
+                            disabled={isPast}
+                            style={isPast ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                        >
+                            Posponer
+                        </button>
+                        <button onClick={() => openModal('cancelar', sesion)} className="btn-sesion btn-cancelar">Cancelar</button>
+                        <a href={sesion.Url} target="_blank" rel="noopener noreferrer" className="btn-sesion btn-sesion-link">Entrar a Sesión</a>
+                        <button onClick={() => openModal('incidencias', sesion)} className="btn-sesion btn-incidencia">Incidentes</button>
+                        <button onClick={() => openModal('bitacora', sesion)} className="btn-sesion btn-bitacora">
+                            {isRejected ? 'Reenviar Bitácora' : 'Bitácora'}
+                        </button>
+                    </div>
                 </div>
-                <div className="sesion-actions">
-                    <button 
-                        onClick={() => openModal('posponer', sesion)} 
-                        className="btn-sesion btn-posponer"
-                        disabled={isPast}
-                        style={isPast ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
-                    >
-                        Posponer
-                    </button>
-                    <button onClick={() => openModal('cancelar', sesion)} className="btn-sesion btn-cancelar">Cancelar</button>
-                    <a href={sesion.Url} target="_blank" rel="noopener noreferrer" className="btn-sesion btn-sesion-link">Entrar a Sesión</a>
-                    <button onClick={() => openModal('incidencias', sesion)} className="btn-sesion btn-incidencia">Incidentes</button>
-                    <button onClick={() => openModal('bitacora', sesion)} className="btn-sesion btn-bitacora">Bitácora</button>
-                </div>
+
+                {/* CAJA DE NOTAS DE EVALUADOR DIRECTO EN LA LISTA */}
+                {isRejected && (
+                    <div style={{ backgroundColor: '#fee2e2', padding: '15px', borderRadius: '8px', marginTop: '15px', border: '1px solid #fca5a5', width: '100%' }}>
+                        <span style={{ display: 'block', fontSize: '0.8rem', color: '#b91c1c', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '8px' }}>
+                            ⚠️ Notas del Evaluador (Segunda Revisión Habilitada)
+                        </span>
+                        <p style={{ margin: 0, fontSize: '0.95rem', color: '#991b1b', lineHeight: 1.5 }}>
+                            {cleanComment}
+                        </p>
+                    </div>
+                )}
             </div>
         );
     };
@@ -262,7 +302,7 @@ export default function RegistroSesiones() {
                                     <div key={est.StudentID} style={{ display: 'grid', gridTemplateColumns: '2fr 1.5fr', gap: '10px', marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px dashed #cbd5e1' }}>
                                         <div>
                                             <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#1e293b', display: 'block', marginBottom: '5px' }}>{est.Name}</span>
-                                            <select className="select-field" value={est.Attendance} onChange={(e) => handleStudentUpdate(est.StudentID, 'Attendance', e.target.value)}>
+                                            <select className="select-field" value={est.Attendance || 'Presente'} onChange={(e) => handleStudentUpdate(est.StudentID, 'Attendance', e.target.value)}>
                                                 <option value="Presente">Presente</option>
                                                 <option value="Ausente">Ausente</option>
                                                 <option value="Retardo">Retardo</option>
@@ -270,7 +310,7 @@ export default function RegistroSesiones() {
                                         </div>
                                         <div>
                                             <span style={{ fontWeight: 600, fontSize: '0.8rem', color: '#64748b', display: 'block', marginBottom: '5px' }}>Detalle / Incidente</span>
-                                            <input className="select-field" type="text" placeholder="Ej. Problemas de internet..." value={est.IncidentReport} onChange={(e) => handleStudentUpdate(est.StudentID, 'IncidentReport', e.target.value)} />
+                                            <input className="select-field" type="text" placeholder="Ej. Problemas de internet..." value={est.IncidentReport || ''} onChange={(e) => handleStudentUpdate(est.StudentID, 'IncidentReport', e.target.value)} />
                                         </div>
                                     </div>
                                 )) : <p style={{ color: '#ef4444' }}>No hay alumnos registrados.</p>}
@@ -288,7 +328,7 @@ export default function RegistroSesiones() {
                 <div className="modal-overlay" onClick={closeModal}>
                     <div className="modal-content" style={{ maxWidth: '600px' }} onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h3>Llenar Bitácora</h3>
+                            <h3>Llenar Bitácora {selectedSession.ReviewerStatus === 'Rechazado' && '(Corrección)'}</h3>
                             <button className="close-button" onClick={closeModal}>&times;</button>
                         </div>
                         
@@ -336,7 +376,9 @@ export default function RegistroSesiones() {
                                 </div>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                                <button type="submit" className="btn-sesion btn-bitacora" style={{ width: '100%', padding: '14px', fontSize: '1rem', border: 'none', justifyContent: 'center' }}>Cerrar Clase y Enviar a Revisión</button>
+                                <button type="submit" className="btn-sesion btn-bitacora" style={{ width: '100%', padding: '14px', fontSize: '1rem', border: 'none', justifyContent: 'center' }}>
+                                    {selectedSession.ReviewerStatus === 'Rechazado' ? 'Reenviar Corrección' : 'Cerrar Clase y Enviar a Revisión'}
+                                </button>
                             </div>
                         </form>
                     </div>

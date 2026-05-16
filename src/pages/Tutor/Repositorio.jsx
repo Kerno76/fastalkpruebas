@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Typography, Paper, Rating, Button, TextField, Box } from '@mui/material';
+import { Typography, Paper, Rating, Button, TextField, Box, Dialog, Chip, IconButton } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import DescriptionIcon from '@mui/icons-material/Description';
 import toast from 'react-hot-toast';
 import ModalMaterial from '../../components/Modals/ModalMaterial.jsx';
 import '../../styles/App.css';
@@ -17,8 +18,8 @@ export default function Repositorio() {
     const [filtroNivel, setFiltroNivel] = useState('');
     const [busquedaAdmin, setBusquedaAdmin] = useState("");
     const [openModal, setOpenModal] = useState(false);
-
-    const courseColors = { 'INGLÉS': 'bg-ingles', 'FRANCÉS': 'bg-frances' };
+    
+    const [itemToDelete, setItemToDelete] = useState(null);
 
     const fetchMateriales = async () => {
         if (!user?.ID) return;
@@ -55,15 +56,21 @@ export default function Repositorio() {
         } catch (error) { toast.error("Error al calificar"); }
     };
 
-    const handleDelete = async (id) => {
-        if (!window.confirm("¿Eliminar material?")) return;
+    const handleDelete = async () => {
+        if (!itemToDelete) return;
+        const loadingToast = toast.loading('Eliminando material...');
         try {
-            const res = await fetch(`http://localhost:8000/api/tutor/materiales/${id}`, { method: 'DELETE' });
+            const res = await fetch(`http://localhost:8000/api/tutor/materiales/${itemToDelete.MaterialID}`, { method: 'DELETE' });
             if ((await res.json()).success) {
-                toast.success("Eliminado");
+                toast.success("Material eliminado con éxito", { id: loadingToast });
+                setItemToDelete(null); 
                 fetchMateriales();
+            } else {
+                toast.error("Error al eliminar el material", { id: loadingToast });
             }
-        } catch (error) { toast.error("Error al eliminar"); }
+        } catch (error) { 
+            toast.error("Error de conexión", { id: loadingToast }); 
+        }
     };
 
     return (
@@ -97,36 +104,100 @@ export default function Repositorio() {
 
             <div className='cards-grid'>
                 {materialesFiltrados.map((item) => (
-                    <Paper key={item.MaterialID} className="student-card repo-card" elevation={0}>
-                        <div className="student-data" style={{ width: '100%' }}>
-                            <Typography className="repo-topic-title">{item.Topic}</Typography>
-                            <div className="info-row" style={{ marginBottom: '10px' }}>
-                                <span className={`cont-course ${item.Language ? courseColors[item.Language.toUpperCase()] : 'bg-default'}`}>{item.Language}</span>
-                                <span className="cont-level">{item.Level}</span>
+                    <Paper key={item.MaterialID} elevation={0} style={{ borderRadius: '16px', border: '1px solid #e2e8f0', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', backgroundColor: '#fff', transition: 'all 0.3s ease' }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '15px', marginBottom: '15px' }}>
+                            <div style={{ backgroundColor: '#f0f9ff', padding: '12px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <DescriptionIcon style={{ color: '#0ea5e9', fontSize: '32px' }} />
                             </div>
-                            <Typography className='whoUp repo-tutor-name' variant="body2">Subido por: <strong>{item.tutorName}</strong></Typography>
-                            
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '10px', backgroundColor: '#f8fafc', borderRadius: '8px', marginTop: '10px' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                    <Typography variant="caption" style={{ fontWeight: 700, color: '#64748b' }}>GENERAL</Typography>
-                                    <Rating value={item.Rating || 0} readOnly size="small" precision={0.5} />
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                    <Typography variant="caption" style={{ fontWeight: 700, color: '#3b82f6' }}>TU VOTO</Typography>
-                                    <Rating value={item.miVoto || 0} onChange={(e, nv) => handleRating(item.MaterialID, nv)} size="small" />
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                                <Typography style={{ fontWeight: 800, color: '#1e293b', fontSize: '1.1rem', lineHeight: 1.2, marginBottom: '6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={item.Topic}>
+                                    {item.Topic}
+                                </Typography>
+                                <Typography style={{ color: '#0ea5e9', fontWeight: 700, fontSize: '0.85rem', marginBottom: '10px' }}>
+                                    Curso: {item.courseName || item.Courses?.Name || 'Material General'}
+                                </Typography>
+                                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                                    <Chip label={item.Language} size="small" style={{ backgroundColor: item.Language?.toUpperCase() === 'INGLÉS' ? '#e0e7ff' : '#fce7f3', color: item.Language?.toUpperCase() === 'INGLÉS' ? '#4f46e5' : '#db2777', fontWeight: 700, fontSize: '0.7rem' }} />
+                                    <Chip label={`Nivel ${item.Level}`} size="small" style={{ backgroundColor: '#f1f5f9', color: '#475569', fontWeight: 700, fontSize: '0.7rem' }} />
                                 </div>
                             </div>
                         </div>
-                        <div className="repo-bottom-actions" style={{ marginTop: '15px', display: 'flex', gap: '8px' }}>
-                            <button className="details" onClick={() => window.open(item.FileUrl, '_blank')}>Ver</button>
-                            <button className="assign btn-descargar" onClick={() => {
-                                const l = document.createElement('a'); l.href = item.FileUrl; l.download = `${item.Topic}.pdf`; l.click();
-                            }}>Descargar</button>
-                            {isAdmin && <button className="btn-delete-repo" onClick={() => handleDelete(item.MaterialID)}><DeleteOutlineIcon fontSize="small" /></button>}
+
+                        <Typography variant="body2" style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '15px' }}>
+                            Subido por: <strong style={{ color: '#334155' }}>{item.tutorName}</strong>
+                        </Typography>
+
+                        <div style={{ backgroundColor: '#f8fafc', padding: '12px', borderRadius: '10px', marginBottom: '15px', border: '1px solid #e2e8f0' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                <Typography style={{ fontSize: '0.7rem', fontWeight: 800, color: '#64748b', letterSpacing: '0.5px' }}>GLOBAL</Typography>
+                                <Rating value={item.Rating || 0} readOnly size="small" precision={0.5} />
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Typography style={{ fontSize: '0.7rem', fontWeight: 800, color: '#0ea5e9', letterSpacing: '0.5px' }}>MI VOTO</Typography>
+                                <Rating value={item.miVoto || 0} onChange={(e, nv) => handleRating(item.MaterialID, nv)} size="small" />
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                            <Button variant="outlined" fullWidth onClick={() => window.open(item.FileUrl, '_blank')} style={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, color: '#475569', borderColor: '#cbd5e1' }}>
+                                Ver
+                            </Button>
+                            <Button variant="contained" fullWidth onClick={() => {
+                                const l = document.createElement('a'); 
+                                l.href = item.FileUrl; 
+                                l.target = '_blank';
+                                l.download = `${item.Topic}.pdf`; 
+                                document.body.appendChild(l);
+                                l.click();
+                                document.body.removeChild(l);
+                            }} style={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, backgroundColor: '#0ea5e9', boxShadow: 'none' }}>
+                                Descargar
+                            </Button>
+                            
+                            {(isAdmin || item.TutorID === user?.ID) && (
+                                <IconButton onClick={() => setItemToDelete(item)} style={{ backgroundColor: '#fee2e2', color: '#ef4444', borderRadius: '8px' }}>
+                                    <DeleteOutlineIcon fontSize="small" />
+                                </IconButton>
+                            )}
                         </div>
                     </Paper>
                 ))}
             </div>
+
+            <Dialog 
+                open={!!itemToDelete} 
+                onClose={() => setItemToDelete(null)} 
+                maxWidth="xs" 
+                fullWidth 
+                PaperProps={{ style: { borderRadius: '16px', padding: '10px' } }}
+            >
+                <Box p={2} textAlign="center">
+                    <Typography variant="h6" style={{ fontWeight: 800, color: '#1e293b', marginBottom: '10px' }}>
+                        Confirmar Eliminación
+                    </Typography>
+                    <Typography variant="body2" style={{ color: '#64748b', marginBottom: '20px', lineHeight: 1.5 }}>
+                        ¿Estás seguro de que deseas eliminar permanentemente el material <strong>"{itemToDelete?.Topic}"</strong>? Esta acción no se puede deshacer.
+                    </Typography>
+                    
+                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                        <Button 
+                            variant="outlined" 
+                            onClick={() => setItemToDelete(null)} 
+                            style={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, color: '#64748b', borderColor: '#cbd5e1' }}
+                        >
+                            Cancelar
+                        </Button>
+                        <Button 
+                            variant="contained" 
+                            color="error" 
+                            onClick={handleDelete} 
+                            style={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, boxShadow: 'none' }}
+                        >
+                            Eliminar
+                        </Button>
+                    </div>
+                </Box>
+            </Dialog>
         </div>
     );
 }

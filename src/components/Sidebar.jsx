@@ -22,7 +22,7 @@ export default function Sidebar() {
             if (userRol === 'Student') {
                 apiUrl = `http://localhost:8000/api/student/notificaciones/${userId}`;
             } else if (userRol === 'Reviewer') {
-                apiUrl = `http://localhost:8000/api/revisor/notificaciones/${userId}`; // Asegúrate de que esta sea la ruta de tu revisor
+                apiUrl = `http://localhost:8000/api/revisor/notificaciones/${userId}`;
             }
 
             // 2. Hacemos la petición a la ruta correcta
@@ -52,7 +52,14 @@ export default function Sidebar() {
   }, [userId, userRol]);
 
   const allowedItems = navItems.filter(item => item.roles.includes(userRol));
-  const sectionsList = ["Administración", "Tutoría", "Estudiante", "Revisión", "General"];
+  
+  // MODIFICADO: Definimos las secciones dinámicamente. 
+  // Si es Admin, excluimos "Tutoría" y "Estudiante".
+  let sectionsList = ["Administración", "Tutoría", "Estudiante", "Revisión", "General"];
+  
+  if (userRol === 'Admin') {
+      sectionsList = ["Administración", "Revisión", "General"];
+  }
 
   return (
     <div className="sidebar">
