@@ -126,50 +126,61 @@ router.get('/tareas/:studentId', async (req, res) => {
 
         res.status(200).json({ success: true, tareas: tareasFormateadas });
     } catch (error) {
-        console.error("Error en GET /tareas (Student):", error.message);
         res.status(500).json({ success: false, message: error.message });
     }
 });
 
 router.put('/entregar-tarea', async (req, res) => {
-    const { AssignmentID, StudentID, TutorID, Title, fileBase64, fileName, fileType, studentUrl } = req.body;
+    const { AssignmentID, StudentID, TutorID, Title, Links, Files } = req.body;
+    
     try {
-        let fileUrl = null;
+        let uploadedFilesArray = [];
 
-        if (fileBase64) {
-            const buffer = Buffer.from(fileBase64.split(',')[1], 'base64');
-            
-            const cleanFileName = fileName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9.\-_]/g, "");
-            const uniqueName = `entrega_${StudentID}_${Date.now()}_${cleanFileName}`;
-            
-            await supabaseAdmin.storage.from('entregas-alumnos').upload(`public/${uniqueName}`, buffer, { contentType: fileType });
-            const { data: urlData } = supabaseAdmin.storage.from('entregas-alumnos').getPublicUrl(`public/${uniqueName}`);
-            fileUrl = urlData.publicUrl;
+        if (Files && Files.length > 0) {
+            for (let file of Files) {
+                const buffer = Buffer.from(file.fileBase64.split(',')[1], 'base64');
+                const cleanFileName = file.fileName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9.\-_]/g, "");
+                const uniqueName = `entrega_${StudentID}_${Date.now()}_${cleanFileName}`;
+                
+                await supabaseAdmin.storage.from('entregas-alumnos').upload(`public/${uniqueName}`, buffer, { contentType: file.fileType });
+                const { data: urlData } = supabaseAdmin.storage.from('entregas-alumnos').getPublicUrl(`public/${uniqueName}`);
+                
+                uploadedFilesArray.push({
+                    name: file.fileName,
+                    url: urlData.publicUrl
+                });
+            }
         }
 
-        const { error: updateErr } = await supabaseAdmin.from('Assignments')
-            .update({
-                Status: 'Submitted',
-                StudentFile: fileUrl,
-                StudentUrl: studentUrl || null
+        const linksText = Links && Links.length > 0 ? JSON.stringify(Links) : null;
+        const filesText = uploadedFilesArray.length > 0 ? JSON.stringify(uploadedFilesArray) : null;
+
+        const { error } = await supabaseAdmin
+            .from('Assignments')
+            .update({ 
+                Status: 'Submitted', 
+                StudentUrl: linksText, 
+                StudentFile: filesText, 
+                AllowResubmit: false 
             })
             .eq('AssignmentID', AssignmentID);
 
-        if (updateErr) throw updateErr;
+        if (error) throw error;
 
-        const { data: studentData } = await supabaseAdmin.from('UsersProfiles').select('Name').eq('ID', StudentID).single();
-
+        const { data: studentProfile } = await supabaseAdmin.from('UsersProfiles').select('Name').eq('ID', StudentID).single();
+        
         await supabaseAdmin.from('Notifications').insert([{
             ReceiverID: TutorID,
             SenderID: StudentID,
-            Type: 'MaterialSubido',
+            Type: 'MaterialSubido', 
             Title: 'Tarea Entregada',
-            Message: `El alumno ${studentData?.Name || ''} ha entregado la tarea: "${Title}". Ya puedes calificarla.`,
+            Message: `El alumno ${studentProfile?.Name || ''} ha entregado su evidencia para la tarea "${Title}".`,
             RelatedEntityID: AssignmentID
         }]);
 
         res.status(200).json({ success: true });
     } catch (error) {
+        console.error("Error al subir tarea múltiple:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 });
@@ -219,28 +230,30 @@ router.get('/sesiones/:studentId', async (req, res) => {
 
         res.status(200).json({ success: true, sesiones: sesionesFormateadas });
     } catch (error) {
-        console.error("Error en GET /sesiones:", error.message);
         res.status(500).json({ success: false, message: error.message });
     }
 });
 
-
 router.get('/dashboard-summary/:studentId', async (req, res) => {
     const { studentId } = req.params;
     try {
-        const { data: enrollments, error: enrollErr } = await supabaseAdmin
+        const { data: studentBase } = await supabaseAdmin
+            .from('Students')
+            .select('Language, CurrentLevel')
+            .eq('ID', studentId)
+            .single();
+
+        const { data: enrollments } = await supabaseAdmin
             .from('Enrollments')
-            .select(`
-                CourseID,
-                Courses ( Name, Language, Level, TutorID )
-            `)
+            .select(`CourseID, Courses ( Name, TutorID )`)
             .eq('StudentID', studentId)
+            .order('EnrollmentID', { ascending: false })
             .limit(1); 
 
         let courseData = null;
         let tutorData = null;
 
-        if (!enrollErr && enrollments && enrollments.length > 0) {
+        if (enrollments && enrollments.length > 0) {
             courseData = enrollments[0].Courses;
 
             if (courseData && courseData.TutorID) {
@@ -263,7 +276,7 @@ router.get('/dashboard-summary/:studentId', async (req, res) => {
             }
         }
 
-        const { count: pendingCount, error: tasksErr } = await supabaseAdmin
+        const { count: pendingCount } = await supabaseAdmin
             .from('Assignments')
             .select('AssignmentID', { count: 'exact', head: true })
             .eq('StudentID', studentId)
@@ -272,21 +285,18 @@ router.get('/dashboard-summary/:studentId', async (req, res) => {
         res.status(200).json({
             success: true,
             summary: {
-                language: courseData?.Language || 'Idioma',
-                level: courseData?.Level || 'Nivel',
-                courseName: courseData?.Name || 'No inscrito',
+                language: studentBase?.Language || 'Sin idioma',
+                level: studentBase?.CurrentLevel || 'Sin nivel',
+                courseName: courseData?.Name || 'Sin asignar',
                 tutor: tutorData || { name: 'Por asignar', career: '-' },
                 pendingTasks: pendingCount || 0
             }
         });
 
     } catch (error) {
-        console.error("Error en dashboard-summary:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 });
-
-
 
 router.get('/mi-tutor/:studentId', async (req, res) => {
     const { studentId } = req.params;
@@ -342,7 +352,31 @@ router.get('/mi-tutor/:studentId', async (req, res) => {
 
         res.status(200).json({ success: true, tutor: tutorData, sesiones: upcomingSessions });
     } catch (error) {
-        console.error("Error en GET /mi-tutor:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.get('/ultima-calificacion/:studentId', async (req, res) => {
+    const { studentId } = req.params;
+    try {
+        const { data: enrollments, error } = await supabaseAdmin
+            .from('Enrollments')
+            .select('FinalGrade, CourseID')
+            .eq('StudentID', studentId)
+            .not('FinalGrade', 'is', null)
+            .order('EnrollmentID', { ascending: false })
+            .limit(1);
+
+        if (error) throw error;
+        if (!enrollments || enrollments.length === 0) return res.status(200).json({ success: true, data: null });
+
+        const courseInfo = await supabaseAdmin.from('Courses').select('Name').eq('CourseID', enrollments[0].CourseID).single();
+
+        res.status(200).json({ 
+            success: true, 
+            data: { grade: enrollments[0].FinalGrade, courseName: courseInfo.data?.Name || 'Curso' } 
+        });
+    } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 });

@@ -78,6 +78,7 @@ router.get('/mis-estudiantes/:tutorId', async (req, res) => {
                 id: profile.ID,
                 name: profile.Name,
                 email: profile.Email,
+                courseId: course?.CourseID,
                 courseName: course?.Name || 'N/A',
                 language: course?.Language || 'N/A',
                 level: course?.Level || 'N/A',
@@ -599,23 +600,40 @@ router.put('/cancelar-sesion', async (req, res) => {
 
 
 router.post('/asignar-tarea', async (req, res) => {
-    const { TutorID, StudentIDs, CourseID, Title, Description, Deadline, HelpMaterialLink, fileBase64, fileName, fileType } = req.body;
+    const { TutorID, StudentIDs, CourseID, Title, Description, Deadline, Links, Files } = req.body;
 
     try {
-        let fileUrl = null;
-        if (fileBase64) {
-            const buffer = Buffer.from(fileBase64.split(',')[1], 'base64');
-            const cleanFileName = fileName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9.\-_]/g, "");
-            const uniqueName = `material_${Date.now()}_${cleanFileName}`;
-            
-            await supabaseAdmin.storage.from('material-tareas-tutor').upload(`public/${uniqueName}`, buffer, { contentType: fileType });
-            const { data: urlData } = supabaseAdmin.storage.from('material-tareas-tutor').getPublicUrl(`public/${uniqueName}`);
-            fileUrl = urlData.publicUrl;
+        let uploadedFilesArray = [];
+
+        if (Files && Files.length > 0) {
+            for (let file of Files) {
+                const buffer = Buffer.from(file.fileBase64.split(',')[1], 'base64');
+                const cleanFileName = file.fileName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9.\-_]/g, "");
+                const uniqueName = `material_${Date.now()}_${cleanFileName}`;
+                
+                await supabaseAdmin.storage.from('material-tareas-tutor').upload(`public/${uniqueName}`, buffer, { contentType: file.fileType });
+                const { data: urlData } = supabaseAdmin.storage.from('material-tareas-tutor').getPublicUrl(`public/${uniqueName}`);
+                
+                uploadedFilesArray.push({
+                    name: file.fileName,
+                    url: urlData.publicUrl
+                });
+            }
         }
 
+        const linksText = Links && Links.length > 0 ? JSON.stringify(Links) : null;
+        const filesText = uploadedFilesArray.length > 0 ? JSON.stringify(uploadedFilesArray) : null;
+
         const assignmentsPayload = StudentIDs.map(studentId => ({
-            TutorID, StudentID: studentId, CourseID, Title, Description, 
-            Deadline, HelpMaterialLink, HelpMaterialFile: fileUrl, Status: 'Pending'
+            TutorID, 
+            StudentID: studentId, 
+            CourseID, 
+            Title, 
+            Description, 
+            Deadline, 
+            HelpMaterialLink: linksText,
+            HelpMaterialFile: filesText, 
+            Status: 'Pending'
         }));
 
         const { data: insertedAssignments, error: assignErr } = await supabaseAdmin
@@ -630,7 +648,10 @@ router.post('/asignar-tarea', async (req, res) => {
         await supabaseAdmin.from('Notifications').insert(notificationsPayload);
 
         res.status(200).json({ success: true });
-    } catch (error) { res.status(500).json({ success: false, message: error.message }); }
+    } catch (error) { 
+        console.error("Error al asignar tarea múltiple:", error);
+        res.status(500).json({ success: false, message: error.message }); 
+    }
 });
 
 
@@ -645,7 +666,6 @@ router.get('/tareas-calificar/:tutorId', async (req, res) => {
 
         if (error) throw error;
 
-        // Filtro seguro en Javascript
         const assignments = allAssignments.filter(a => a.Status?.toLowerCase() !== 'canceled');
 
         const studentIds = [...new Set(assignments.map(a => a.StudentID).filter(Boolean))];
@@ -790,22 +810,41 @@ router.put('/calificar-tarea', async (req, res) => {
 });
 
 router.put('/editar-tarea-completa', async (req, res) => {
-    const { AssignmentIDs, CurrentStudentIDs, NewStudentIDs, CourseID, TutorID, Title, Description, Deadline, HelpMaterialLink, fileBase64, fileName, fileType, existingFileUrl, removeExistingFile } = req.body;
+    const { 
+        AssignmentIDs, CurrentStudentIDs, NewStudentIDs, CourseID, TutorID, Title, 
+        Description, Deadline, Links, ExistingFiles, NewFiles 
+    } = req.body;
 
     try {
-        let fileUrl = removeExistingFile ? null : (existingFileUrl || null);
-        
-        if (fileBase64) {
-            const buffer = Buffer.from(fileBase64.split(',')[1], 'base64');
-            const cleanFileName = fileName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9.\-_]/g, "");
-            const uniqueName = `material_${Date.now()}_${cleanFileName}`;
-            await supabaseAdmin.storage.from('material-tareas-tutor').upload(`public/${uniqueName}`, buffer, { contentType: fileType });
-            const { data: urlData } = supabaseAdmin.storage.from('material-tareas-tutor').getPublicUrl(`public/${uniqueName}`);
-            fileUrl = urlData.publicUrl; 
+        let finalFilesArray = [...(ExistingFiles || [])];
+
+        if (NewFiles && NewFiles.length > 0) {
+            for (let file of NewFiles) {
+                const buffer = Buffer.from(file.fileBase64.split(',')[1], 'base64');
+                const cleanFileName = file.fileName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9.\-_]/g, "");
+                const uniqueName = `material_${Date.now()}_${cleanFileName}`;
+                
+                await supabaseAdmin.storage.from('material-tareas-tutor').upload(`public/${uniqueName}`, buffer, { contentType: file.fileType });
+                const { data: urlData } = supabaseAdmin.storage.from('material-tareas-tutor').getPublicUrl(`public/${uniqueName}`);
+                
+                finalFilesArray.push({
+                    name: file.fileName,
+                    url: urlData.publicUrl
+                });
+            }
         }
 
+        const linksText = Links && Links.length > 0 ? JSON.stringify(Links) : null;
+        const filesText = finalFilesArray.length > 0 ? JSON.stringify(finalFilesArray) : null;
+
         await supabaseAdmin.from('Assignments')
-            .update({ Title, Description, Deadline, HelpMaterialLink, HelpMaterialFile: fileUrl })
+            .update({ 
+                Title, 
+                Description, 
+                Deadline, 
+                HelpMaterialLink: linksText, 
+                HelpMaterialFile: filesText 
+            })
             .in('AssignmentID', AssignmentIDs);
 
         const studentsToAdd = NewStudentIDs.filter(id => !CurrentStudentIDs.includes(id));
@@ -821,11 +860,11 @@ router.put('/editar-tarea-completa', async (req, res) => {
         if (studentsToAdd.length > 0) {
             const newAssignments = studentsToAdd.map(studentId => ({
                 TutorID, StudentID: studentId, CourseID, Title, Description,
-                Deadline, HelpMaterialLink, HelpMaterialFile: fileUrl, Status: 'Pending'
+                Deadline, HelpMaterialLink: linksText, HelpMaterialFile: filesText, Status: 'Pending'
             }));
             const { data: newInserts } = await supabaseAdmin.from('Assignments').insert(newAssignments).select('AssignmentID, StudentID');
             
-            if(newInserts) {
+            if (newInserts) {
                 const notifs = newInserts.map(a => ({
                     ReceiverID: a.StudentID, SenderID: TutorID, Type: 'AsignacionCurso', 
                     Title: 'Nueva Tarea Asignada', Message: `Se te ha asignado la tarea: "${Title}".`, RelatedEntityID: a.AssignmentID
@@ -835,7 +874,7 @@ router.put('/editar-tarea-completa', async (req, res) => {
         }
 
         const studentsToNotifyUpdate = CurrentStudentIDs.filter(id => !studentsToRemove.includes(id));
-        if(studentsToNotifyUpdate.length > 0) {
+        if (studentsToNotifyUpdate.length > 0) {
             const updateNotifs = studentsToNotifyUpdate.map(sid => ({
                 ReceiverID: sid, SenderID: TutorID, Type: 'AsignacionCurso',
                 Title: 'Actualizacion de Tarea', Message: `El tutor ha modificado detalles o material de la tarea "${Title}".`, RelatedEntityID: null
@@ -844,6 +883,136 @@ router.put('/editar-tarea-completa', async (req, res) => {
         }
 
         res.status(200).json({ success: true });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.get('/cursos-por-evaluar/:tutorId', async (req, res) => {
+    const { tutorId } = req.params;
+    try {
+        const { data: cursos, error: cursosErr } = await supabaseAdmin
+            .from('Courses')
+            .select('*, AdminComments') 
+            .eq('TutorID', tutorId)
+            .eq('GradingStatus', 'Pending_Grades');
+
+        if (cursosErr) throw cursosErr;
+        if (!cursos || cursos.length === 0) {
+            return res.status(200).json({ success: true, cursos: [] });
+        }
+
+        const cursosConAlumnos = await Promise.all(cursos.map(async (curso) => {
+            const { data: enrollments } = await supabaseAdmin
+                .from('Enrollments')
+                .select('StudentID, FinalGrade, FinalTutorComments')
+                .eq('CourseID', curso.CourseID);
+
+            if (!enrollments || enrollments.length === 0) return { ...curso, alumnos: [] };
+
+            const studentIds = enrollments.map(e => e.StudentID);
+            const { data: profiles } = await supabaseAdmin.from('UsersProfiles').select('ID, Name').in('ID', studentIds);
+            const { data: studentsData } = await supabaseAdmin.from('Students').select('ID, CurrentLevel').in('ID', studentIds);
+
+            const alumnos = enrollments.map(enr => {
+                const prof = profiles.find(p => p.ID === enr.StudentID);
+                const stu = studentsData.find(s => s.ID === enr.StudentID);
+                return {
+                    StudentID: enr.StudentID,
+                    Name: prof?.Name || 'Desconocido',
+                    CurrentLevel: stu?.CurrentLevel || 'N/A',
+                    FinalGrade: enr.FinalGrade || '',
+                    FinalTutorComments: enr.FinalTutorComments || ''
+                };
+            });
+            return { ...curso, alumnos };
+        }));
+
+        res.status(200).json({ success: true, cursos: cursosConAlumnos });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.put('/enviar-evaluacion-curso', async (req, res) => {
+    const { courseId, tutorId, evaluaciones } = req.body; 
+    try {
+        for (let ev of evaluaciones) {
+            const { error: updateEnrErr } = await supabaseAdmin
+                .from('Enrollments')
+                .update({ FinalGrade: ev.FinalGrade, FinalTutorComments: ev.FinalTutorComments })
+                .match({ CourseID: courseId, StudentID: ev.StudentID });
+            if (updateEnrErr) throw updateEnrErr;
+        }
+
+        const { error: updateCourseErr } = await supabaseAdmin
+            .from('Courses')
+            .update({ GradingStatus: 'Pending_Admin_Approval', AdminComments: null })
+            .eq('CourseID', courseId);
+            
+        if (updateCourseErr) throw updateCourseErr;
+
+        const { data: admins } = await supabaseAdmin.from('UsersProfiles').select('ID').eq('Rol', 'Admin');
+        const { data: curso } = await supabaseAdmin.from('Courses').select('Name').eq('CourseID', courseId).single();
+        const { data: tutor } = await supabaseAdmin.from('UsersProfiles').select('Name').eq('ID', tutorId).single();
+
+        if (admins && admins.length > 0) {
+            const notifs = admins.map(a => ({
+                ReceiverID: a.ID, 
+                SenderID: tutorId, 
+                Type: 'AlertaAdmin', 
+                Title: 'Evaluación de Curso Lista',
+                Message: `El tutor ${tutor?.Name || ''} ha enviado las calificaciones finales de "${curso?.Name || ''}". Requiere revisión y cierre.`,
+                RelatedEntityID: courseId
+            }));
+            await supabaseAdmin.from('Notifications').insert(notifs);
+        }
+
+        res.status(200).json({ success: true, message: 'Evaluaciones enviadas al administrador.' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.get('/historial-evaluaciones-tutor/:tutorId', async (req, res) => {
+    const { tutorId } = req.params;
+    try {
+        const { data: cursos, error: cursosErr } = await supabaseAdmin
+            .from('Courses')
+            .select('*')
+            .eq('TutorID', tutorId)
+            .in('GradingStatus', ['Pending_Admin_Approval', 'Finished']);
+
+        if (cursosErr) throw cursosErr;
+        if (!cursos || cursos.length === 0) return res.status(200).json({ success: true, cursos: [] });
+
+        const cursosConAlumnos = await Promise.all(cursos.map(async (curso) => {
+            const { data: enrollments } = await supabaseAdmin
+                .from('Enrollments')
+                .select('StudentID, FinalGrade, FinalTutorComments')
+                .eq('CourseID', curso.CourseID);
+
+            if (!enrollments || enrollments.length === 0) return { ...curso, alumnos: [] };
+
+            const studentIds = enrollments.map(e => e.StudentID);
+            const { data: profiles } = await supabaseAdmin.from('UsersProfiles').select('ID, Name').in('ID', studentIds);
+            const { data: studentsData } = await supabaseAdmin.from('Students').select('ID, CurrentLevel').in('ID', studentIds);
+
+            const alumnos = enrollments.map(enr => {
+                const prof = profiles.find(p => p.ID === enr.StudentID);
+                const stu = studentsData.find(s => s.ID === enr.StudentID);
+                return {
+                    StudentID: enr.StudentID,
+                    Name: prof?.Name || 'Desconocido',
+                    CurrentLevel: stu?.CurrentLevel || 'N/A',
+                    FinalGrade: enr.FinalGrade,
+                    FinalTutorComments: enr.FinalTutorComments
+                };
+            });
+            return { ...curso, alumnos };
+        }));
+
+        res.status(200).json({ success: true, cursos: cursosConAlumnos });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

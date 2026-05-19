@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Chip, Snackbar, Alert, Box, Avatar, Dialog, IconButton, Grid, TextField, InputAdornment, FormControlLabel, Checkbox } from '@mui/material';
 
 import CheckIcon from '@mui/icons-material/Check';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CloseIcon from '@mui/icons-material/Close';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import AssignmentIcon from '@mui/icons-material/Assignment';
@@ -46,12 +47,13 @@ export default function DashboardRevisor() {
     const [evidencias, setEvidencias] = useState([]);
     const [viewMode, setViewMode] = useState('Pendientes'); 
     const [searchTerm, setSearchTerm] = useState('');
+    const [validationsCount, setValidationsCount] = useState(0);
     
-    // Estado para guardar los comentarios escritos directamente en la tabla
     const [inlineComments, setInlineComments] = useState({});
     
     const [openAlert, setOpenAlert] = useState({ show: false, message: '', type: 'success' });
     const [notificaciones, setNotificaciones] = useState([]);
+    
     const [openNotifModal, setOpenNotifModal] = useState(false);
     const [selectedNotif, setSelectedNotif] = useState(null);
 
@@ -78,6 +80,14 @@ export default function DashboardRevisor() {
             const dataNotif = await resNotif.json();
             if (dataNotif.success) setNotificaciones(dataNotif.notificaciones);
         } catch (err) { console.error("Error cargando notificaciones:", err); }
+
+        if (isReviewer) {
+            try {
+                const resStats = await fetch(`http://localhost:8000/api/revisor/stats/${userId}`);
+                const dataStats = await resStats.json();
+                if (dataStats.success) setValidationsCount(dataStats.validationsCompleted);
+            } catch (err) { console.error("Error cargando stats de revisor:", err); }
+        }
     };
 
     useEffect(() => { 
@@ -86,7 +96,6 @@ export default function DashboardRevisor() {
         return () => clearInterval(intervalId);
     }, [userId, isAdmin]);
 
-    // Cuando abrimos el modal de confirmación, tomamos el comentario que haya escrito en la tabla
     const openEvalModalDialog = (row, status) => {
         const rowComment = inlineComments[row.id] || '';
         setEvalModal({ open: true, row, status, comments: rowComment, allowResubmit: true });
@@ -116,7 +125,6 @@ export default function DashboardRevisor() {
             if (data.success) {
                 setOpenAlert({ show: true, message: `Sesión marcada como ${status}`, type: status === 'Aprobado' ? 'success' : 'error' });
                 
-                // Limpiamos el comentario de la tabla para esa fila
                 setInlineComments(prev => {
                     const next = { ...prev };
                     delete next[row.id];
@@ -172,6 +180,17 @@ export default function DashboardRevisor() {
                             ? 'Monitorea el trabajo de todos los tutores y el estatus de sus revisiones.' 
                             : 'Revisa las bitácoras enviadas por tus tutores asignados.'}
                     </p>
+                    
+                    {isReviewer && (
+                        <div style={{ marginTop: '5px' }}>
+                            <Chip 
+                                icon={<CheckCircleIcon style={{ color: '#16a34a' }} />} 
+                                label={`${validationsCount} Bitácoras Evaluadas`} 
+                                size="small"
+                                style={{ backgroundColor: '#dcfce3', color: '#166534', fontWeight: 700 }} 
+                            />
+                        </div>
+                    )}
                 </div>
 
                 <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
@@ -231,12 +250,10 @@ export default function DashboardRevisor() {
                             <TableCell style={{ fontWeight: 'bold', color: '#4f566b' }}>Tema y Resumen</TableCell>
                             <TableCell style={{ fontWeight: 'bold', color: '#4f566b', textAlign: 'center' }}>Estatus</TableCell>
                             
-                            {/* Columna de Comentarios SOLO en Pendientes */}
                             {viewMode === 'Pendientes' && (
                                 <TableCell style={{ fontWeight: 'bold', color: '#4f566b', width: '25%' }}>Comentarios</TableCell>
                             )}
 
-                            {/* Columna de Evaluador SOLO en Historial */}
                             {viewMode === 'Historial' && (
                                 <TableCell style={{ fontWeight: 'bold', color: '#4f566b', textAlign: 'center' }}>Evaluador</TableCell>
                             )}
@@ -275,7 +292,6 @@ export default function DashboardRevisor() {
                                     {row.status === 'Rechazado' && <Chip label="Rechazado" size="small" style={{ backgroundColor: '#fee2e2', color: '#ef4444', fontWeight: 'bold' }} />}
                                 </TableCell>
 
-                                {/* Celda de Comentarios en línea para calificación rápida */}
                                 {viewMode === 'Pendientes' && (
                                     <TableCell>
                                         <TextField
@@ -296,7 +312,6 @@ export default function DashboardRevisor() {
                                     </TableCell>
                                 )}
 
-                                {/* Datos de Evaluación Visibles SOLO en Historial */}
                                 {viewMode === 'Historial' && (
                                     <TableCell align="center">
                                         <Typography style={{ fontSize: '0.85rem', color: '#475569', fontWeight: 600 }}>
@@ -370,19 +385,27 @@ export default function DashboardRevisor() {
                         {notificaciones.length > 0 ? notificaciones.map((item) => {
                             const style = getNotifStyle(item.Type);
                             const localDate = new Date(item.CreatedAt.replace(' ', 'T') + 'Z');
-                            const timeString = localDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                            const timeString = localDate.toLocaleString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 
                             return (
-                                <Paper key={item.NotificationID} className={`activity-card ${!item.IsRead ? 'unread' : ''}`} elevation={0} onClick={() => handleOpenNotification(item)}>
+                                <Paper 
+                                    key={item.NotificationID} 
+                                    className={`activity-card ${!item.IsRead ? 'unread' : ''}`} 
+                                    elevation={0} 
+                                    onClick={() => handleOpenNotification(item)}
+                                    style={{ cursor: 'pointer' }}
+                                >
                                     <Avatar style={{ backgroundColor: style.bg, color: style.color, width: 40, height: 40 }}>
                                         {style.icon}
                                     </Avatar>
                                     <Box className="activity-info">
                                         <Typography className="activity-title">{item.Title}</Typography>
-                                        <Typography className="activity-desc">{item.Message}</Typography>
+                                        <Typography className="activity-desc" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                            {item.Message}
+                                        </Typography>
                                     </Box>
                                     <Typography className="activity-time">{timeString}</Typography>
-                                    {!item.IsRead && <div className="unread-dot"></div>}
+                                    {!item.IsRead && <div className="unread-dot" style={{ backgroundColor: '#ef4444', width: '8px', height: '8px', borderRadius: '50%', marginLeft: '10px' }}></div>}
                                 </Paper>
                             );
                         }) : (
@@ -392,7 +415,35 @@ export default function DashboardRevisor() {
                 </div>
             </div>
 
-            {/* MODAL DE EVALUACIÓN Y COMENTARIOS */}
+            <Dialog open={openNotifModal} onClose={() => setOpenNotifModal(false)} maxWidth="xs" fullWidth PaperProps={{ style: { borderRadius: '16px', padding: '10px' } }}>
+                {selectedNotif && (
+                    <div style={{ padding: '20px', position: 'relative' }}>
+                        <IconButton onClick={() => setOpenNotifModal(false)} style={{ position: 'absolute', right: 10, top: 10 }}>
+                            <CloseIcon />
+                        </IconButton>
+                        
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
+                            <Avatar style={{ backgroundColor: getNotifStyle(selectedNotif.Type).bg, color: getNotifStyle(selectedNotif.Type).color, width: 50, height: 50 }}>
+                                {getNotifStyle(selectedNotif.Type).icon}
+                            </Avatar>
+                            <Typography variant="h6" style={{ fontWeight: 800, color: '#1e293b', lineHeight: 1.2 }}>
+                                {selectedNotif.Title}
+                            </Typography>
+                        </div>
+                        
+                        <div style={{ marginBottom: '15px', display: 'flex', justifyContent: 'flex-start' }}>
+                            <Typography variant="caption" style={{ backgroundColor: '#f1f5f9', color: '#475569', padding: '4px 8px', borderRadius: '6px', fontWeight: 600 }}>
+                                {new Date(selectedNotif.CreatedAt.replace(' ', 'T') + 'Z').toLocaleString('es-MX', { dateStyle: 'full', timeStyle: 'short' })}
+                            </Typography>
+                        </div>
+
+                        <Typography variant="body1" style={{ color: '#475569', lineHeight: 1.6, marginBottom: '25px', backgroundColor: '#f8fafc', padding: '15px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                            {selectedNotif.Message}
+                        </Typography>
+                    </div>
+                )}
+            </Dialog>
+
             <Dialog open={evalModal.open} onClose={closeEvalModal} maxWidth="xs" fullWidth PaperProps={{ style: { borderRadius: '16px', padding: '10px' } }}>
                 <Box p={2}>
                     <Typography variant="h6" style={{ fontWeight: 800, color: '#1e293b', marginBottom: '10px' }}>

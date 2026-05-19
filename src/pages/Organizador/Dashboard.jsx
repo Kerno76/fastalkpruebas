@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { CalendarWidget } from "../../components/CalendarWidget";
 import '../../styles/App.css';
-
-// Importamos iconos dinámicos
 import PeopleIcon from '@mui/icons-material/People';
 import SchoolIcon from '@mui/icons-material/School';
 import ClassIcon from '@mui/icons-material/Class';
@@ -10,9 +8,9 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import EventAvailableIcon from '@mui/icons-material/EventAvailable'; 
-import { Box, Typography, Avatar, Paper } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+import { Box, Typography, Avatar, Paper, Dialog, IconButton } from '@mui/material';
 
-// Función para mapear el icono y colores correctos según la notificación
 const getNotifStyle = (type) => {
     switch(type) {
         case 'MaterialSubido': return { icon: <CloudUploadIcon />, bg: '#e0f2fe', color: '#0284c7' };
@@ -23,7 +21,6 @@ const getNotifStyle = (type) => {
     }
 };
 
-// Función para mapear el icono de las tarjetas superiores
 const getStatIcon = (title) => {
     if (title.includes('Estudiantes')) return <PeopleIcon style={{ color: '#3b82f6' }} />;
     if (title.includes('Tutores')) return <SchoolIcon style={{ color: '#8b5cf6' }} />;
@@ -32,122 +29,153 @@ const getStatIcon = (title) => {
 };
 
 export default function Dashboard() {
-  const user = JSON.parse(localStorage.getItem('user'));
-  const adminId = user?.ID;
+    const user = JSON.parse(localStorage.getItem('user'));
+    const adminId = user?.ID;
 
-  const [stats, setStats] = useState([
-    { title: "Estudiantes Activos", amount: 0 },
-    { title: "Tutores Activos", amount: 0 },
-    { title: "Cursos Activos", amount: 0 }
-  ]);
-  const [notificaciones, setNotificaciones] = useState([]);
+    const [stats, setStats] = useState([
+        { title: "Estudiantes Activos", amount: 0 },
+        { title: "Tutores Activos", amount: 0 },
+        { title: "Cursos Activos", amount: 0 }
+    ]);
+    const [notificaciones, setNotificaciones] = useState([]);
 
-  const fetchData = async () => {
-      if (!adminId) return;
-      try {
-          // 1. Obtener las métricas globales
-          const resStats = await fetch('http://localhost:8000/api/admin/dashboard-summary');
-          const dataStats = await resStats.json();
-          if (dataStats.success) setStats(dataStats.stats);
+    const [openNotifModal, setOpenNotifModal] = useState(false);
+    const [selectedNotif, setSelectedNotif] = useState(null);
 
-          // 2. Obtener las notificaciones recientes
-          const resNotif = await fetch(`http://localhost:8000/api/admin/notificaciones/${adminId}`);
-          const dataNotif = await resNotif.json();
-          if (dataNotif.success) setNotificaciones(dataNotif.notificaciones);
-      } catch (error) {
-          console.error("Error cargando dashboard:", error);
-      }
-  };
+    const fetchData = async () => {
+        if (!adminId) return;
+        try {
+            const resStats = await fetch('http://localhost:8000/api/admin/dashboard-summary');
+            const dataStats = await resStats.json();
+            if (dataStats.success) setStats(dataStats.stats);
 
-  useEffect(() => {
-      fetchData();
-      // Actualizamos automáticamente cada 30 segundos
-      const intervalId = setInterval(fetchData, 30000);
-      return () => clearInterval(intervalId);
-  }, [adminId]);
+            const resNotif = await fetch(`http://localhost:8000/api/admin/notificaciones/${adminId}`);
+            const dataNotif = await resNotif.json();
+            if (dataNotif.success) setNotificaciones(dataNotif.notificaciones);
+        } catch (error) {
+            console.error("Error cargando dashboard:", error);
+        }
+    };
 
-  // Si hacen clic en una notificación que no han leído, la marcamos como leída en la BD
-  const handleLeerNotificacion = async (notif) => {
-      if (!notif.IsRead) {
-          try {
-              await fetch(`http://localhost:8000/api/admin/notificaciones/leer/${notif.NotificationID}`, { method: 'PUT' });
-              setNotificaciones(prev => prev.map(n => n.NotificationID === notif.NotificationID ? { ...n, IsRead: true } : n));
-          } catch (error) { console.error(error); }
-      }
-  };
+    useEffect(() => {
+        fetchData();
+        const intervalId = setInterval(fetchData, 30000);
+        return () => clearInterval(intervalId);
+    }, [adminId]);
 
-  return (
-    <div className="mainContent">
+    const handleOpenNotification = async (notif) => {
+        setSelectedNotif(notif);
+        setOpenNotifModal(true);
 
-      <h2 id="Title">Panel Principal</h2>
-      <p className="dashboard-subtitle">Bienvenido de vuelta. Aquí está el resumen general de FasTalk.</p>
+        if (!notif.IsRead) {
+            try {
+                await fetch(`http://localhost:8000/api/admin/notificaciones/leer/${notif.NotificationID}`, { method: 'PUT' });
+                setNotificaciones(prev => prev.map(n => n.NotificationID === notif.NotificationID ? { ...n, IsRead: true } : n));
+            } catch (error) { console.error(error); }
+        }
+    };
 
-      <div className="dashboard-cards-grid">
-        {stats.map((stat, index) => (
-          <div key={index} className="dash-card">
-            <div className="dash-card-header">
-              <h1>{stat.title}</h1>
-              <span className="icon-wrapper" style={{ backgroundColor: '#f8fafc', borderRadius: '50%', padding: '8px', display: 'flex' }}>
-                {getStatIcon(stat.title)}
-              </span>
+    return (
+        <div className="mainContent">
+
+        <h2 id="Title">Panel Principal</h2>
+        <p className="dashboard-subtitle">Bienvenido de vuelta. Aquí está el resumen general de FasTalk.</p>
+
+        <div className="dashboard-cards-grid">
+            {stats.map((stat, index) => (
+            <div key={index} className="dash-card">
+                <div className="dash-card-header">
+                <h1>{stat.title}</h1>
+                <span className="icon-wrapper" style={{ backgroundColor: '#f8fafc', borderRadius: '50%', padding: '8px', display: 'flex' }}>
+                    {getStatIcon(stat.title)}
+                </span>
+                </div>
+                
+                <div className="stat-container">
+                <span className="stat-number">{stat.amount}</span>
+                <span className="stat-label">Total en sistema</span>
+                </div>
+                
+                <p className="card-footer-text" style={{ color: '#64748b' }}>Cálculo en tiempo real</p>
             </div>
-            
-            <div className="stat-container">
-              <span className="stat-number">{stat.amount}</span>
-              <span className="stat-label">Total en sistema</span>
-            </div>
-            
-            <p className="card-footer-text" style={{ color: '#64748b' }}>Cálculo en tiempo real</p>
-          </div>
-        ))}
-      </div>
-
-      <div className="bottomSection">
-        <div className="recentActivity">
-          <h2 style={{ marginBottom: '15px' }}>Actividad Reciente</h2>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {notificaciones.length > 0 ? notificaciones.map((item) => {
-                  const style = getNotifStyle(item.Type);
-                  // Convertimos la hora de UTC a Local
-                  const localDate = new Date(item.CreatedAt.replace(' ', 'T') + 'Z');
-                  const timeString = localDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-                  return (
-                      <Paper 
-                          key={item.NotificationID} 
-                          className={`activity-card ${!item.IsRead ? 'unread' : ''}`} 
-                          elevation={0}
-                          onClick={() => handleLeerNotificacion(item)}
-                          style={{ cursor: !item.IsRead ? 'pointer' : 'default' }}
-                      >
-                          <Avatar style={{ backgroundColor: style.bg, color: style.color }}>
-                              {style.icon}
-                          </Avatar>
-
-                          <Box className="activity-info">
-                              <Typography className="activity-title">{item.Title}</Typography>
-                              <Typography className="activity-desc">{item.Message}</Typography>
-                          </Box>
-
-                          <Typography className="activity-time">{timeString}</Typography>
-                          {!item.IsRead && <div className="unread-dot" style={{ backgroundColor: '#ef4444', width: '8px', height: '8px', borderRadius: '50%', marginLeft: '10px' }}></div>}
-                      </Paper>
-                  );
-              }) : (
-                  <p style={{ textAlign: 'center', color: '#94a3b8', padding: '20px', backgroundColor: '#f8fafc', borderRadius: '12px' }}>
-                      Aún no hay actividad reciente en el sistema.
-                  </p>
-              )}
-          </div>
+            ))}
         </div>
 
-        <div className="calendar">
-          <h2 style={{ marginBottom: '15px' }}>Calendario General</h2>
-          <CalendarWidget></CalendarWidget>
+        <div className="bottomSection">
+            <div className="recentActivity">
+            <h2 style={{ marginBottom: '15px' }}>Actividad Reciente</h2>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {notificaciones.length > 0 ? notificaciones.map((item) => {
+                    const style = getNotifStyle(item.Type);
+                    const localDate = new Date(item.CreatedAt.replace(' ', 'T') + 'Z');
+                    const timeString = localDate.toLocaleString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+                    return (
+                        <Paper 
+                            key={item.NotificationID} 
+                            className={`activity-card ${!item.IsRead ? 'unread' : ''}`} 
+                            elevation={0}
+                            onClick={() => handleOpenNotification(item)}
+                            style={{ cursor: 'pointer' }}
+                        >
+                            <Avatar style={{ backgroundColor: style.bg, color: style.color }}>
+                                {style.icon}
+                            </Avatar>
+
+                            <Box className="activity-info">
+                                <Typography className="activity-title">{item.Title}</Typography>
+                                <Typography className="activity-desc" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    {item.Message}
+                                </Typography>
+                            </Box>
+
+                            <Typography className="activity-time">{timeString}</Typography>
+                            {!item.IsRead && <div className="unread-dot" style={{ backgroundColor: '#ef4444', width: '8px', height: '8px', borderRadius: '50%', marginLeft: '10px' }}></div>}
+                        </Paper>
+                    );
+                }) : (
+                    <p style={{ textAlign: 'center', color: '#94a3b8', padding: '20px', backgroundColor: '#f8fafc', borderRadius: '12px' }}>
+                        Aún no hay actividad reciente en el sistema.
+                    </p>
+                )}
+            </div>
+            </div>
+
+            <div className="calendar">
+            <h2 style={{ marginBottom: '15px' }}>Calendario General</h2>
+            <CalendarWidget></CalendarWidget>
+            </div>
         </div>
 
-      </div>
-    </div>
-  )
-}
+        <Dialog open={openNotifModal} onClose={() => setOpenNotifModal(false)} maxWidth="xs" fullWidth PaperProps={{ style: { borderRadius: '16px', padding: '10px' } }}>
+            {selectedNotif && (
+                <div style={{ padding: '20px', position: 'relative' }}>
+                    <IconButton onClick={() => setOpenNotifModal(false)} style={{ position: 'absolute', right: 10, top: 10 }}>
+                        <CloseIcon />
+                    </IconButton>
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
+                        <Avatar style={{ backgroundColor: getNotifStyle(selectedNotif.Type).bg, color: getNotifStyle(selectedNotif.Type).color, width: 50, height: 50 }}>
+                            {getNotifStyle(selectedNotif.Type).icon}
+                        </Avatar>
+                        <Typography variant="h6" style={{ fontWeight: 800, color: '#1e293b', lineHeight: 1.2 }}>
+                            {selectedNotif.Title}
+                        </Typography>
+                    </div>
+                    
+                    <div style={{ marginBottom: '15px', display: 'flex', justifyContent: 'flex-start' }}>
+                        <Typography variant="caption" style={{ backgroundColor: '#f1f5f9', color: '#475569', padding: '4px 8px', borderRadius: '6px', fontWeight: 600 }}>
+                            {new Date(selectedNotif.CreatedAt.replace(' ', 'T') + 'Z').toLocaleString('es-MX', { dateStyle: 'full', timeStyle: 'short' })}
+                        </Typography>
+                    </div>
+
+                    <Typography variant="body1" style={{ color: '#475569', lineHeight: 1.6, marginBottom: '25px', backgroundColor: '#f8fafc', padding: '15px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                        {selectedNotif.Message}
+                    </Typography>
+                </div>
+            )}
+        </Dialog>
+        </div>
+    )
+    }

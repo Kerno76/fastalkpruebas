@@ -9,6 +9,7 @@ import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import CloseIcon from '@mui/icons-material/Close';
 import AssignmentIcon from '@mui/icons-material/Assignment'; 
+import StarIcon from '@mui/icons-material/Star';
 
 import '../../styles/Estudiante/EstudianteDashboard.css';
 import '../../styles/App.css';
@@ -27,6 +28,7 @@ export default function EstudianteDashboard() {
 
   const [notificaciones, setNotificaciones] = useState([]);
   const [proximaSesion, setProximaSesion] = useState(null);
+  const [ultimaCalificacion, setUltimaCalificacion] = useState(null);
   
   const [summaryData, setSummaryData] = useState({
       language: 'Cargando...',
@@ -52,7 +54,19 @@ export default function EstudianteDashboard() {
 
       fetch(`http://localhost:8000/api/student/dashboard-summary/${studentId}`)
           .then(res => res.json())
-          .then(result => { if (result.success) setSummaryData(result.summary); });
+          .then(result => { 
+              if (result.success) {
+                  setSummaryData(prev => ({
+                      ...result.summary,
+                      level: result.summary.level || prev.level,
+                      language: result.summary.language || prev.language
+                  }));
+              }
+          });
+
+      fetch(`http://localhost:8000/api/student/ultima-calificacion/${studentId}`)
+          .then(res => res.json())
+          .then(result => { if (result.success) setUltimaCalificacion(result.data); });
 
   }, [studentId]);
 
@@ -64,7 +78,7 @@ export default function EstudianteDashboard() {
           try {
               await fetch(`http://localhost:8000/api/tutor/notificaciones/leer/${notif.NotificationID}`, { method: 'PUT' });
               setNotificaciones(prev => prev.map(n => n.NotificationID === notif.NotificationID ? { ...n, IsRead: true } : n));
-          } catch (error) { console.error(error); }
+          } catch (error) {}
       }
   };
 
@@ -73,8 +87,34 @@ export default function EstudianteDashboard() {
       <h2 className="dashboard-title">¡Hola, {user?.Name?.split(' ')[0] || 'Estudiante'}! ¿Listo para aprender hoy?</h2>
       <p className="dashboard-subtitle">Bienvenido de vuelta. Aquí está un resumen de tu inscripción y actividades.</p>
 
-      <div className="dashboard-cards-grid">
+      <div className="dashboard-cards-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px' }}>
         
+        <div className="dash-card" style={{ backgroundColor: ultimaCalificacion ? (ultimaCalificacion.grade >= 70 ? '#f0fdf4' : '#fef2f2') : '#fff', border: ultimaCalificacion ? (ultimaCalificacion.grade >= 70 ? '1px solid #bbf7d0' : '1px solid #fecaca') : '1px solid #e2e8f0' }}>
+          <div className="dash-card-header">
+            <h1>Última Calificación</h1>
+            <span className="iconCard" style={{ backgroundColor: ultimaCalificacion ? (ultimaCalificacion.grade >= 70 ? '#dcfce3' : '#fee2e2') : '#f1f5f9', color: ultimaCalificacion ? (ultimaCalificacion.grade >= 70 ? '#16a34a' : '#ef4444') : '#475569' }}><StarIcon /></span>
+          </div>
+          <div className="dash-card-body" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px 0' }}>
+            {ultimaCalificacion ? (
+                <>
+                    <Typography style={{ fontSize: '3.5rem', fontWeight: 'bold', color: ultimaCalificacion.grade >= 70 ? '#16a34a' : '#ef4444', lineHeight: 1 }}>
+                        {ultimaCalificacion.grade}
+                    </Typography>
+                    <Typography style={{ color: ultimaCalificacion.grade >= 70 ? '#15803d' : '#991b1b', marginTop: '10px', fontWeight: 800, textAlign: 'center' }}>
+                        Curso: "{ultimaCalificacion.courseName}"
+                    </Typography>
+                    <Typography style={{ color: '#64748b', fontSize: '0.8rem', textAlign: 'center', marginTop: '5px' }}>
+                        {ultimaCalificacion.grade >= 70 ? '¡Aprobaste el curso!' : 'Necesitas repasar este nivel.'}
+                    </Typography>
+                </>
+            ) : (
+                <Typography style={{ color: '#94a3b8', textAlign: 'center', padding: '20px 0' }}>
+                    Aún no tienes calificaciones finales registradas.
+                </Typography>
+            )}
+          </div>
+        </div>
+
         <div className="dash-card">
           <div className="dash-card-header">
             <h1>Nivel actual</h1>
@@ -125,29 +165,6 @@ export default function EstudianteDashboard() {
           </div>
         </div>
 
-        <div className="dash-card">
-          <div className="dash-card-header">
-            <h1>Siguiente sesión</h1>
-            <span className="iconCard"><InsertInvitationIcon /></span>
-          </div>
-          <div className="dash-card-body">
-            <div className="session-details">
-              {proximaSesion ? (
-                  <>
-                    <p className="session-date" style={{ fontWeight: 'bold' }}>{proximaSesion.Date} a las {proximaSesion.StartTime}</p>
-                    <p className="session-topic">{proximaSesion.Topic}</p>
-                    <button className="start-session-btn" onClick={() => window.open(proximaSesion.Url, '_blank')}>Unirse a Sesión</button>
-                  </>
-              ) : (
-                  <>
-                    <p className="session-topic" style={{ color: '#94a3b8' }}>No tienes sesiones agendadas para hoy.</p>
-                    <button className="start-session-btn" disabled style={{ backgroundColor: '#e2e8f0', color: '#94a3b8', cursor: 'not-allowed' }}>Unirse a Sesión</button>
-                  </>
-              )}
-            </div>
-          </div>
-        </div>
-
       </div>
 
       <div className="bottomSection-student" style={{ marginTop: '30px' }}>
@@ -158,23 +175,27 @@ export default function EstudianteDashboard() {
               {notificaciones.length > 0 ? notificaciones.map((item) => {
                   const style = getNotifStyle(item.Type);
                   const localDate = new Date(item.CreatedAt.replace(' ', 'T') + 'Z');
-                  const timeString = localDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                  const dateString = localDate.toLocaleDateString([], { day: '2-digit', month: '2-digit', year: 'numeric' });
+                  const timeString = localDate.toLocaleString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 
                   return (
-                      <Paper key={item.NotificationID} className={`activity-card ${!item.IsRead ? 'unread' : ''}`} elevation={0} onClick={() => handleOpenNotification(item)}>
+                      <Paper 
+                          key={item.NotificationID} 
+                          className={`activity-card ${!item.IsRead ? 'unread' : ''}`} 
+                          elevation={0} 
+                          onClick={() => handleOpenNotification(item)}
+                          style={{ cursor: 'pointer' }}
+                      >
                           <Avatar style={{ backgroundColor: style.bg, color: style.color, width: 40, height: 40 }}>
                               {style.icon}
                           </Avatar>
                           <Box className="activity-info">
                               <Typography className="activity-title">{item.Title}</Typography>
-                              <Typography className="activity-desc">{item.Message}</Typography>
+                              <Typography className="activity-desc" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                  {item.Message}
+                              </Typography>
                           </Box>
-                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                              <Typography className="activity-time" style={{ fontWeight: 600 }}>{timeString}</Typography>
-                              <Typography style={{ fontSize: '0.75rem', color: '#64748b' }}>{dateString}</Typography>
-                          </div>
-                          {!item.IsRead && <div className="unread-dot"></div>}
+                          <Typography className="activity-time">{timeString}</Typography>
+                          {!item.IsRead && <div className="unread-dot" style={{ backgroundColor: '#ef4444', width: '8px', height: '8px', borderRadius: '50%', marginLeft: '10px' }}></div>}
                       </Paper>
                   );
               }) : (
@@ -187,14 +208,25 @@ export default function EstudianteDashboard() {
       <Dialog open={openNotifModal} onClose={() => setOpenNotifModal(false)} maxWidth="xs" fullWidth PaperProps={{ style: { borderRadius: '16px', padding: '10px' } }}>
           {selectedNotif && (
               <div style={{ padding: '20px', position: 'relative' }}>
-                  <IconButton onClick={() => setOpenNotifModal(false)} style={{ position: 'absolute', right: 10, top: 10 }}><CloseIcon /></IconButton>
+                  <IconButton onClick={() => setOpenNotifModal(false)} style={{ position: 'absolute', right: 10, top: 10 }}>
+                      <CloseIcon />
+                  </IconButton>
+                  
                   <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
                       <Avatar style={{ backgroundColor: getNotifStyle(selectedNotif.Type).bg, color: getNotifStyle(selectedNotif.Type).color, width: 50, height: 50 }}>
                           {getNotifStyle(selectedNotif.Type).icon}
                       </Avatar>
-                      <Typography variant="h6" style={{ fontWeight: 800, color: '#1e293b', lineHeight: 1.2 }}>{selectedNotif.Title}</Typography>
+                      <Typography variant="h6" style={{ fontWeight: 800, color: '#1e293b', lineHeight: 1.2 }}>
+                          {selectedNotif.Title}
+                      </Typography>
                   </div>
-                  <span className="notif-modal-date">{new Date(selectedNotif.CreatedAt.replace(' ', 'T') + 'Z').toLocaleString()}</span>
+                  
+                  <div style={{ marginBottom: '15px', display: 'flex', justifyContent: 'flex-start' }}>
+                      <Typography variant="caption" style={{ backgroundColor: '#f1f5f9', color: '#475569', padding: '4px 8px', borderRadius: '6px', fontWeight: 600 }}>
+                          {new Date(selectedNotif.CreatedAt.replace(' ', 'T') + 'Z').toLocaleString('es-MX', { dateStyle: 'full', timeStyle: 'short' })}
+                      </Typography>
+                  </div>
+
                   <Typography variant="body1" style={{ color: '#475569', lineHeight: 1.6, marginBottom: '25px', backgroundColor: '#f8fafc', padding: '15px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
                       {selectedNotif.Message}
                   </Typography>

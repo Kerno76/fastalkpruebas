@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Box, Typography, Avatar, Paper, Dialog, IconButton, Button } from '@mui/material';
+import { Box, Typography, Avatar, Paper, Dialog, IconButton } from '@mui/material';
 import { CalendarWidget } from "../../components/CalendarWidget";
 
 import EventAvailableIcon from '@mui/icons-material/EventAvailable'; 
@@ -32,6 +32,8 @@ export default function TutorDashboard() {
   const [dashData, setDashData] = useState({ name: 'Cargando...', totalHours: 0, totalStudents: 0, nivelesAsignados: 'Cargando...', proximaSesion: null });
   const [notificaciones, setNotificaciones] = useState([]);
   
+  const [fechasConSesion, setFechasConSesion] = useState([]); 
+  
   const [openNotifModal, setOpenNotifModal] = useState(false);
   const [selectedNotif, setSelectedNotif] = useState(null);
 
@@ -50,14 +52,20 @@ export default function TutorDashboard() {
               .then(res => res.json())
               .then(result => { if (result.success) setNotificaciones(result.notificaciones); })
               .catch(err => console.error(err));
+
+          fetch(`http://localhost:8000/api/tutor/sesiones-pendientes/${tutorId}`)
+              .then(res => res.json())
+              .then(result => { 
+                  if (result.success) {
+                      const fechas = result.sesiones.map(s => s.Date);
+                      setFechasConSesion(fechas);
+                  } 
+              })
+              .catch(err => console.error(err));
       };
 
-      // Llamada inicial
       fetchData();
-
-      // Intervalo de 30 segundos para actualizar las notificaciones visualmente
       const intervalId = setInterval(fetchData, 30000);
-
       return () => clearInterval(intervalId);
   }, [tutorId]);
 
@@ -140,16 +148,18 @@ export default function TutorDashboard() {
               {notificaciones.length > 0 ? notificaciones.map((item) => {
                   const style = getNotifStyle(item.Type);
                   const localDate = new Date(item.CreatedAt.replace(' ', 'T') + 'Z');
-                  const timeString = localDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                  const timeString = localDate.toLocaleString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 
                   return (
-                      <Paper key={item.NotificationID} className={`activity-card ${!item.IsRead ? 'unread' : ''}`} elevation={0} onClick={() => handleOpenNotification(item)}>
+                      <Paper key={item.NotificationID} className={`activity-card ${!item.IsRead ? 'unread' : ''}`} elevation={0} onClick={() => handleOpenNotification(item)} style={{ cursor: 'pointer' }}>
                           <Avatar style={{ backgroundColor: style.bg, color: style.color, width: 40, height: 40 }}>
                               {style.icon}
                           </Avatar>
                           <Box className="activity-info">
                               <Typography className="activity-title">{item.Title}</Typography>
-                              <Typography className="activity-desc">{item.Message}</Typography>
+                              <Typography className="activity-desc" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                  {item.Message}
+                              </Typography>
                           </Box>
                           <Typography className="activity-time">{timeString}</Typography>
                           {!item.IsRead && <div className="unread-dot"></div>}
@@ -163,7 +173,8 @@ export default function TutorDashboard() {
 
         <div className="calendar">
           <h2>Calendario</h2>
-          <CalendarWidget />
+          {/* AQUÍ PASAMOS LAS FECHAS AL COMPONENTE DEL CALENDARIO */}
+          <CalendarWidget fechasAgendadas={fechasConSesion} />
         </div>
       </div>
 
@@ -171,6 +182,7 @@ export default function TutorDashboard() {
           {selectedNotif && (
               <div style={{ padding: '20px', position: 'relative' }}>
                   <IconButton onClick={() => setOpenNotifModal(false)} style={{ position: 'absolute', right: 10, top: 10 }}><CloseIcon /></IconButton>
+                  
                   <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
                       <Avatar style={{ backgroundColor: getNotifStyle(selectedNotif.Type).bg, color: getNotifStyle(selectedNotif.Type).color, width: 50, height: 50 }}>
                           {getNotifStyle(selectedNotif.Type).icon}
@@ -178,9 +190,11 @@ export default function TutorDashboard() {
                       <Typography variant="h6" style={{ fontWeight: 800, color: '#1e293b', lineHeight: 1.2 }}>{selectedNotif.Title}</Typography>
                   </div>
                   
-                  <span className="notif-modal-date">
-                      {new Date(selectedNotif.CreatedAt.replace(' ', 'T') + 'Z').toLocaleString()}
-                  </span>
+                  <div style={{ marginBottom: '15px', display: 'flex', justifyContent: 'flex-start' }}>
+                      <Typography variant="caption" style={{ backgroundColor: '#f1f5f9', color: '#475569', padding: '4px 8px', borderRadius: '6px', fontWeight: 600 }}>
+                          {new Date(selectedNotif.CreatedAt.replace(' ', 'T') + 'Z').toLocaleString('es-MX', { dateStyle: 'full', timeStyle: 'short' })}
+                      </Typography>
+                  </div>
 
                   <Typography variant="body1" style={{ color: '#475569', lineHeight: 1.6, marginBottom: '25px', backgroundColor: '#f8fafc', padding: '15px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
                       {selectedNotif.Message}

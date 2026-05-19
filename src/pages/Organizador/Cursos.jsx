@@ -1,14 +1,21 @@
 import { useState, useEffect } from 'react';
 import { Typography, Button, IconButton, Paper, Dialog, Select, MenuItem, FormControl, Box, Chip, OutlinedInput, Checkbox, ListItemText, Divider, Avatar, List, ListItem, ListItemAvatar, ListItemText as MuiListItemText, TextField, InputAdornment } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import UploadFileIcon from '@mui/icons-material/UploadFile';
 import CloseIcon from '@mui/icons-material/Close';
 import GroupsIcon from '@mui/icons-material/Groups';
 import EventIcon from '@mui/icons-material/Event';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import SearchIcon from '@mui/icons-material/Search'; 
+import DeleteIcon from '@mui/icons-material/Delete';
+import HistoryIcon from '@mui/icons-material/History';
+import ClassIcon from '@mui/icons-material/Class';
 import toast from 'react-hot-toast';
 import ModalCursos from '../../components/Modals/ModalCursos';
+
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+import dayjs from 'dayjs';
 
 import '../../styles/App.css';
 import '../../styles/Organizador/Cursos.css';
@@ -21,20 +28,50 @@ const MenuProps = {
     },
 };
 
+const getCourseStatus = (curso) => {
+    if (curso.Status === 'Past') return 'Past';
+    if (curso.Status === 'Canceled') return 'Canceled';
+
+    if (!curso.StartDate || !curso.EndDate) return 'Upcoming';
+    
+    const today = new Date();
+    const start = new Date(curso.StartDate);
+    const end = new Date(curso.EndDate);
+    
+    if (today > end) return 'Past';
+    if (today >= start && today <= end) return 'Active';
+    return 'Upcoming';
+};
+
 export default function ControlCursos() {
     const [openModalCursos, setOpenModalCursos] = useState(false);
     const [rawCursos, setRawCursos] = useState([]);
     const [timelineData, setTimelineData] = useState([]);
     const [estudiantesDisponibles, setEstudiantesDisponibles] = useState([]);
     const [alumnosInscritos, setAlumnosInscritos] = useState([]);
+    const [tutoresList, setTutoresList] = useState([]);
     
     const [openDetalles, setOpenDetalles] = useState(false);
     const [openAlumnos, setOpenAlumnos] = useState(false);
     const [cursoSeleccionado, setCursoSeleccionado] = useState(null);
     const [alumnosNuevos, setAlumnosNuevos] = useState([]);
+    const [alumnoAEliminar, setAlumnoAEliminar] = useState(null);
+
+    const [viewMode, setViewMode] = useState('Actuales'); 
 
     const [filtros, setFiltros] = useState({ anio: 'Todos', idioma: 'Todos', nivel: 'Todos', estado: 'Todos' });
     const [searchTerm, setSearchTerm] = useState(''); 
+
+    const [isEditing, setIsEditing] = useState(false);
+    const [editFormData, setEditFormData] = useState({
+        Name: '',
+        Period: '',
+        Language: '',
+        Level: '',
+        StartDate: '',
+        EndDate: '',
+        TutorID: ''
+    });
 
     const fetchCursos = async () => {
         try {
@@ -57,14 +94,19 @@ export default function ControlCursos() {
         try {
             const resStudents = await fetch("http://localhost:8000/api/admin/estudiantes-disponibles");
             const dataStudents = await resStudents.json();
-            if (Array.isArray(dataStudents)) {
-                setEstudiantesDisponibles(dataStudents);
-            } else {
-                setEstudiantesDisponibles([]);
-            }
+            if (Array.isArray(dataStudents)) setEstudiantesDisponibles(dataStudents);
         } catch (error) {
-            console.error("Error al obtener estudiantes:", error);
-            setEstudiantesDisponibles([]);
+            console.error(error);
+        }
+    };
+
+    const fetchTutores = async () => {
+        try {
+            const response = await fetch("http://localhost:8000/api/admin/tutores");
+            const data = await response.json();
+            if (Array.isArray(data)) setTutoresList(data);
+        } catch (error) {
+            console.error(error);
         }
     };
 
@@ -86,10 +128,17 @@ export default function ControlCursos() {
     useEffect(() => {
         fetchCursos();
         fetchEstudiantesDisp();
+        fetchTutores();
     }, []);
 
     useEffect(() => {
         let filtrados = Array.isArray(rawCursos) ? [...rawCursos] : [];
+
+        if (viewMode === 'Actuales') {
+            filtrados = filtrados.filter(c => getCourseStatus(c) === 'Active' || getCourseStatus(c) === 'Upcoming');
+        } else {
+            filtrados = filtrados.filter(c => getCourseStatus(c) === 'Past' || getCourseStatus(c) === 'Canceled');
+        }
 
         if (filtros.anio !== 'Todos') {
             filtrados = filtrados.filter(c => c.StartDate && new Date(c.StartDate).getFullYear().toString() === filtros.anio);
@@ -101,16 +150,7 @@ export default function ControlCursos() {
             filtrados = filtrados.filter(c => c.Level === filtros.nivel);
         }
         if (filtros.estado !== 'Todos') {
-            filtrados = filtrados.filter(c => {
-                if (!c.StartDate || !c.EndDate) return false;
-                const today = new Date();
-                const end = new Date(c.EndDate);
-                const start = new Date(c.StartDate);
-                let status = 'Upcoming';
-                if (today > end) status = 'Past';
-                else if (today >= start && today <= end) status = 'Active';
-                return status === filtros.estado;
-            });
+            filtrados = filtrados.filter(c => getCourseStatus(c) === filtros.estado);
         }
 
         if (searchTerm.trim() !== '') {
@@ -122,7 +162,7 @@ export default function ControlCursos() {
         }
         
         setTimelineData(formatData(filtrados));
-    }, [filtros, rawCursos, searchTerm]); 
+    }, [filtros, rawCursos, searchTerm, viewMode]); 
 
     const handleFilterChange = (e) => setFiltros({ ...filtros, [e.target.name]: e.target.value });
 
@@ -130,18 +170,13 @@ export default function ControlCursos() {
         if (!Array.isArray(cursosArray)) return [];
         
         const grouped = {};
-        const today = new Date();
         
         cursosArray.forEach(curso => {
             const start = curso.StartDate ? new Date(curso.StartDate) : null;
             const end = curso.EndDate ? new Date(curso.EndDate) : null;
             const year = start && !isNaN(start) ? start.getFullYear().toString() : 'Desconocido';
             
-            let status = 'Upcoming';
-            if (start && end) {
-                if (today > end) status = 'Past'; 
-                else if (today >= start && today <= end) status = 'Active';
-            }
+            const status = getCourseStatus(curso);
 
             let durText = "Sin definir";
             if (start && end && !isNaN(start) && !isNaN(end)) {
@@ -190,8 +225,53 @@ export default function ControlCursos() {
 
     const getStatusClass = (status) => status === 'Active' ? 'status-active' : status === 'Upcoming' ? 'status-upcoming' : 'status-past';
 
-    const handleAbrirDetalles = (curso) => { setCursoSeleccionado(curso); setOpenDetalles(true); };
-    const handleAbrirAlumnos = (curso) => { setCursoSeleccionado(curso); setAlumnosNuevos([]); fetchAlumnosInscritos(curso.id); setOpenAlumnos(true); };
+    const handleAbrirDetalles = (curso) => { 
+        setCursoSeleccionado(curso); 
+        setEditFormData({
+            Name: curso.raw?.Name || '',
+            Period: curso.raw?.Period || '',
+            Language: curso.raw?.Language || '',
+            Level: curso.raw?.Level || '',
+            StartDate: curso.raw?.StartDate || '',
+            EndDate: curso.raw?.EndDate || '',
+            TutorID: curso.raw?.TutorID || ''
+        });
+        setIsEditing(false);
+        setOpenDetalles(true); 
+    };
+
+    const handleAbrirAlumnos = (curso) => { 
+        setCursoSeleccionado(curso); 
+        setAlumnosNuevos([]); 
+        fetchAlumnosInscritos(curso.id); 
+        setOpenAlumnos(true); 
+    };
+
+    const handleGuardarDetalles = async () => {
+        const loadingToast = toast.loading('Guardando cambios...');
+        try {
+            const response = await fetch("http://localhost:8000/api/admin/editar-curso", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    courseId: cursoSeleccionado.id,
+                    ...editFormData
+                })
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                toast.success('Curso actualizado correctamente', { id: loadingToast });
+                setIsEditing(false);
+                setOpenDetalles(false);
+                fetchCursos();
+            } else {
+                toast.error(data.message || 'Error al guardar', { id: loadingToast });
+            }
+        } catch (error) {
+            toast.error('Error de conexión', { id: loadingToast });
+        }
+    };
 
     const handleAddAlumnos = async () => {
         if (alumnosNuevos.length === 0) return;
@@ -205,14 +285,34 @@ export default function ControlCursos() {
             const data = await response.json();
             if (data.success) {
                 toast.success('¡Alumnos integrados!', { id: loadingToast });
-                setOpenAlumnos(false);
+                setAlumnosNuevos([]);
+                fetchAlumnosInscritos(cursoSeleccionado.id);
                 fetchCursos();
                 fetchEstudiantesDisp();
             } else throw new Error(data.message);
         } catch (error) { toast.error(error.message || 'Error de conexión', { id: loadingToast }); }
     };
 
-    // MODIFICADO: Ahora solo filtra por idioma, ignorando el nivel
+    const handleRemoveAlumno = async () => {
+        if (!alumnoAEliminar) return;
+        const loadingToast = toast.loading('Removiendo alumno...');
+        try {
+            const response = await fetch("http://localhost:8000/api/admin/remover-alumno-curso", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ courseId: cursoSeleccionado.id, studentId: alumnoAEliminar.ID })
+            });
+            const data = await response.json();
+            if (data.success) {
+                toast.success('Alumno removido del curso', { id: loadingToast });
+                setAlumnoAEliminar(null);
+                fetchAlumnosInscritos(cursoSeleccionado.id);
+                fetchCursos();
+                fetchEstudiantesDisp();
+            } else throw new Error(data.message);
+        } catch (error) { toast.error(error.message || 'Error de conexión', { id: loadingToast }); }
+    };
+
     const estudiantesFiltrados = cursoSeleccionado && Array.isArray(estudiantesDisponibles) 
         ? estudiantesDisponibles.filter(est => {
             const estLang = est.Language ? est.Language.toUpperCase() : '';
@@ -227,17 +327,53 @@ export default function ControlCursos() {
         : []
     )].sort((a, b) => b - a);
 
+    const isPastCourse = cursoSeleccionado?.status === 'Past' || cursoSeleccionado?.status === 'Canceled';
+
     return (
         <div className='mainContent'>
-            <div className="header-container">
-                <h2 className="dashboard-title">Gestión de Cursos</h2>
-                <div className="header-actions">
-                    <Button onClick={() => setOpenModalCursos(true)} variant="contained" startIcon={<AddIcon />} className="btn-primary">Registrar Nuevo Curso</Button>
+            <div className="header-container" style={{ alignItems: 'center', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '15px' }}>
+                
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <h2 className="dashboard-title" style={{ margin: 0 }}>Gestión de Cursos</h2>
+                </div>
+
+                <div className="header-actions" style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                    
+                    <div style={{ display: 'flex', backgroundColor: '#e2e8f0', borderRadius: '10px', padding: '4px' }}>
+                        <Button 
+                            startIcon={<ClassIcon />}
+                            onClick={() => setViewMode('Actuales')}
+                            style={{ 
+                                backgroundColor: viewMode === 'Actuales' ? '#fff' : 'transparent',
+                                color: viewMode === 'Actuales' ? '#0f172a' : '#64748b',
+                                textTransform: 'none', fontWeight: 600, borderRadius: '8px', 
+                                boxShadow: viewMode === 'Actuales' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                            }}
+                        >
+                            Actuales
+                        </Button>
+                        <Button 
+                            startIcon={<HistoryIcon />}
+                            onClick={() => setViewMode('Historial')}
+                            style={{ 
+                                backgroundColor: viewMode === 'Historial' ? '#fff' : 'transparent',
+                                color: viewMode === 'Historial' ? '#0f172a' : '#64748b',
+                                textTransform: 'none', fontWeight: 600, borderRadius: '8px', 
+                                boxShadow: viewMode === 'Historial' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                            }}
+                        >
+                            Historial
+                        </Button>
+                    </div>
+
+                    <Button onClick={() => setOpenModalCursos(true)} variant="contained" startIcon={<AddIcon />} style={{ backgroundColor: '#68899D', textTransform: 'none', borderRadius: '8px', fontWeight: 600, padding: '8px 16px' }}>
+                        Nuevo Curso
+                    </Button>
                     <ModalCursos open={openModalCursos} onClose={() => { setOpenModalCursos(false); fetchCursos(); fetchEstudiantesDisp(); }} />
                 </div>
             </div>
 
-            <hr className="divisor"/>
+            <hr className="divisor" style={{ marginBottom: '25px', borderTop: '1px solid #e0e4e8' }}/>
 
             <div className="filters-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', alignItems: 'center' }}>
                 
@@ -257,26 +393,30 @@ export default function ControlCursos() {
                     }}
                 />
 
-                {['anio', 'idioma', 'nivel', 'estado'].map((f) => (
-                    <div key={f} style={{ display: 'flex', alignItems: 'center' }}>
-                        <span className="filter-label" style={{ marginRight: '8px' }}>{f.charAt(0).toUpperCase() + f.slice(1)}:</span>
-                        <FormControl size="small" style={{ minWidth: 100 }}>
-                            <Select name={f} value={filtros[f]} onChange={handleFilterChange} sx={{ borderRadius: '10px', backgroundColor: '#fff' }}>
-                                <MenuItem value="Todos">Todos</MenuItem>
-                                {f === 'anio' && aniosDisponibles.map(a => <MenuItem key={a} value={a}>{a}</MenuItem>)}
-                                {f === 'idioma' && ['INGLÉS', 'FRANCÉS'].map(i => <MenuItem key={i} value={i}>{i.charAt(0) + i.slice(1).toLowerCase()}</MenuItem>)}
-                                {f === 'nivel' && ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].map(n => <MenuItem key={n} value={n}>{n}</MenuItem>)}
-                                {f === 'estado' && [['Active', 'Activos'], ['Upcoming', 'Próximos'], ['Past', 'Pasados']].map(s => <MenuItem key={s[0]} value={s[0]}>{s[1]}</MenuItem>)}
-                            </Select>
-                        </FormControl>
-                    </div>
-                ))}
+                {['anio', 'idioma', 'nivel', 'estado'].map((f) => {
+                    if (viewMode === 'Historial' && f === 'estado') return null;
+
+                    return (
+                        <div key={f} style={{ display: 'flex', alignItems: 'center' }}>
+                            <span className="filter-label" style={{ marginRight: '8px' }}>{f.charAt(0).toUpperCase() + f.slice(1)}:</span>
+                            <FormControl size="small" style={{ minWidth: 100 }}>
+                                <Select name={f} value={filtros[f]} onChange={handleFilterChange} sx={{ borderRadius: '10px', backgroundColor: '#fff' }}>
+                                    <MenuItem value="Todos">Todos</MenuItem>
+                                    {f === 'anio' && aniosDisponibles.map(a => <MenuItem key={a} value={a}>{a}</MenuItem>)}
+                                    {f === 'idioma' && ['INGLÉS', 'FRANCÉS'].map(i => <MenuItem key={i} value={i}>{i.charAt(0) + i.slice(1).toLowerCase()}</MenuItem>)}
+                                    {f === 'nivel' && ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].map(n => <MenuItem key={n} value={n}>{n}</MenuItem>)}
+                                    {f === 'estado' && [['Active', 'Activos'], ['Upcoming', 'Próximos']].map(s => <MenuItem key={s[0]} value={s[0]}>{s[1]}</MenuItem>)}
+                                </Select>
+                            </FormControl>
+                        </div>
+                    );
+                })}
             </div>
 
             <div className="cursos-timeline">
                 {timelineData.length === 0 ? (
-                    <Typography variant="body1" color="textSecondary" align="center" style={{ marginTop: '40px' }}>
-                        No se encontraron cursos con los filtros o búsqueda seleccionada.
+                    <Typography variant="body1" color="textSecondary" align="center" style={{ marginTop: '40px', fontStyle: 'italic' }}>
+                        No se encontraron cursos en la sección de {viewMode}.
                     </Typography>
                 ) : (
                     timelineData.map((yearBlock) => (
@@ -329,28 +469,129 @@ export default function ControlCursos() {
                     <Typography className="modal-title">Detalles del Curso</Typography>
                     {cursoSeleccionado && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                            <div style={{ backgroundColor: '#f8fafc', padding: '20px', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-                                <Typography variant="h5" style={{ fontWeight: 800, color: '#1e293b' }}>{cursoSeleccionado.name}</Typography>
-                                <Typography variant="body2" style={{ color: '#64748b', fontWeight: 600, marginBottom: '10px' }}>{cursoSeleccionado.period}</Typography>
-                                <div style={{ display: 'flex', gap: '8px' }}>
-                                    <Chip label={cursoSeleccionado.raw?.Language || 'N/A'} size="small" variant="outlined" />
-                                    <Chip label={`Nivel ${cursoSeleccionado.level}`} size="small" color="primary" />
-                                    <Chip label={cursoSeleccionado.status} size="small" className={getStatusClass(cursoSeleccionado.status)} />
+                            {isPastCourse && (
+                                <div style={{ backgroundColor: '#fff7ed', padding: '10px', borderRadius: '8px', border: '1px solid #fed7aa' }}>
+                                    <Typography variant="body2" style={{ color: '#9a3412', fontWeight: 600, textAlign: 'center' }}>
+                                        Este curso ha finalizado y se encuentra en modo Solo Lectura.
+                                    </Typography>
                                 </div>
+                            )}
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '15px' }}>
+                                <TextField 
+                                    label="Nombre del Curso" 
+                                    name="Name" 
+                                    value={editFormData.Name} 
+                                    onChange={e => setEditFormData({...editFormData, Name: e.target.value})} 
+                                    disabled={!isEditing || isPastCourse} 
+                                    size="small" 
+                                    fullWidth 
+                                />
                             </div>
+
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                                <Paper elevation={0} style={{ padding: '15px', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
-                                    <Typography variant="caption" style={{ fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Tutor Titular</Typography>
-                                    <Typography variant="body1" style={{ fontWeight: 700, color: '#334155' }}>{cursoSeleccionado.raw?.tutorName || 'Sin Asignar'}</Typography>
-                                </Paper>
-                                <Paper elevation={0} style={{ padding: '15px', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
-                                    <Typography variant="caption" style={{ fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Duración</Typography>
-                                    <Typography variant="body1" style={{ fontWeight: 700, color: '#334155' }}>{cursoSeleccionado.dur}</Typography>
-                                </Paper>
+                                <TextField 
+                                    label="Periodo (Ej. Ene - Jun)" 
+                                    name="Period" 
+                                    value={editFormData.Period} 
+                                    onChange={e => setEditFormData({...editFormData, Period: e.target.value})} 
+                                    disabled={!isEditing || isPastCourse} 
+                                    size="small" 
+                                    fullWidth 
+                                />
+                                <TextField 
+                                    select 
+                                    label="Nivel" 
+                                    name="Level" 
+                                    value={editFormData.Level} 
+                                    onChange={e => setEditFormData({...editFormData, Level: e.target.value})} 
+                                    disabled={!isEditing || isPastCourse} 
+                                    size="small" 
+                                    fullWidth
+                                >
+                                    <MenuItem value="A1">A1</MenuItem>
+                                    <MenuItem value="A2">A2</MenuItem>
+                                    <MenuItem value="B1">B1</MenuItem>
+                                    <MenuItem value="B2">B2</MenuItem>
+                                    <MenuItem value="C1">C1</MenuItem>
+                                    <MenuItem value="C2">C2</MenuItem>
+                                </TextField>
+                                <TextField 
+                                    select 
+                                    label="Idioma" 
+                                    name="Language" 
+                                    value={editFormData.Language} 
+                                    onChange={(e) => {
+                                        if (isEditing && cursoSeleccionado.students > 0) {
+                                            toast.error('No se puede cambiar el idioma porque hay alumnos inscritos.', { icon: '⚠️' });
+                                            return;
+                                        }
+                                        setEditFormData({...editFormData, Language: e.target.value});
+                                    }} 
+                                    disabled={!isEditing || isPastCourse} 
+                                    size="small" 
+                                    fullWidth
+                                >
+                                    <MenuItem value="Inglés">Inglés</MenuItem>
+                                    <MenuItem value="Francés">Francés</MenuItem>
+                                </TextField>
+                                <TextField 
+                                    select 
+                                    label="Tutor Asignado" 
+                                    name="TutorID" 
+                                    value={editFormData.TutorID || ''} 
+                                    onChange={e => setEditFormData({...editFormData, TutorID: e.target.value})} 
+                                    disabled={!isEditing || isPastCourse} 
+                                    size="small" 
+                                    fullWidth
+                                >
+                                    <MenuItem value=""><em>Sin Asignar</em></MenuItem>
+                                    {tutoresList.filter(t => t.Tutors && t.Tutors.Language === editFormData.Language).map(tutor => (
+                                        <MenuItem key={tutor.ID} value={tutor.ID}>{tutor.Name}</MenuItem>
+                                    ))}
+                                </TextField>
+                                
+                                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                    <DateTimePicker 
+                                        label="Fecha y Hora de Inicio"
+                                        value={editFormData.StartDate ? dayjs(editFormData.StartDate) : null}
+                                        onChange={(newValue) => setEditFormData(prev => ({ ...prev, StartDate: newValue ? newValue.format('YYYY-MM-DD HH:mm:ss') : '' }))}
+                                        disabled={!isEditing || isPastCourse}
+                                        slotProps={{ textField: { fullWidth: true, size: "small", variant: "outlined" } }}
+                                    />
+                                </LocalizationProvider>
+                                
+                                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                    <DateTimePicker 
+                                        label="Fecha y Hora de Fin"
+                                        value={editFormData.EndDate ? dayjs(editFormData.EndDate) : null}
+                                        onChange={(newValue) => setEditFormData(prev => ({ ...prev, EndDate: newValue ? newValue.format('YYYY-MM-DD HH:mm:ss') : '' }))}
+                                        disabled={!isEditing || isPastCourse}
+                                        slotProps={{ textField: { fullWidth: true, size: "small", variant: "outlined" } }}
+                                    />
+                                </LocalizationProvider>
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#64748b' }}>
-                                <EventIcon fontSize="small" />
-                                <Typography variant="body2"><strong>{cursoSeleccionado.raw?.StartDate || 'N/A'}</strong> al <strong>{cursoSeleccionado.raw?.EndDate || 'N/A'}</strong></Typography>
+
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                                {!isEditing ? (
+                                    <Button 
+                                        variant="contained" 
+                                        onClick={() => setIsEditing(true)} 
+                                        disabled={isPastCourse}
+                                        style={{ backgroundColor: isPastCourse ? '#cbd5e1' : '#68899D', textTransform: 'none', fontWeight: 600 }}
+                                    >
+                                        {isPastCourse ? 'Histórico' : 'Editar Curso'}
+                                    </Button>
+                                ) : (
+                                    <>
+                                        <Button variant="outlined" onClick={() => setIsEditing(false)} style={{ textTransform: 'none', fontWeight: 600 }}>
+                                            Cancelar
+                                        </Button>
+                                        <Button variant="contained" color="success" onClick={handleGuardarDetalles} style={{ textTransform: 'none', fontWeight: 600 }}>
+                                            Guardar Cambios
+                                        </Button>
+                                    </>
+                                )}
                             </div>
                         </div>
                     )}
@@ -363,6 +604,15 @@ export default function ControlCursos() {
                     <Typography className="modal-title">Gestión de Estudiantes</Typography>
                     {cursoSeleccionado && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            
+                            {isPastCourse && (
+                                <div style={{ backgroundColor: '#fff7ed', padding: '10px', borderRadius: '8px', border: '1px solid #fed7aa' }}>
+                                    <Typography variant="body2" style={{ color: '#9a3412', fontWeight: 600, textAlign: 'center' }}>
+                                        Este curso ha finalizado. La lista de alumnos es histórica y de solo lectura.
+                                    </Typography>
+                                </div>
+                            )}
+
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f0f9ff', padding: '15px', borderRadius: '12px', border: '1px solid #bae6fd' }}>
                                 <div>
                                     <Typography variant="caption" style={{ color: '#0369a1', fontWeight: 800 }}>{cursoSeleccionado.name}</Typography>
@@ -374,34 +624,77 @@ export default function ControlCursos() {
                             <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #f1f5f9', borderRadius: '12px' }}>
                                 <List dense>
                                     {alumnosInscritos.map((al) => (
-                                        <ListItem key={al.ID}>
+                                        <ListItem 
+                                            key={al.ID}
+                                            secondaryAction={
+                                                !isPastCourse ? (
+                                                    <IconButton edge="end" aria-label="delete" onClick={() => setAlumnoAEliminar(al)}>
+                                                        <DeleteIcon style={{ color: '#ef4444' }} />
+                                                    </IconButton>
+                                                ) : null
+                                            }
+                                        >
                                             <ListItemAvatar><Avatar sx={{ width: 32, height: 32 }}><AccountCircleIcon /></Avatar></ListItemAvatar>
                                             <MuiListItemText primary={al.Name || 'Desconocido'} primaryTypographyProps={{ style: { fontWeight: 600, fontSize: '0.9rem' } }} />
                                         </ListItem>
                                     ))}
-                                    {alumnosInscritos.length === 0 && <Typography variant="body2" align="center" style={{ padding: '10px', color: '#94a3b8' }}>No hay alumnos inscritos aún.</Typography>}
+                                    {alumnosInscritos.length === 0 && <Typography variant="body2" align="center" style={{ padding: '10px', color: '#94a3b8' }}>No hay alumnos inscritos.</Typography>}
                                 </List>
                             </div>
 
-                            <Divider />
-
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                <Typography variant="body2" style={{ fontWeight: 800, color: '#1e293b' }}>Integrar nuevos alumnos</Typography>
-                                <Select multiple fullWidth displayEmpty value={alumnosNuevos} onChange={(e) => setAlumnosNuevos(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)} input={<OutlinedInput sx={{ borderRadius: '12px' }} />} renderValue={(selected) => selected.length === 0 ? <em>Selecciona alumnos disponibles</em> : <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>{selected.map(v => <Chip key={v} label={estudiantesFiltrados.find(s => s.ID === v)?.Name || 'Alumno'} size="small" color="primary" />)}</Box>} MenuProps={MenuProps}>
-                                    {/* MODIFICADO: Agregué el "Nivel Real" para identificar más fácil a los alumnos */}
-                                    {estudiantesFiltrados.map((s) => <MenuItem key={s.ID} value={s.ID}><Checkbox checked={alumnosNuevos.indexOf(s.ID) > -1} /><ListItemText primary={`${s.Name} (Nivel Real: ${s.CurrentLevel})`} /></MenuItem>)}
-                                    {estudiantesFiltrados.length === 0 && <MenuItem disabled>No hay alumnos de este idioma disponibles</MenuItem>}
-                                </Select>
-                            </div>
+                            {!isPastCourse && (
+                                <>
+                                    <Divider />
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                        <Typography variant="body2" style={{ fontWeight: 800, color: '#1e293b' }}>Integrar nuevos alumnos</Typography>
+                                        <Select multiple fullWidth displayEmpty value={alumnosNuevos} onChange={(e) => setAlumnosNuevos(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)} input={<OutlinedInput sx={{ borderRadius: '12px' }} />} renderValue={(selected) => selected.length === 0 ? <em>Selecciona alumnos disponibles</em> : <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>{selected.map(v => <Chip key={v} label={estudiantesFiltrados.find(s => s.ID === v)?.Name || 'Alumno'} size="small" color="primary" />)}</Box>} MenuProps={MenuProps}>
+                                            {estudiantesFiltrados.map((s) => <MenuItem key={s.ID} value={s.ID}><Checkbox checked={alumnosNuevos.indexOf(s.ID) > -1} /><ListItemText primary={`${s.Name} (Nivel Real: ${s.CurrentLevel})`} /></MenuItem>)}
+                                            {estudiantesFiltrados.length === 0 && <MenuItem disabled>No hay alumnos de este idioma disponibles</MenuItem>}
+                                        </Select>
+                                    </div>
+                                </>
+                            )}
 
                             <div className="modal-actions">
                                 <Button onClick={() => setOpenAlumnos(false)} className="btn-cancel">Cerrar</Button>
-                                <Button onClick={handleAddAlumnos} variant="contained" className="btn-save" disabled={alumnosNuevos.length === 0}>Añadir Seleccionados</Button>
+                                {!isPastCourse && (
+                                    <Button onClick={handleAddAlumnos} variant="contained" className="btn-save" disabled={alumnosNuevos.length === 0}>Añadir Seleccionados</Button>
+                                )}
                             </div>
                         </div>
                     )}
                 </div>
             </Dialog>
+
+            <Dialog open={!!alumnoAEliminar} onClose={() => setAlumnoAEliminar(null)} maxWidth="xs" fullWidth PaperProps={{ style: { borderRadius: '16px', padding: '10px' } }}>
+                <Box p={2} textAlign="center">
+                    <Typography variant="h6" style={{ fontWeight: 800, color: '#1e293b', marginBottom: '10px' }}>
+                        Confirmar Eliminación
+                    </Typography>
+                    <Typography variant="body2" style={{ color: '#64748b', marginBottom: '20px', lineHeight: 1.5 }}>
+                        ¿Estás seguro de que deseas remover a <strong>{alumnoAEliminar?.Name}</strong> del curso <strong>{cursoSeleccionado?.name}</strong>?
+                    </Typography>
+                    
+                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                        <Button 
+                            variant="outlined" 
+                            onClick={() => setAlumnoAEliminar(null)} 
+                            style={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, color: '#64748b', borderColor: '#cbd5e1' }}
+                        >
+                            Cancelar
+                        </Button>
+                        <Button 
+                            variant="contained" 
+                            color="error" 
+                            onClick={handleRemoveAlumno} 
+                            style={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, boxShadow: 'none' }}
+                        >
+                            Sí, remover
+                        </Button>
+                    </div>
+                </Box>
+            </Dialog>
+
         </div>
     );
 }

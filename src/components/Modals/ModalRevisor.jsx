@@ -20,28 +20,37 @@ export default function ModalRevisor({ open, onClose }) {
     Notes: ''
   });
 
+  const [tutorsLoaded, setTutorsLoaded] = useState(false);
+
   useEffect(() => {
-    if (open) {
+    if (open && !tutorsLoaded) {
       const fetchTutores = async () => {
         try {
-          const response = await fetch("http://localhost:8000/api/admin/tutores");
+          const response = await fetch("http://localhost:8000/api/admin/tutores-sin-revisor");
           const data = await response.json();
-          if (Array.isArray(data)) setTutoresDisponibles(data);
+          if (data.success && Array.isArray(data.tutores)) {
+              setTutoresDisponibles(data.tutores);
+          }
         } catch (error) {
           console.error("Error al obtener tutores:", error);
         }
       };
       fetchTutores();
+      setTutorsLoaded(true);
     }
-  }, [open]);
+    
+    if (!open && tutorsLoaded) {
+      setTutorsLoaded(false);
+    }
+  }, [open, tutorsLoaded]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleRegistrar = async () => {
-    if (!formData.Name || !formData.Email || !formData.BirthDate) {
-      toast.error("Nombre, correo y fecha de nacimiento son obligatorios.");
+    if (!formData.Name || !formData.Email || !formData.BirthDate || !formData.Phone || !formData.Career) {
+      toast.error("Todos los campos (excepto Notas y Tutores Asignados) son obligatorios.");
       return;
     }
 
@@ -125,8 +134,8 @@ export default function ModalRevisor({ open, onClose }) {
           </div>
 
           <div className="form-row">
-            <div className="form-group">
-              <label>Tutores Asignados</label>
+            <div className="form-group" style={{ width: '100%' }}>
+              <label>Tutores Asignados (Opcional)</label>
               <Select
                 multiple
                 fullWidth
@@ -153,7 +162,7 @@ export default function ModalRevisor({ open, onClose }) {
 
           <div className="modal-actions" style={{ marginBottom: '10px' }}>
             <Button onClick={onClose} className="btn-cancel">Cancelar</Button>
-            <Button onClick={handleRegistrar} variant="contained" className="btn-save">Registrar Revisor</Button>
+            <Button onClick={handleRegistrar} variant="contained" className="btn-save" style={{ backgroundColor: '#8a045d' }}>Registrar Revisor</Button>
           </div>
         </form>
       </DialogContent>

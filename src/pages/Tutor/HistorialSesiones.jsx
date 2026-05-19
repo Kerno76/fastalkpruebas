@@ -90,8 +90,8 @@ export default function HistorialSesiones() {
                                         <span style={{ 
                                             fontWeight: 600, 
                                             color: row.ReviewerStatus === 'Aprobado' ? '#16a34a' : 
-                                                  row.ReviewerStatus === 'Rechazado' ? '#dc2626' : 
-                                                  row.ReviewerStatus === 'Pendiente' ? '#ca8a04' : '#94a3b8' 
+                                                row.ReviewerStatus === 'Rechazado' ? '#dc2626' : 
+                                                row.ReviewerStatus === 'Pendiente' ? '#ca8a04' : '#94a3b8' 
                                         }}>
                                             {row.ReviewerStatus || 'No iniciada'}
                                         </span>

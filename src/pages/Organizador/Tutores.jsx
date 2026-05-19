@@ -30,13 +30,24 @@ export default function ControlTutores() {
     const [tutorSeleccionado, setTutorSeleccionado] = useState(null);
     const [cursosDelTutor, setCursosDelTutor] = useState([]);
 
+    const [isEditing, setIsEditing] = useState(false);
+    const [editFormData, setEditFormData] = useState({
+        Name: '',
+        Phone: '',
+        BirthDate: '',
+        Language: '',
+        Career: '',
+        Hobbies: '',
+        Notes: ''
+    });
+
     const fetchTutores = async () => {
         try {
             const response = await fetch("http://localhost:8000/api/admin/tutores");
             const data = await response.json();
             if (Array.isArray(data)) setTutores(data);
         } catch (error) {
-            console.error("Error al obtener tutores:", error);
+            console.error(error);
         }
     };
 
@@ -49,9 +60,60 @@ export default function ControlTutores() {
         setOpenModalRevisor(true);
     };
 
-    const handleAbrirDetalles = (tutor) => {
-        setTutorSeleccionado(tutor);
+    const handleAbrirDetalles = async (tutor) => {
+        const rawTutorData = Array.isArray(tutor.Tutors) ? tutor.Tutors[0] : (tutor.Tutors || {});
+        
+        // Verificamos si el tutor tiene cursos asignados antes de abrir el modal
+        let tieneCursos = false;
+        try {
+            const response = await fetch(`http://localhost:8000/api/admin/tutor-cursos/${tutor.ID}`);
+            const data = await response.json();
+            if (data.success && data.cursos.length > 0) {
+                tieneCursos = true;
+            }
+        } catch (error) {
+            console.error("Error al verificar cursos del tutor", error);
+        }
+
+        setTutorSeleccionado({ ...tutor, tieneCursos });
+        
+        setEditFormData({
+            Name: tutor.Name || '',
+            Phone: rawTutorData.Phone || '',
+            BirthDate: tutor.BirthDate || '',
+            Language: rawTutorData.Language || '',
+            Career: rawTutorData.Career || '',
+            Hobbies: rawTutorData.Hobbies || '',
+            Notes: rawTutorData.Notes || ''
+        });
+        setIsEditing(false);
         setOpenDetalles(true);
+    };
+
+    const handleGuardarDetalles = async () => {
+        const loadingToast = toast.loading('Guardando cambios...');
+        try {
+            const response = await fetch("http://localhost:8000/api/admin/editar-tutor", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    userId: tutorSeleccionado.ID,
+                    ...editFormData
+                })
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                toast.success('Datos actualizados correctamente', { id: loadingToast });
+                setIsEditing(false);
+                setOpenDetalles(false);
+                fetchTutores();
+            } else {
+                toast.error(data.message || 'Error al guardar', { id: loadingToast });
+            }
+        } catch (error) {
+            toast.error('Error de conexión', { id: loadingToast });
+        }
     };
 
     const handleAbrirCursos = async (tutor) => {
@@ -236,80 +298,82 @@ export default function ControlTutores() {
                                 style={{ 
                                     backgroundColor: estado === 'Inactive' ? '#f8fafc' : '#ffffff',
                                     border: estado === 'Inactive' ? '1px solid #e2e8f0' : '1px solid #e0e4e8',
-                                    transition: 'all 0.3s ease'
+                                    transition: 'all 0.3s ease',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    height: '100%'
                                 }}
                             >
-                                <div className="card-top" style={{ alignItems: 'flex-start' }}>
+                                <div className="card-top" style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
                                     
-                                    <Avatar className="tutor-avatar" style={{ opacity: estado === 'Inactive' ? 0.4 : 1, filter: estado === 'Inactive' ? 'grayscale(100%)' : 'none' }}>
-                                        <AccountCircleIcon style={{ fontSize: '60px', color: '#697386' }} />
-                                    </Avatar>
+                                    <div style={{ display: 'flex', width: '100%', alignItems: 'flex-start' }}>
+                                        <Avatar className="tutor-avatar" style={{ opacity: estado === 'Inactive' ? 0.4 : 1, filter: estado === 'Inactive' ? 'grayscale(100%)' : 'none' }}>
+                                            <AccountCircleIcon style={{ fontSize: '60px', color: '#697386' }} />
+                                        </Avatar>
 
-                                    <div className="tutor-data">
-                                        <div className='header-container-card'>
-                                            <Typography className="tutor-name-title" style={{ 
-                                                textDecoration: estado === 'Inactive' ? 'line-through' : 'none', 
-                                                color: estado === 'Inactive' ? '#94a3b8' : '#1e293b' 
-                                            }}>
-                                                {item.Name}
-                                            </Typography>
-                                            
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-                                                <span className={`status ${estado === 'Inactive' ? 'status-inactive' : ''}`}>
-                                                    {estado}
-                                                </span>
-                                                {isAdmin && (
-                                                    <IconButton 
-                                                        size="small" 
-                                                        style={{ 
-                                                            color: estado === 'Active' ? '#ef4444' : '#10b981', 
-                                                            backgroundColor: estado === 'Active' ? 'transparent' : '#dcfce7',
-                                                            padding: '4px' 
-                                                        }} 
-                                                        onClick={() => handleToggleEstado(item.ID, estado, tieneRevisor, estudiantes)}
-                                                    >
-                                                        {estado === 'Active' ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
-                                                    </IconButton>
-                                                )}
-                                            </div>
-                                        </div>
-                                        
-                                        <div style={{ opacity: estado === 'Inactive' ? 0.5 : 1, filter: estado === 'Inactive' ? 'grayscale(100%)' : 'none' }}>
-                                            <div className="info-grid">
-                                                <div className="info-row">
-                                                    <div className="info-item">
-                                                        <span className="label">Curso</span>
-                                                        <span className={`cont-course ${courseColors[idioma] || 'bg-default'}`}>{idioma}</span>
-                                                    </div>
-                                                    <div className="info-item">
-                                                        <span className="label">Carrera</span>
-                                                        <span className="cont-career">{carrera}</span>
-                                                    </div>
-                                                </div>
-                                                <div className="info-row">
-                                                    <div className="info-item">
-                                                        <span className="label">Horas Acreditadas</span>
-                                                        <span className="cont-horasV">{horas} hrs</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="tutor-row">
-                                                <Typography variant="body1" style={{ color: '#4f566b', fontSize: '1rem' }}>
-                                                    <strong>{estudiantes}</strong> Estudiantes asignados 
+                                        <div className="tutor-data" style={{ width: '100%' }}>
+                                            <div className='header-container-card'>
+                                                <Typography className="tutor-name-title" style={{ 
+                                                    textDecoration: estado === 'Inactive' ? 'line-through' : 'none', 
+                                                    color: estado === 'Inactive' ? '#94a3b8' : '#1e293b' 
+                                                }}>
+                                                    {item.Name}
                                                 </Typography>
+                                                
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                                                    <span className={`status ${estado === 'Inactive' ? 'status-inactive' : ''}`}>
+                                                        {estado}
+                                                    </span>
+                                                    {isAdmin && (
+                                                        <IconButton 
+                                                            size="small" 
+                                                            style={{ 
+                                                                color: estado === 'Active' ? '#ef4444' : '#10b981', 
+                                                                backgroundColor: estado === 'Active' ? 'transparent' : '#dcfce7',
+                                                                padding: '4px' 
+                                                            }} 
+                                                            onClick={() => handleToggleEstado(item.ID, estado, tieneRevisor, estudiantes)}
+                                                        >
+                                                            {estado === 'Active' ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
+                                                        </IconButton>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            
+                                            <div style={{ opacity: estado === 'Inactive' ? 0.5 : 1, filter: estado === 'Inactive' ? 'grayscale(100%)' : 'none' }}>
+                                                <div className="info-grid">
+                                                    <div className="info-row">
+                                                        <div className="info-item">
+                                                            <span className="label">Curso</span>
+                                                            <span className={`cont-course ${courseColors[idioma] || 'bg-default'}`}>{idioma}</span>
+                                                        </div>
+                                                        <div className="info-item">
+                                                            <span className="label">Carrera</span>
+                                                            <span className="cont-career">{carrera}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="info-row">
+                                                        <div className="info-item">
+                                                            <span className="label">Horas Acreditadas</span>
+                                                            <span className="cont-horasV">{horas} hrs</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="tutor-row">
+                                                    <Typography variant="body1" style={{ color: '#4f566b', fontSize: '1rem' }}>
+                                                        <strong>{estudiantes}</strong> Estudiantes asignados 
+                                                    </Typography>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="bottom-actions" style={{ flexDirection: 'column', gap: '8px', marginTop: '5px' }}>
-                                    <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
-                                        <button onClick={() => handleAbrirDetalles(item)} className="details" style={{ flex: 1, padding: '8px', fontSize: '0.85rem' }}>Ver Detalles</button>
-                                        <button onClick={() => handleOpenRevisorModal(item)} className="assign" style={{ flex: 1, padding: '8px', fontSize: '0.85rem', ...estiloBotonRevisor, opacity: estado === 'Inactive' ? 0.5 : 1 }} disabled={estado === 'Inactive'}>{textoBotonRevisor}</button>
-                                        <button onClick={() => handleAbrirCursos(item)} className="assign" style={{ flex: 1, padding: '8px', fontSize: '0.85rem', opacity: estado === 'Inactive' ? 0.5 : 1 }} disabled={estado === 'Inactive'}>Ver Cursos</button>
-                                    </div>
-                                    <button className="assign" style={{ width: '100%', padding: '10px', opacity: estado === 'Inactive' ? 0.5 : 1 }} disabled={estado === 'Inactive'}>Revisar Bitacoras</button>
+                                <div className="bottom-actions" style={{ display: 'flex', gap: '8px', marginTop: 'auto', width: '100%', paddingTop: '15px' }}>
+                                    <button onClick={() => handleAbrirDetalles(item)} className="details" style={{ flex: 1, padding: '8px', fontSize: '0.85rem' }}>Ver Detalles</button>
+                                    <button onClick={() => handleOpenRevisorModal(item)} className="assign" style={{ flex: 1, padding: '8px', fontSize: '0.85rem', ...estiloBotonRevisor, opacity: estado === 'Inactive' ? 0.5 : 1 }} disabled={estado === 'Inactive'}>{textoBotonRevisor}</button>
+                                    <button onClick={() => handleAbrirCursos(item)} className="assign" style={{ flex: 1, padding: '8px', fontSize: '0.85rem', opacity: estado === 'Inactive' ? 0.5 : 1 }} disabled={estado === 'Inactive'}>Ver Cursos</button>
                                 </div>
                             </Paper>
                         );
@@ -338,30 +402,111 @@ export default function ControlTutores() {
                             </div>
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                                <Paper elevation={0} style={{ padding: '15px', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
-                                    <Typography variant="caption" style={{ fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Teléfono</Typography>
-                                    <Typography variant="body1" style={{ fontWeight: 700, color: '#334155' }}>{(Array.isArray(tutorSeleccionado.Tutors) ? tutorSeleccionado.Tutors[0]?.Phone : tutorSeleccionado.Tutors?.Phone) || 'N/A'}</Typography>
-                                </Paper>
-                                <Paper elevation={0} style={{ padding: '15px', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
-                                    <Typography variant="caption" style={{ fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Fecha de Nacimiento</Typography>
-                                    <Typography variant="body1" style={{ fontWeight: 700, color: '#334155' }}>{tutorSeleccionado.BirthDate || 'N/A'}</Typography>
-                                </Paper>
-                                <Paper elevation={0} style={{ padding: '15px', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
-                                    <Typography variant="caption" style={{ fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Idioma de Especialidad</Typography>
-                                    <Typography variant="body1" style={{ fontWeight: 700, color: '#334155' }}>{(Array.isArray(tutorSeleccionado.Tutors) ? tutorSeleccionado.Tutors[0]?.Language : tutorSeleccionado.Tutors?.Language) || 'N/A'}</Typography>
-                                </Paper>
-                                <Paper elevation={0} style={{ padding: '15px', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
-                                    <Typography variant="caption" style={{ fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Carrera</Typography>
-                                    <Typography variant="body1" style={{ fontWeight: 700, color: '#334155' }}>{(Array.isArray(tutorSeleccionado.Tutors) ? tutorSeleccionado.Tutors[0]?.Career : tutorSeleccionado.Tutors?.Career) || 'N/A'}</Typography>
-                                </Paper>
+                                <TextField 
+                                    label="Nombre" 
+                                    name="Name" 
+                                    value={editFormData.Name} 
+                                    onChange={e => setEditFormData({...editFormData, Name: e.target.value})} 
+                                    disabled={!isEditing} 
+                                    size="small" 
+                                    fullWidth 
+                                />
+                                <TextField 
+                                    label="Teléfono" 
+                                    name="Phone" 
+                                    value={editFormData.Phone} 
+                                    onChange={e => setEditFormData({...editFormData, Phone: e.target.value})} 
+                                    disabled={!isEditing} 
+                                    size="small" 
+                                    fullWidth 
+                                />
+                                <TextField 
+                                    label="Fecha de Nacimiento" 
+                                    type="date" 
+                                    name="BirthDate" 
+                                    value={editFormData.BirthDate} 
+                                    onChange={e => setEditFormData({...editFormData, BirthDate: e.target.value})} 
+                                    disabled={!isEditing} 
+                                    size="small" 
+                                    fullWidth 
+                                    InputLabelProps={{ shrink: true }} 
+                                />
+                                <TextField 
+                                    select 
+                                    label="Idioma de Especialidad" 
+                                    name="Language" 
+                                    value={editFormData.Language || ''} 
+                                    onChange={(e) => {
+                                        if (isEditing && tutorSeleccionado?.tieneCursos) {
+                                            toast.error('No se puede cambiar el idioma mientras el tutor tenga cursos asignados.', { icon: '⚠️' });
+                                            return;
+                                        }
+                                        setEditFormData({...editFormData, Language: e.target.value});
+                                    }} 
+                                    disabled={!isEditing} 
+                                    size="small" 
+                                    fullWidth
+                                >
+                                    <MenuItem value="Inglés">Inglés</MenuItem>
+                                    <MenuItem value="Francés">Francés</MenuItem>
+                                </TextField>
+                                <TextField 
+                                    label="Carrera" 
+                                    name="Career" 
+                                    value={editFormData.Career} 
+                                    onChange={e => setEditFormData({...editFormData, Career: e.target.value})} 
+                                    disabled={!isEditing} 
+                                    size="small" 
+                                    fullWidth 
+                                />
+                                <TextField 
+                                    label="Fecha de Registro" 
+                                    value={(Array.isArray(tutorSeleccionado.Tutors) ? tutorSeleccionado.Tutors[0]?.DateJoined : tutorSeleccionado.Tutors?.DateJoined) || 'N/A'} 
+                                    disabled 
+                                    size="small" 
+                                    fullWidth 
+                                />
                             </div>
 
-                            <Paper elevation={0} style={{ padding: '15px', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
-                                <Typography variant="caption" style={{ fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Hobbies y Tags</Typography>
-                                <Typography variant="body1" style={{ fontWeight: 700, color: '#334155', marginTop: '5px' }}>
-                                    {(Array.isArray(tutorSeleccionado.Tutors) ? tutorSeleccionado.Tutors[0]?.Hobbies : tutorSeleccionado.Tutors?.Hobbies) || 'Sin registrar'}
-                                </Typography>
-                            </Paper>
+                            <TextField 
+                                label="Hobbies y Tags" 
+                                name="Hobbies" 
+                                value={editFormData.Hobbies} 
+                                onChange={e => setEditFormData({...editFormData, Hobbies: e.target.value})} 
+                                disabled={!isEditing} 
+                                size="small" 
+                                fullWidth 
+                            />
+                            
+                            <TextField 
+                                label="Notas" 
+                                name="Notes" 
+                                value={editFormData.Notes} 
+                                onChange={e => setEditFormData({...editFormData, Notes: e.target.value})} 
+                                disabled={!isEditing} 
+                                size="small" 
+                                fullWidth 
+                                multiline 
+                                rows={3} 
+                            />
+
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                                {isAdmin && !isEditing && (
+                                    <Button variant="contained" onClick={() => setIsEditing(true)} style={{ backgroundColor: '#68899D', textTransform: 'none', fontWeight: 600 }}>
+                                        Editar Datos
+                                    </Button>
+                                )}
+                                {isAdmin && isEditing && (
+                                    <>
+                                        <Button variant="outlined" onClick={() => setIsEditing(false)} style={{ textTransform: 'none', fontWeight: 600 }}>
+                                            Cancelar
+                                        </Button>
+                                        <Button variant="contained" color="success" onClick={handleGuardarDetalles} style={{ textTransform: 'none', fontWeight: 600 }}>
+                                            Guardar Cambios
+                                        </Button>
+                                    </>
+                                )}
+                            </div>
                         </div>
                     )}
                 </div>

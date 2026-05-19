@@ -37,6 +37,15 @@ export default function ControlRevisores() {
     const [tutoresDisponibles, setTutoresDisponibles] = useState([]);
     const [nuevosTutores, setNuevosTutores] = useState([]);
 
+    const [isEditing, setIsEditing] = useState(false);
+    const [editFormData, setEditFormData] = useState({
+        Name: '',
+        Phone: '',
+        BirthDate: '',
+        Career: '',
+        Notes: ''
+    });
+
     const fetchRevisores = async () => {
         try {
             const response = await fetch("http://localhost:8000/api/admin/revisores");
@@ -102,7 +111,43 @@ export default function ControlRevisores() {
 
     const handleAbrirDetalles = (revisor) => {
         setRevisorSeleccionado(revisor);
+        const rawRevisorData = Array.isArray(revisor.Reviewer) ? revisor.Reviewer[0] : (revisor.Reviewer || {});
+        
+        setEditFormData({
+            Name: revisor.Name || '',
+            Phone: rawRevisorData.Phone || '',
+            BirthDate: revisor.BirthDate || '',
+            Career: rawRevisorData.Career || '',
+            Notes: rawRevisorData.Notes || ''
+        });
+        setIsEditing(false);
         setOpenDetalles(true);
+    };
+
+    const handleGuardarDetalles = async () => {
+        const loadingToast = toast.loading('Guardando cambios...');
+        try {
+            const response = await fetch("http://localhost:8000/api/admin/editar-reviewer", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    userId: revisorSeleccionado.ID,
+                    ...editFormData
+                })
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                toast.success('Datos actualizados correctamente', { id: loadingToast });
+                setIsEditing(false);
+                setOpenDetalles(false);
+                fetchRevisores();
+            } else {
+                toast.error(data.message || 'Error al guardar', { id: loadingToast });
+            }
+        } catch (error) {
+            toast.error('Error de conexión', { id: loadingToast });
+        }
     };
 
     const handleAbrirTutores = (revisor) => {
@@ -264,15 +309,18 @@ export default function ControlRevisores() {
                                 style={{ 
                                     backgroundColor: estado === 'Inactive' ? '#f8fafc' : '#ffffff',
                                     border: estado === 'Inactive' ? '1px solid #e2e8f0' : '1px solid #e0e4e8',
-                                    transition: 'all 0.3s ease'
+                                    transition: 'all 0.3s ease',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    height: '100%'
                                 }}
                             >
-                                <div className="card-top" style={{ alignItems: 'flex-start' }}>
+                                <div className="card-top" style={{ alignItems: 'flex-start', flexGrow: 1 }}>
                                     <Avatar className="revisor-avatar" style={{ opacity: estado === 'Inactive' ? 0.4 : 1, filter: estado === 'Inactive' ? 'grayscale(100%)' : 'none' }}>
                                         <AccountCircleIcon style={{ fontSize: '60px', color: '#697386' }} />
                                     </Avatar>
 
-                                    <div className="revisor-data">
+                                    <div className="revisor-data" style={{ width: '100%' }}>
                                         <div className='header-container-card'>
                                             <Typography className="revisor-name-title" style={{ 
                                                 textDecoration: estado === 'Inactive' ? 'line-through' : 'none', 
@@ -313,7 +361,7 @@ export default function ControlRevisores() {
                                                 </div>
                                                 <div className="info-row-card">
                                                     <div className="info-item">
-                                                        <span className="label">Validaciones</span>
+                                                        <span className="label">Bitácoras Calificadas</span>
                                                         <span className="cont-completedV">{validaciones}</span>
                                                     </div>
                                                 </div>
@@ -322,10 +370,9 @@ export default function ControlRevisores() {
                                     </div>
                                 </div>
 
-                                <div className="bottom-actions" style={{ marginTop: '5px' }}>
-                                    <button className="details" onClick={() => handleAbrirDetalles(item)}>Ver Detalles</button>
-                                    <button className="details" onClick={() => handleAbrirTutores(item)}>Ver Tutores</button>
-                                    <button className="assign" disabled={estado === 'Inactive'} style={{ opacity: estado === 'Inactive' ? 0.5 : 1 }}>Ver cola de trabajo</button>
+                                <div className="bottom-actions" style={{ display: 'flex', gap: '8px', marginTop: 'auto', width: '100%', paddingTop: '15px' }}>
+                                    <button className="details" style={{ flex: 1, padding: '8px', fontSize: '0.85rem' }} onClick={() => handleAbrirDetalles(item)}>Ver Detalles</button>
+                                    <button className="details" style={{ flex: 1, padding: '8px', fontSize: '0.85rem' }} onClick={() => handleAbrirTutores(item)}>Ver Tutores</button>
                                 </div>
                             </Paper>
                         );
@@ -354,22 +401,88 @@ export default function ControlRevisores() {
                             </div>
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                                <Paper elevation={0} style={{ padding: '15px', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
-                                    <Typography variant="caption" style={{ fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Teléfono</Typography>
-                                    <Typography variant="body1" style={{ fontWeight: 700, color: '#334155' }}>{(Array.isArray(revisorSeleccionado.Reviewer) ? revisorSeleccionado.Reviewer[0]?.Phone : revisorSeleccionado.Reviewer?.Phone) || 'N/A'}</Typography>
-                                </Paper>
-                                <Paper elevation={0} style={{ padding: '15px', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
-                                    <Typography variant="caption" style={{ fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Fecha de Nacimiento</Typography>
-                                    <Typography variant="body1" style={{ fontWeight: 700, color: '#334155' }}>{revisorSeleccionado.BirthDate || 'N/A'}</Typography>
-                                </Paper>
-                                <Paper elevation={0} style={{ padding: '15px', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
-                                    <Typography variant="caption" style={{ fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Carrera</Typography>
-                                    <Typography variant="body1" style={{ fontWeight: 700, color: '#334155' }}>{(Array.isArray(revisorSeleccionado.Reviewer) ? revisorSeleccionado.Reviewer[0]?.Career : revisorSeleccionado.Reviewer?.Career) || 'N/A'}</Typography>
-                                </Paper>
-                                <Paper elevation={0} style={{ padding: '15px', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
-                                    <Typography variant="caption" style={{ fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Validaciones Hechas</Typography>
-                                    <Typography variant="body1" style={{ fontWeight: 700, color: '#334155' }}>{(Array.isArray(revisorSeleccionado.Reviewer) ? revisorSeleccionado.Reviewer[0]?.ValidationsCompleted : revisorSeleccionado.Reviewer?.ValidationsCompleted) || '0'}</Typography>
-                                </Paper>
+                                <TextField 
+                                    label="Nombre Completo" 
+                                    name="Name" 
+                                    value={editFormData.Name} 
+                                    onChange={e => setEditFormData({...editFormData, Name: e.target.value})} 
+                                    disabled={!isEditing} 
+                                    size="small" 
+                                    fullWidth 
+                                />
+                                <TextField 
+                                    label="Teléfono" 
+                                    name="Phone" 
+                                    value={editFormData.Phone} 
+                                    onChange={e => setEditFormData({...editFormData, Phone: e.target.value})} 
+                                    disabled={!isEditing} 
+                                    size="small" 
+                                    fullWidth 
+                                />
+                                <TextField 
+                                    label="Fecha de Nacimiento" 
+                                    type="date" 
+                                    name="BirthDate" 
+                                    value={editFormData.BirthDate} 
+                                    onChange={e => setEditFormData({...editFormData, BirthDate: e.target.value})} 
+                                    disabled={!isEditing} 
+                                    size="small" 
+                                    fullWidth 
+                                    InputLabelProps={{ shrink: true }} 
+                                />
+                                <TextField 
+                                    label="Carrera" 
+                                    name="Career" 
+                                    value={editFormData.Career} 
+                                    onChange={e => setEditFormData({...editFormData, Career: e.target.value})} 
+                                    disabled={!isEditing} 
+                                    size="small" 
+                                    fullWidth 
+                                />
+                                <TextField 
+                                    label="Bitácoras Calificadas" 
+                                    value={(Array.isArray(revisorSeleccionado.Reviewer) ? revisorSeleccionado.Reviewer[0]?.ValidationsCompleted : revisorSeleccionado.Reviewer?.ValidationsCompleted) || '0'} 
+                                    disabled 
+                                    size="small" 
+                                    fullWidth 
+                                />
+                                <TextField 
+                                    label="Fecha de Registro" 
+                                    value={(Array.isArray(revisorSeleccionado.Reviewer) ? revisorSeleccionado.Reviewer[0]?.DateJoined : revisorSeleccionado.Reviewer?.DateJoined) || 'N/A'} 
+                                    disabled 
+                                    size="small" 
+                                    fullWidth 
+                                />
+                            </div>
+
+                            <TextField 
+                                label="Notas" 
+                                name="Notes" 
+                                value={editFormData.Notes} 
+                                onChange={e => setEditFormData({...editFormData, Notes: e.target.value})} 
+                                disabled={!isEditing} 
+                                size="small" 
+                                fullWidth 
+                                multiline 
+                                rows={3} 
+                            />
+
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                                {isAdmin && !isEditing && (
+                                    <Button variant="contained" onClick={() => setIsEditing(true)} style={{ backgroundColor: '#8a045d', textTransform: 'none', fontWeight: 600 }}>
+                                        Editar Datos
+                                    </Button>
+                                )}
+                                {isAdmin && isEditing && (
+                                    <>
+                                        <Button variant="outlined" onClick={() => setIsEditing(false)} style={{ textTransform: 'none', fontWeight: 600 }}>
+                                            Cancelar
+                                        </Button>
+                                        <Button variant="contained" color="success" onClick={handleGuardarDetalles} style={{ textTransform: 'none', fontWeight: 600 }}>
+                                            Guardar Cambios
+                                        </Button>
+                                    </>
+                                )}
                             </div>
                         </div>
                     )}

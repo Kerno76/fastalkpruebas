@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Typography, Paper, Button, CircularProgress } from '@mui/material';
+import { Typography, Paper, Button, CircularProgress, Chip, Divider } from '@mui/material';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import HistoryIcon from '@mui/icons-material/History';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
+import ClassIcon from '@mui/icons-material/Class'; // Importado para el botón
 import toast from 'react-hot-toast';
 
 import '../../styles/App.css';
@@ -12,11 +15,7 @@ export default function MisSesiones() {
     
     const [sesiones, setSesiones] = useState([]);
     const [loading, setLoading] = useState(true);
-
-    const courseColors = { 
-        'Inglés': 'bg-ingles', 
-        'Francés': 'bg-frances' 
-    };
+    const [viewMode, setViewMode] = useState('Actuales'); // Cambiado a 'Actuales' / 'Historial'
 
     useEffect(() => {
         const fetchSesiones = async () => {
@@ -39,10 +38,26 @@ export default function MisSesiones() {
         if (user?.ID) fetchSesiones();
     }, [user?.ID]);
 
+    const formatDateBlock = (dateStr) => {
+        if (!dateStr) return { mes: '---', dia: '--' };
+        const fecha = new Date(`${dateStr}T00:00:00`); 
+        const mes = fecha.toLocaleDateString('es-ES', { month: 'short' }).substring(0, 3).toUpperCase();
+        const dia = fecha.toLocaleDateString('es-ES', { day: '2-digit' });
+        const diaSemana = fecha.toLocaleDateString('es-ES', { weekday: 'long' });
+        return { mes, dia, diaSemana: diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1) };
+    };
+
+    const formatTime12h = (timeStr) => {
+        if (!timeStr) return '--:--';
+        const [hour, minute] = timeStr.split(':');
+        const h = parseInt(hour, 10);
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        const formattedHour = h % 12 || 12;
+        return `${formattedHour}:${minute} ${ampm}`;
+    };
+
     const hoyISO = new Date().toISOString().split('T')[0];
-    
     const proximasSesiones = sesiones.filter(item => item.date >= hoyISO);
-    
     const sesionesPasadas = sesiones.filter(item => item.date < hoyISO);
 
     if (loading) {
@@ -52,103 +67,104 @@ export default function MisSesiones() {
     return (
         <div className='mainContent'>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '20px', marginBottom: '20px' }}>
-                <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', color: 'var(--text-main)' }}>Mis Sesiones</h2>
-                <p className='subtitleMainMS' style={{ margin: 0, fontSize: '15px' }}>
-                    Consulta tus próximos enlaces de clase y el registro de las que ya tomaste.
-                </p>
+            {/* HEADER CON BOTONES TIPO TOGGLE */}
+            <div className="header-container" style={{ marginBottom: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <h2 className="dashboard-title" style={{ margin: 0 }}>Mis Sesiones</h2>
+                    <p className='subtitleMainMS' style={{ margin: 0 }}>Consulta tus enlaces de clase y el registro histórico.</p>
+                </div>
+
+                <div style={{ display: 'flex', backgroundColor: '#e2e8f0', borderRadius: '10px', padding: '4px' }}>
+                    <Button 
+                        startIcon={<ClassIcon />}
+                        onClick={() => setViewMode('Actuales')}
+                        style={{ 
+                            backgroundColor: viewMode === 'Actuales' ? '#fff' : 'transparent',
+                            color: viewMode === 'Actuales' ? '#0f172a' : '#64748b',
+                            textTransform: 'none', fontWeight: 600, borderRadius: '8px', padding: '6px 16px',
+                            boxShadow: viewMode === 'Actuales' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                        }}
+                    >
+                        Actuales
+                    </Button>
+                    <Button 
+                        startIcon={<HistoryIcon />}
+                        onClick={() => setViewMode('Historial')}
+                        style={{ 
+                            backgroundColor: viewMode === 'Historial' ? '#fff' : 'transparent',
+                            color: viewMode === 'Historial' ? '#0f172a' : '#64748b',
+                            textTransform: 'none', fontWeight: 600, borderRadius: '8px', padding: '6px 16px',
+                            boxShadow: viewMode === 'Historial' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+                        }}
+                    >
+                        Historial
+                    </Button>
+                </div>
             </div>
 
             <hr className="divisor" style={{ marginBottom: '25px', borderTop: '1px solid #e0e4e8' }} />
 
-            <Typography variant="h6" style={{ fontWeight: 'bold', color: 'var(--text-main)', marginBottom: '15px' }}>
-                Próximas Sesiones
-            </Typography>
+            {/* VISTA: ACTUALES */}
+            {viewMode === 'Actuales' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    {proximasSesiones.length > 0 ? proximasSesiones.map((item) => {
+                        const dateInfo = formatDateBlock(item.date);
+                        return (
+                            <Paper key={item.id} elevation={0} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'stretch', padding: '20px', backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexGrow: 1 }}>
+                                    <div style={{ backgroundColor: '#f1f5f9', borderRadius: '12px', padding: '12px 15px', minWidth: '75px', textAlign: 'center', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Typography style={{ fontSize: '0.85rem', color: '#ef4444', fontWeight: 800 }}>{dateInfo.mes}</Typography>
+                                        <Typography style={{ fontSize: '2rem', color: '#0f172a', fontWeight: 900, lineHeight: 1.1 }}>{dateInfo.dia}</Typography>
+                                    </div>
+                                    <Divider orientation="vertical" flexItem style={{ borderColor: '#e2e8f0' }} />
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        <Typography style={{ fontSize: '1.25rem', fontWeight: 800 }}>{item.topic}</Typography>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#475569' }}>
+                                                <AccessTimeIcon style={{ fontSize: '1.1rem' }} />
+                                                <Typography style={{ fontSize: '0.95rem', fontWeight: 600 }}>{dateInfo.diaSemana}, {formatTime12h(item.time)}</Typography>
+                                            </div>
+                                            <Chip label={`${item.course} ${item.level ? `- ${item.level}` : ''}`} size="small" style={{ backgroundColor: '#e0f2fe', color: '#0284c7', fontWeight: 700 }} />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    {item.url ? (
+                                        <Button variant="contained" href={item.url} target="_blank" startIcon={<VideocamIcon />} style={{ backgroundColor: '#3b82f6', textTransform: 'none', borderRadius: '8px', padding: '10px 20px', fontWeight: 700, boxShadow: 'none' }}>Unirse</Button>
+                                    ) : (
+                                        <Typography variant="body2" style={{ color: '#f59e0b', fontWeight: 600 }}>⏳ Enlace pendiente</Typography>
+                                    )}
+                                </div>
+                            </Paper>
+                        );
+                    }) : <Typography style={{ color: '#94a3b8', fontStyle: 'italic' }}>No hay clases próximas.</Typography>}
+                </div>
+            )}
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '40px' }}>
-                {proximasSesiones.length > 0 ? proximasSesiones.map((item) => (
-                    <Paper key={item.id} elevation={0} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px', backgroundColor: 'var(--bg-card)', border: '1px solid #e0e4e8', borderRadius: '12px', flexWrap: 'wrap', gap: '15px' }}>
-                        
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '25px', minWidth: '300px' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column', minWidth: '110px' }}>
-                                <Typography className='dateMS' style={{ fontWeight: 'bold', fontSize: '1.1rem'}}>{item.date}</Typography>
-                                <Typography className='hourMS' style={{fontSize: '0.9rem', color: '#64748b' }}>{item.time}</Typography>
-                            </div>
-                            <div style={{ borderLeft: '2px solid #e0e4e8', height: '45px' }}></div>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                                <span className={`cont-course ${courseColors[item.language] || 'bg-ingles'}`} style={{ width: 'fit-content', fontSize: '0.75rem', padding: '4px 8px', borderRadius: '4px', fontWeight: 600 }}>
-                                    {item.course} - {item.level}
-                                </span>
-                                <Typography className='topicMS' style={{ fontSize: '0.95rem', fontWeight: '500', color: '#1e293b' }}>{item.topic}</Typography>
-                            </div>
-                        </div>
-
-                        <div>
-                            {item.url ? (
-                                <Button 
-                                    variant="contained" 
-                                    href={item.url} 
-                                    target="_blank" 
-                                    startIcon={<VideocamIcon />} 
-                                    style={{ backgroundColor: '#3b82f6', textTransform: 'none', borderRadius: '8px', padding: '8px 16px', fontWeight: 600, boxShadow: 'none' }}
-                                >
-                                    Unirse a Sesión
-                                </Button>
-                            ) : (
-                                <Typography variant="caption" style={{ color: '#94a3b8', fontStyle: 'italic' }}>Enlace pendiente...</Typography>
-                            )}
-                        </div>
-
-                    </Paper>
-                )) : (
-                    <Typography style={{ color: '#94a3b8', fontStyle: 'italic' }}>No tienes clases programadas próximamente.</Typography>
-                )}
-            </div>
-
-            <Typography variant="h6" style={{ fontWeight: 'bold', color: 'var(--text-main)', marginBottom: '15px' }}>
-                Historial de Sesiones
-            </Typography>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                {sesionesPasadas.length > 0 ? sesionesPasadas.map((item) => (
-                    <Paper key={item.id} elevation={0} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px', backgroundColor: '#f8fafc', border: '1px solid #e0e4e8', borderRadius: '12px', flexWrap: 'wrap', gap: '15px' }}>
-                        
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '25px', minWidth: '300px' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column', minWidth: '110px' }}>
-                                <Typography className='dateMS' style={{ fontWeight: 'bold', fontSize: '1.1rem', color: '#64748b' }}>{item.date}</Typography>
-                                <Typography className='hourMS' style={{ fontSize: '0.9rem', color: '#94a3b8' }}>{item.time}</Typography>
-                            </div>
-                            <div style={{ borderLeft: '2px solid #e2e8f0', height: '45px' }}></div>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                                <span className={`cont-course ${courseColors[item.language] || 'bg-ingles'}`} style={{ width: 'fit-content', fontSize: '0.75rem', padding: '4px 8px', borderRadius: '4px', fontWeight: 600, opacity: 0.8 }}>
-                                    {item.course} - {item.level}
-                                </span>
-                                <Typography className='topicMS' style={{ fontSize: '0.95rem', fontWeight: '500', color: '#475569' }}>{item.topic}</Typography>
-                            </div>
-                        </div>
-
-                        <div>
-                            <Button 
-                                variant="outlined" 
-                                startIcon={<HistoryIcon />} 
-                                disabled
-                                style={{ 
-                                    textTransform: 'none', 
-                                    borderRadius: '8px', 
-                                    borderColor: '#cbd5e1', 
-                                    color: '#94a3b8',
-                                    fontWeight: 600
-                                }}
-                            >
-                                Sesión Finalizada
-                            </Button>
-                        </div>
-
-                    </Paper>
-                )) : (
-                    <Typography style={{ color: '#94a3b8', fontStyle: 'italic' }}>Aún no tienes un historial de clases pasadas.</Typography>
-                )}
-            </div>
+            {/* VISTA: HISTORIAL */}
+            {viewMode === 'Historial' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    {sesionesPasadas.length > 0 ? sesionesPasadas.map((item) => {
+                        const dateInfo = formatDateBlock(item.date);
+                        return (
+                            <Paper key={item.id} elevation={0} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 20px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '55px' }}>
+                                        <Typography style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 800 }}>{dateInfo.mes}</Typography>
+                                        <Typography style={{ fontSize: '1.5rem', color: '#64748b', fontWeight: 800 }}>{dateInfo.dia}</Typography>
+                                    </div>
+                                    <Divider orientation="vertical" flexItem style={{ borderColor: '#e2e8f0' }} />
+                                    <div>
+                                        <Typography style={{ fontSize: '1.1rem', fontWeight: 700, color: '#475569' }}>{item.topic}</Typography>
+                                        <Typography style={{ fontSize: '0.85rem', color: '#64748b' }}>{formatTime12h(item.time)} | {item.course} {item.level}</Typography>
+                                    </div>
+                                </div>
+                                <Button variant="outlined" disabled size="small" style={{ textTransform: 'none', borderRadius: '8px', borderColor: '#cbd5e1', color: '#94a3b8' }}>Finalizada</Button>
+                            </Paper>
+                        );
+                    }) : <Typography style={{ color: '#94a3b8', fontStyle: 'italic' }}>No hay historial disponible.</Typography>}
+                </div>
+            )}
 
         </div>
     );

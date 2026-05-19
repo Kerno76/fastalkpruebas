@@ -4,7 +4,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import toast from 'react-hot-toast';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 
 import '../../styles/Modals/Modales.css';
 
@@ -13,11 +13,11 @@ const ITEM_PADDING_TOP = 8;
 const MenuProps = {
     PaperProps: {
         style: {
-        maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
-        width: 250,
+            maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+            width: 250,
         },
     },
-    };
+};
 
 export default function ModalCursos({ open, onClose }) {
     const [formData, setFormData] = useState({
@@ -69,7 +69,6 @@ export default function ModalCursos({ open, onClose }) {
                 newState.TutorID = ''; 
             }
             
-            
             return newState;
         });
     };
@@ -84,8 +83,8 @@ export default function ModalCursos({ open, onClose }) {
 
         const payload = {
             ...formData,
-            StartDate: formData.StartDate || '2026-02-14',
-            EndDate: formData.EndDate || '2026-06-15'
+            StartDate: formData.StartDate || '2026-02-14 00:00:00',
+            EndDate: formData.EndDate || '2026-06-15 23:59:59'
         };
 
         try {
@@ -184,7 +183,6 @@ export default function ModalCursos({ open, onClose }) {
                     <div className="form-row">
                         <div className="form-group" style={{ width: '100%' }}>
                             <label>Asignar Alumnos Disponibles (Sin Curso)</label>
-                            {/* MODIFICADO: Ahora solo evalúa si hay un idioma seleccionado */}
                             <Select
                                 labelId="mutiple-student-label"
                                 multiple
@@ -214,7 +212,6 @@ export default function ModalCursos({ open, onClose }) {
                                     filteredStudents.map((student) => (
                                         <MenuItem key={student.ID} value={student.ID}>
                                             <Checkbox checked={formData.StudentIDs.indexOf(student.ID) > -1} />
-                                            {/* Aquí sí mostramos el nivel del alumno para que el Admin sepa su nivel real */}
                                             <ListItemText primary={`${student.Name} (Nivel Real: ${student.CurrentLevel})`} />
                                         </MenuItem>
                                     ))
@@ -229,21 +226,21 @@ export default function ModalCursos({ open, onClose }) {
 
                     <div className="form-row">
                         <div className="form-group">
-                            <label>Fecha de Inicio</label>
+                            <label>Fecha y Hora de Inicio</label>
                             <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                <DatePicker 
-                                onChange={(newValue) => setFormData(prev => ({ ...prev, StartDate: newValue ? newValue.format('YYYY-MM-DD') : '' }))}
-                                slotProps={{ textField: { fullWidth: true, variant: "outlined", placeholder: "MM/DD/YYYY" } }}
+                                <DateTimePicker 
+                                    onChange={(newValue) => setFormData(prev => ({ ...prev, StartDate: newValue ? newValue.format('YYYY-MM-DD HH:mm:ss') : '' }))}
+                                    slotProps={{ textField: { fullWidth: true, variant: "outlined", placeholder: "MM/DD/YYYY hh:mm aa" } }}
                                 />
                             </LocalizationProvider>
                         </div>
 
                         <div className="form-group">
-                            <label>Fecha de Fin</label>
+                            <label>Fecha y Hora de Fin</label>
                             <LocalizationProvider dateAdapter={AdapterDayjs}>
-                                <DatePicker 
-                                onChange={(newValue) => setFormData(prev => ({ ...prev, EndDate: newValue ? newValue.format('YYYY-MM-DD') : '' }))}
-                                slotProps={{ textField: { fullWidth: true, variant: "outlined", placeholder: "MM/DD/YYYY" } }}
+                                <DateTimePicker 
+                                    onChange={(newValue) => setFormData(prev => ({ ...prev, EndDate: newValue ? newValue.format('YYYY-MM-DD HH:mm:ss') : '' }))}
+                                    slotProps={{ textField: { fullWidth: true, variant: "outlined", placeholder: "MM/DD/YYYY hh:mm aa" } }}
                                 />
                             </LocalizationProvider>
                         </div>

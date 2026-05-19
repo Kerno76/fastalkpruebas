@@ -89,8 +89,9 @@ router.post('/registrar', async (req, res) => {
 
         if (profileError) throw profileError;
 
+        const localISOTime = new Date(Date.now() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+
         if (rol === 'Tutor') {
-            const localISOTime = new Date(Date.now() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0];
             const { error: tutorError } = await supabaseAdmin
                 .from('Tutors')
                 .insert([{
@@ -104,7 +105,6 @@ router.post('/registrar', async (req, res) => {
                 }]);
             if (tutorError) throw tutorError;
         } else if (rol === 'Student') {
-            const localISOTime = new Date(Date.now() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0];
             const { error: studentError } = await supabaseAdmin
                 .from('Students')
                 .insert([{ 
@@ -126,7 +126,8 @@ router.post('/registrar', async (req, res) => {
                     Phone: Phone,
                     Career: career,
                     AsignedTutors: totalAssigned,
-                    Notes: notes
+                    Notes: notes,
+                    DateJoined: localISOTime 
                 }]);
                 
             if (reviewerError) throw reviewerError;
@@ -156,6 +157,170 @@ router.post('/registrar', async (req, res) => {
 
         res.status(200).json({ success: true, message: 'Usuario registrado y correo enviado.' });
 
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.put('/editar-tutor', async (req, res) => {
+    const { userId, Name, BirthDate, Phone, Language, Career, Hobbies, Notes } = req.body;
+    try {
+        const { data: tutorActual, error: checkErr } = await supabaseAdmin
+            .from('Tutors')
+            .select('Language')
+            .eq('ID', userId)
+            .single();
+
+        if (checkErr) throw checkErr;
+
+        if (tutorActual && tutorActual.Language !== Language) {
+            const { data: cursosAsignados, error: cursosErr } = await supabaseAdmin
+                .from('Courses')
+                .select('CourseID')
+                .eq('TutorID', userId);
+
+            if (cursosErr) throw cursosErr;
+
+            if (cursosAsignados && cursosAsignados.length > 0) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: `No se puede cambiar el idioma a ${Language} porque el tutor tiene cursos asignados. Debes retirarlo de sus cursos primero.` 
+                });
+            }
+        }
+
+        const { error: profErr } = await supabaseAdmin
+            .from('UsersProfiles')
+            .update({ Name, BirthDate })
+            .eq('ID', userId);
+        if (profErr) throw profErr;
+
+        const { error: tutErr } = await supabaseAdmin
+            .from('Tutors')
+            .update({ Phone, Language, Career, Hobbies, Notes })
+            .eq('ID', userId);
+        if (tutErr) throw tutErr;
+
+        res.status(200).json({ success: true });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.put('/editar-estudiante', async (req, res) => {
+    const { userId, Name, BirthDate, Phone, Language, CurrentLevel, Notes } = req.body;
+    try {
+        const { data: estudianteActual, error: checkErr } = await supabaseAdmin
+            .from('Students')
+            .select('Language')
+            .eq('ID', userId)
+            .single();
+
+        if (checkErr) throw checkErr;
+
+        if (estudianteActual && estudianteActual.Language !== Language) {
+            const { data: cursosEnrolado, error: cursosErr } = await supabaseAdmin
+                .from('Enrollments')
+                .select('CourseID')
+                .eq('StudentID', userId);
+
+            if (cursosErr) throw cursosErr;
+
+            if (cursosEnrolado && cursosEnrolado.length > 0) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: `No se puede cambiar el idioma a ${Language} porque el estudiante está enrolado en un curso. Debes retirarlo del curso primero.` 
+                });
+            }
+        }
+
+        const { error: profErr } = await supabaseAdmin
+            .from('UsersProfiles')
+            .update({ Name, BirthDate })
+            .eq('ID', userId);
+        if (profErr) throw profErr;
+
+        const { error: estErr } = await supabaseAdmin
+            .from('Students')
+            .update({ Phone, Language, CurrentLevel, Notes })
+            .eq('ID', userId);
+        if (estErr) throw estErr;
+
+        res.status(200).json({ success: true });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.put('/editar-reviewer', async (req, res) => {
+    const { userId, Name, BirthDate, Phone, Career, Notes } = req.body;
+    try {
+        const { error: profErr } = await supabaseAdmin
+            .from('UsersProfiles')
+            .update({ Name, BirthDate })
+            .eq('ID', userId);
+        if (profErr) throw profErr;
+
+        const { error: revErr } = await supabaseAdmin
+            .from('Reviewer')
+            .update({ Phone, Career, Notes })
+            .eq('ID', userId);
+        if (revErr) throw revErr;
+
+        res.status(200).json({ success: true });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.put('/editar-curso', async (req, res) => {
+    const { courseId, Name, Period, Language, Level, StartDate, EndDate, TutorID } = req.body;
+    try {
+        const { data: cursoActual } = await supabaseAdmin.from('Courses').select('Language').eq('CourseID', courseId).single();
+
+        if (cursoActual && cursoActual.Language !== Language) {
+            const { count } = await supabaseAdmin.from('Enrollments').select('*', { count: 'exact', head: true }).eq('CourseID', courseId);
+            if (count > 0) {
+                return res.status(400).json({ success: false, message: 'No se puede cambiar el idioma si hay alumnos inscritos.' });
+            }
+        }
+
+        const ahora = new Date();
+        const start = new Date(StartDate);
+        const end = new Date(EndDate);
+        
+        let nuevoStatus = 'Active';
+        if (ahora < start) nuevoStatus = 'Upcoming';
+        if (ahora > end) nuevoStatus = 'Past';
+
+        const { error } = await supabaseAdmin
+            .from('Courses')
+            .update({ 
+                Name, Period, Language, Level, StartDate, EndDate, TutorID: TutorID || null,
+                Status: nuevoStatus,       
+                GradingStatus: 'Active'    
+            })
+            .eq('CourseID', courseId);
+            
+        if (error) throw error;
+
+        res.status(200).json({ success: true, message: 'Curso actualizado exitosamente.' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.delete('/remover-alumno-curso', async (req, res) => {
+    const { courseId, studentId } = req.body;
+    try {
+        const { error } = await supabaseAdmin
+            .from('Enrollments')
+            .delete()
+            .match({ CourseID: courseId, StudentID: studentId });
+
+        if (error) throw error;
+        
+        res.status(200).json({ success: true, message: 'Alumno removido del curso.' });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -214,7 +379,7 @@ router.get('/revisores', async (req, res) => {
             .from('UsersProfiles')
             .select(`
                 ID, Name, Email, Rol, State, BirthDate,
-                Reviewer ( Phone, Career, AsignedTutors, ValidationsCompleted, Notes ) 
+                Reviewer ( Phone, Career, AsignedTutors, ValidationsCompleted, Notes, DateJoined ) 
             `) 
             .eq('Rol', 'Reviewer');
 
@@ -280,21 +445,34 @@ router.get('/estudiantes-disponibles', async (req, res) => {
     try {
         const { data: estudiantes, error: estError } = await supabaseAdmin
             .from('UsersProfiles')
-            .select(`
-                ID, Name,
-                Students ( Language, CurrentLevel )
-            `)
+            .select(`ID, Name, Students ( Language, CurrentLevel )`)
             .eq('Rol', 'Student');
 
         if (estError) throw estError;
 
-        const { data: enrollments, error: enrError } = await supabaseAdmin
-            .from('Enrollments')
-            .select('StudentID');
+        const { data: activeCourses, error: courseErr } = await supabaseAdmin
+            .from('Courses')
+            .select('CourseID, EndDate')
+            .in('Status', ['Active', 'Upcoming']);
+            
+        if (courseErr) throw courseErr;
+        
+        const ahora = new Date();
+        const activeCourseIds = activeCourses 
+            ? activeCourses.filter(c => new Date(c.EndDate) >= ahora).map(c => c.CourseID) 
+            : [];
+            
+        let enrolledIds = [];
 
-        if (enrError) throw enrError;
+        if (activeCourseIds.length > 0) {
+            const { data: enrollments } = await supabaseAdmin
+                .from('Enrollments')
+                .select('StudentID')
+                .in('CourseID', activeCourseIds);
 
-        const enrolledIds = enrollments.map(e => e.StudentID);
+            if (enrollments) enrolledIds = enrollments.map(e => e.StudentID);
+        }
+
         const disponibles = estudiantes.filter(est => !enrolledIds.includes(est.ID));
 
         const formated = disponibles.map(est => {
@@ -317,9 +495,22 @@ router.post('/cursos', async (req, res) => {
     const { Name, Language, Level, Period, TutorID, StartDate, EndDate, StudentIDs } = req.body;
 
     try {
+        const ahora = new Date();
+        const start = new Date(StartDate);
+        const end = new Date(EndDate);
+        
+        let statusInicial = 'Active';
+        if (ahora < start) statusInicial = 'Upcoming';
+        if (ahora > end) statusInicial = 'Past';
+
         const { data: nuevoCurso, error: cursoError } = await supabaseAdmin
             .from('Courses')
-            .insert([{ Name, Language, Level, Period, TutorID: TutorID || null, StartDate, EndDate, Status: 'Active' }])
+            .insert([{ 
+                Name, Language, Level, Period, TutorID: TutorID || null, 
+                StartDate, EndDate, 
+                Status: statusInicial, 
+                GradingStatus: 'Active' 
+            }])
             .select()
             .single();
 
@@ -331,14 +522,10 @@ router.post('/cursos', async (req, res) => {
                 StudentID: studentId
             }));
 
-            const { error: enrollError } = await supabaseAdmin
-                .from('Enrollments')
-                .insert(enrollments);
-
-            if (enrollError) throw enrollError;
+            await supabaseAdmin.from('Enrollments').insert(enrollments);
         }
 
-        res.status(200).json({ success: true, message: 'Curso creado y alumnos enrolados.' });
+        res.status(200).json({ success: true, message: 'Curso creado.' });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -710,4 +897,181 @@ router.get('/todas-bitacoras', async (req, res) => {
     }
 });
 
+router.get('/cursos-pendientes-cierre', async (req, res) => {
+    try {
+        const { data: cursos, error: cursosErr } = await supabaseAdmin
+            .from('Courses')
+            .select('*')
+            .eq('GradingStatus', 'Pending_Admin_Approval');
+
+        if (cursosErr) throw cursosErr;
+        if (!cursos || cursos.length === 0) return res.status(200).json({ success: true, cursos: [] });
+
+        const cursosConAlumnos = await Promise.all(cursos.map(async (curso) => {
+            const { data: tutorProfile } = await supabaseAdmin.from('UsersProfiles').select('Name').eq('ID', curso.TutorID).single();
+
+            const { data: enrollments } = await supabaseAdmin
+                .from('Enrollments')
+                .select('StudentID, FinalGrade, FinalTutorComments')
+                .eq('CourseID', curso.CourseID);
+
+            if (!enrollments || enrollments.length === 0) return { ...curso, tutorName: tutorProfile?.Name, alumnos: [] };
+
+            const studentIds = enrollments.map(e => e.StudentID);
+            const { data: profiles } = await supabaseAdmin.from('UsersProfiles').select('ID, Name').in('ID', studentIds);
+            const { data: studentsData } = await supabaseAdmin.from('Students').select('ID, CurrentLevel').in('ID', studentIds);
+
+            const alumnos = enrollments.map(enr => {
+                const prof = profiles.find(p => p.ID === enr.StudentID);
+                const stu = studentsData.find(s => s.ID === enr.StudentID);
+                return {
+                    StudentID: enr.StudentID,
+                    Name: prof?.Name || 'Desconocido',
+                    CurrentLevel: stu?.CurrentLevel || 'N/A',
+                    FinalGrade: enr.FinalGrade,
+                    FinalTutorComments: enr.FinalTutorComments
+                };
+            });
+            return { ...curso, tutorName: tutorProfile?.Name || 'Sin asignar', alumnos };
+        }));
+
+        res.status(200).json({ success: true, cursos: cursosConAlumnos });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.put('/cerrar-curso', async (req, res) => {
+    const { courseId } = req.body;
+    try {
+        const { data: curso } = await supabaseAdmin.from('Courses').select('Level, Name, TutorID').eq('CourseID', courseId).single();
+        const nivelImpartido = curso.Level;
+
+        const { data: enrollments } = await supabaseAdmin
+            .from('Enrollments')
+            .select('StudentID, FinalGrade')
+            .eq('CourseID', courseId);
+
+        let notificaciones = [];
+
+        for (let enr of enrollments) {
+            if (enr.FinalGrade >= 70) {
+                const niveles = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+                const indiceActual = niveles.indexOf(nivelImpartido);
+                
+                let nuevoNivel = nivelImpartido;
+                let mensajeNotificacion = '';
+
+                if (indiceActual !== -1 && indiceActual < niveles.length - 1) {
+                    nuevoNivel = niveles[indiceActual + 1];
+                    mensajeNotificacion = `Has aprobado el curso "${curso.Name}" con una calificación de ${enr.FinalGrade}. Tu nuevo nivel ahora es ${nuevoNivel}.`;
+                } 
+                else if (nivelImpartido === 'C2' || indiceActual === niveles.length - 1) {
+                    nuevoNivel = 'C2';
+                    mensajeNotificacion = `Has aprobado el curso "${curso.Name}" con una calificación de ${enr.FinalGrade}. ¡Felicidades por dominar y mantener el nivel máximo C2!`;
+                }
+
+                await supabaseAdmin.from('Students').update({ CurrentLevel: nuevoNivel }).eq('ID', enr.StudentID);
+
+                notificaciones.push({
+                    ReceiverID: enr.StudentID, SenderID: curso.TutorID, Type: 'AlertaAdmin', Title: '¡Felicidades, has aprobado!',
+                    Message: mensajeNotificacion, RelatedEntityID: courseId
+                });
+            } else {
+                notificaciones.push({
+                    ReceiverID: enr.StudentID, SenderID: curso.TutorID, Type: 'AlertaAdmin', Title: 'Fin del Curso',
+                    Message: `El curso "${curso.Name}" ha concluido. Tu calificación fue ${enr.FinalGrade}, por lo que necesitas seguir practicando para poder avanzar de nivel.`, RelatedEntityID: courseId
+                });
+            }
+        }
+
+        await supabaseAdmin
+            .from('Courses')
+            .update({ 
+                Status: 'Past', 
+                GradingStatus: 'Finished' 
+            })
+            .eq('CourseID', courseId);
+
+        notificaciones.push({
+            ReceiverID: curso.TutorID, SenderID: curso.TutorID, Type: 'AlertaAdmin', Title: 'Curso Cerrado Exitosamente',
+            Message: `El administrador ha revisado y cerrado oficialmente tu curso "${curso.Name}".`, RelatedEntityID: courseId
+        });
+
+        if (notificaciones.length > 0) {
+            await supabaseAdmin.from('Notifications').insert(notificaciones);
+        }
+
+        res.status(200).json({ success: true, message: 'Curso cerrado y niveles actualizados.' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.get('/historial-cursos-cerrados', async (req, res) => {
+    try {
+        const { data: cursos, error: cursosErr } = await supabaseAdmin
+            .from('Courses')
+            .select('*')
+            .eq('GradingStatus', 'Finished');
+
+        if (cursosErr) throw cursosErr;
+        if (!cursos || cursos.length === 0) return res.status(200).json({ success: true, cursos: [] });
+
+        const cursosConAlumnos = await Promise.all(cursos.map(async (curso) => {
+            const { data: tutorProfile } = await supabaseAdmin.from('UsersProfiles').select('Name').eq('ID', curso.TutorID).single();
+
+            const { data: enrollments } = await supabaseAdmin
+                .from('Enrollments')
+                .select('StudentID, FinalGrade, FinalTutorComments')
+                .eq('CourseID', curso.CourseID);
+
+            if (!enrollments || enrollments.length === 0) return { ...curso, tutorName: tutorProfile?.Name, alumnos: [] };
+
+            const studentIds = enrollments.map(e => e.StudentID);
+            const { data: profiles } = await supabaseAdmin.from('UsersProfiles').select('ID, Name').in('ID', studentIds);
+            const { data: studentsData } = await supabaseAdmin.from('Students').select('ID, CurrentLevel').in('ID', studentIds);
+
+            const alumnos = enrollments.map(enr => {
+                const prof = profiles.find(p => p.ID === enr.StudentID);
+                const stu = studentsData.find(s => s.ID === enr.StudentID);
+                return {
+                    StudentID: enr.StudentID,
+                    Name: prof?.Name || 'Desconocido',
+                    CurrentLevel: stu?.CurrentLevel || 'N/A',
+                    FinalGrade: enr.FinalGrade,
+                    FinalTutorComments: enr.FinalTutorComments
+                };
+            });
+            return { ...curso, tutorName: tutorProfile?.Name || 'Sin asignar', alumnos };
+        }));
+
+        res.status(200).json({ success: true, cursos: cursosConAlumnos });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.put('/rechazar-evaluacion', async (req, res) => {
+    const { courseId, adminComments } = req.body;
+    try {
+        const { error } = await supabaseAdmin
+            .from('Courses')
+            .update({ GradingStatus: 'Pending_Grades', AdminComments: adminComments })
+            .eq('CourseID', courseId);
+            
+        if (error) throw error;
+
+        const { data: curso } = await supabaseAdmin.from('Courses').select('TutorID, Name').eq('CourseID', courseId).single();
+        if (curso && curso.TutorID) {
+            await supabaseAdmin.from('Notifications').insert([{
+                ReceiverID: curso.TutorID, Type: 'AlertaAdmin', Title: 'Evaluación Rechazada',
+                Message: `El administrador devolvió la evaluación de "${curso.Name}" con correcciones necesarias.`, RelatedEntityID: courseId
+            }]);
+        }
+        res.status(200).json({ success: true });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
 module.exports = router;

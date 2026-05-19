@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Typography, Avatar, Paper, TextField, IconButton, Dialog, Chip } from '@mui/material';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import SearchIcon from '@mui/icons-material/Search';
@@ -11,6 +12,7 @@ import '../../styles/Tutor/MisEstudiantes.css';
 export default function MisEstudiantes() {
     const user = JSON.parse(localStorage.getItem('user'));
     const isAdmin = user?.Rol === 'Admin';
+    const navigate = useNavigate();
     const courseColors = { 'INGLÉS': 'bg-ingles', 'FRANCÉS': 'bg-frances' };
 
     const [busqueda, setBusqueda] = useState("");
@@ -31,6 +33,7 @@ export default function MisEstudiantes() {
                             name: e.Name,
                             email: e.Email,
                             tutorAsignado: e.tutorAsignado,
+                            courseId: e.cursoData.CourseID,
                             courseName: e.cursoData.Name,
                             language: e.cursoData.Language,
                             level: e.cursoData.Level,
@@ -134,8 +137,8 @@ export default function MisEstudiantes() {
                                 <button className="details" onClick={() => handleAbrirExpediente(item)}>Ver Expediente</button>
                                 {!isAdmin && (
                                     <>
-                                        <button className="assign btn-agendar">Agendar Clase</button>
-                                        <button className="assign">Dejar Tarea</button>
+                                        <button className="assign btn-agendar" onClick={() => navigate('/agendar', { state: { courseId: item.courseId, studentId: item.id } })}>Agendar Clase</button>
+                                        <button className="assign" onClick={() => navigate('/tareas', { state: { courseId: item.courseId, studentId: item.id } })}>Dejar Tarea</button>
                                     </>
                                 )}
                             </div>

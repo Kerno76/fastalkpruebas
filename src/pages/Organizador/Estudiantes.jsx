@@ -30,6 +30,16 @@ export default function ControlEstudiantes() {
     const [estudianteSeleccionado, setEstudianteSeleccionado] = useState(null);
     const [cursoElegido, setCursoElegido] = useState('');
 
+    const [isEditing, setIsEditing] = useState(false);
+    const [editFormData, setEditFormData] = useState({
+        Name: '',
+        Phone: '',
+        BirthDate: '',
+        Language: '',
+        CurrentLevel: '',
+        Notes: ''
+    });
+
     const fetchEstudiantes = async () => {
         try {
             const response = await fetch("http://localhost:8000/api/admin/estudiantes-list");
@@ -85,7 +95,45 @@ export default function ControlEstudiantes() {
 
     const handleAbrirDetalles = (estudiante) => {
         setEstudianteSeleccionado(estudiante);
+        const rawStudentList = estudiante.Students || {};
+        const estData = Array.isArray(rawStudentList) ? (rawStudentList[0] || {}) : rawStudentList;
+
+        setEditFormData({
+            Name: estudiante.Name || '',
+            Phone: estData.Phone || '',
+            BirthDate: estudiante.BirthDate || '',
+            Language: estData.Language || '',
+            CurrentLevel: estData.CurrentLevel || '',
+            Notes: estData.Notes || ''
+        });
+        setIsEditing(false);
         setOpenDetalles(true);
+    };
+
+    const handleGuardarDetalles = async () => {
+        const loadingToast = toast.loading('Guardando cambios...');
+        try {
+            const response = await fetch("http://localhost:8000/api/admin/editar-estudiante", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    userId: estudianteSeleccionado.ID,
+                    ...editFormData
+                })
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                toast.success('Datos actualizados correctamente', { id: loadingToast });
+                setIsEditing(false);
+                setOpenDetalles(false);
+                fetchEstudiantes();
+            } else {
+                toast.error(data.message || 'Error al guardar', { id: loadingToast });
+            }
+        } catch (error) {
+            toast.error('Error de conexión', { id: loadingToast });
+        }
     };
 
     const handleAbrirAsignar = (estudiante) => {
@@ -265,62 +313,63 @@ export default function ControlEstudiantes() {
                                     height: '100%'
                                 }}
                             >
-                                <div className="card-top" style={{ alignItems: 'flex-start', flexGrow: 1 }}>
+                                <div className="card-top" style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
                                     
-                                    <Avatar className="student-avatar" style={{ opacity: estado === 'Inactive' ? 0.4 : 1, filter: estado === 'Inactive' ? 'grayscale(100%)' : 'none' }}>
-                                        <AccountCircleIcon style={{ fontSize: '60px', color: '#697386' }} />
-                                    </Avatar>
+                                    <div style={{ display: 'flex', width: '100%', alignItems: 'flex-start' }}>
+                                        <Avatar className="student-avatar" style={{ opacity: estado === 'Inactive' ? 0.4 : 1, filter: estado === 'Inactive' ? 'grayscale(100%)' : 'none' }}>
+                                            <AccountCircleIcon style={{ fontSize: '60px', color: '#697386' }} />
+                                        </Avatar>
 
-                                    <div className="student-data" style={{ width: '100%' }}>
-                                        <div className='header-container-card'>
-                                            
-                                            <Typography className="student-name-title" style={{ 
-                                                textDecoration: estado === 'Inactive' ? 'line-through' : 'none', 
-                                                color: estado === 'Inactive' ? '#94a3b8' : '#1e293b' 
-                                            }}>
-                                                {item.Name}
-                                            </Typography>
-
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-                                                <span className={`status ${estado === 'Inactive' ? 'status-inactive' : ''}`}>{estado}</span>
+                                        <div className="student-data" style={{ width: '100%' }}>
+                                            <div className='header-container-card'>
                                                 
-                                                {isAdmin && (
-                                                    <IconButton 
-                                                        size="small" 
-                                                        style={{ 
-                                                            color: estado === 'Active' ? '#ef4444' : '#10b981', 
-                                                            backgroundColor: estado === 'Active' ? 'transparent' : '#dcfce7',
-                                                            padding: '4px' 
-                                                        }} 
-                                                        onClick={() => handleToggleEstado(item.ID, estado, tutorAsignado)}
-                                                    >
-                                                        {estado === 'Active' ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
-                                                    </IconButton>
-                                                )}
-                                            </div>
-                                        </div>
+                                                <Typography className="student-name-title" style={{ 
+                                                    textDecoration: estado === 'Inactive' ? 'line-through' : 'none', 
+                                                    color: estado === 'Inactive' ? '#94a3b8' : '#1e293b' 
+                                                }}>
+                                                    {item.Name}
+                                                </Typography>
 
-                                        <div style={{ opacity: estado === 'Inactive' ? 0.5 : 1, filter: estado === 'Inactive' ? 'grayscale(100%)' : 'none' }}>
-                                            <div className="info-grid">
-                                                <div className="info-row-card">
-                                                    <div className="info-item">
-                                                        <span className="label">Nivel</span>
-                                                        <span className="cont-level">{nivel}</span>
-                                                    </div>
-                                                    <div className="info-item">
-                                                        <span className="label">Curso</span>
-                                                        <span className={`cont-course ${courseColors[idioma] || 'bg-default'}`}>{idioma}</span>
-                                                    </div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                                                    <span className={`status ${estado === 'Inactive' ? 'status-inactive' : ''}`}>{estado}</span>
+                                                    
+                                                    {isAdmin && (
+                                                        <IconButton 
+                                                            size="small" 
+                                                            style={{ 
+                                                                color: estado === 'Active' ? '#ef4444' : '#10b981', 
+                                                                backgroundColor: estado === 'Active' ? 'transparent' : '#dcfce7',
+                                                                padding: '4px' 
+                                                            }} 
+                                                            onClick={() => handleToggleEstado(item.ID, estado, tutorAsignado)}
+                                                        >
+                                                            {estado === 'Active' ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
+                                                        </IconButton>
+                                                    )}
                                                 </div>
                                             </div>
 
-                                            <div className="tutor-row" style={{ marginTop: '0' }}>
-                                                <Typography variant="body2" style={{ color: '#4f566b' }}>
-                                                    Tutor Asignado: <strong>{tutorAsignado}</strong>
-                                                </Typography>
+                                            <div style={{ opacity: estado === 'Inactive' ? 0.5 : 1, filter: estado === 'Inactive' ? 'grayscale(100%)' : 'none' }}>
+                                                <div className="info-grid">
+                                                    <div className="info-row-card">
+                                                        <div className="info-item">
+                                                            <span className="label">Nivel</span>
+                                                            <span className="cont-level">{nivel}</span>
+                                                        </div>
+                                                        <div className="info-item">
+                                                            <span className="label">Curso</span>
+                                                            <span className={`cont-course ${courseColors[idioma] || 'bg-default'}`}>{idioma}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="tutor-row" style={{ marginTop: '0' }}>
+                                                    <Typography variant="body2" style={{ color: '#4f566b' }}>
+                                                        Tutor Asignado: <strong>{tutorAsignado}</strong>
+                                                    </Typography>
+                                                </div>
                                             </div>
                                         </div>
-
                                     </div>
                                 </div>
 
@@ -360,31 +409,91 @@ export default function ControlEstudiantes() {
                             </div>
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                                <Paper elevation={0} style={{ padding: '15px', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
-                                    <Typography variant="caption" style={{ fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Teléfono</Typography>
-                                    <Typography variant="body1" style={{ fontWeight: 700, color: '#334155' }}>{estData?.Phone || 'N/A'}</Typography>
-                                </Paper>
-                                <Paper elevation={0} style={{ padding: '15px', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
-                                    <Typography variant="caption" style={{ fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Fecha de Nacimiento</Typography>
-                                    <Typography variant="body1" style={{ fontWeight: 700, color: '#334155' }}>{estudianteSeleccionado?.BirthDate || 'N/A'}</Typography>
-                                </Paper>
-                                <Paper elevation={0} style={{ padding: '15px', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
-                                    <Typography variant="caption" style={{ fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Idioma Inscrito</Typography>
-                                    <Typography variant="body1" style={{ fontWeight: 700, color: '#334155' }}>{estIdioma || 'N/A'}</Typography>
-                                </Paper>
-                                <Paper elevation={0} style={{ padding: '15px', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
-                                    <Typography variant="caption" style={{ fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Nivel Actual</Typography>
-                                    <Typography variant="body1" style={{ fontWeight: 700, color: '#334155' }}>{estNivel || 'N/A'}</Typography>
-                                </Paper>
-                                <Paper elevation={0} style={{ padding: '15px', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
-                                    <Typography variant="caption" style={{ fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Fecha de Registro</Typography>
-                                    <Typography variant="body1" style={{ fontWeight: 700, color: '#334155' }}>{estData?.DateJoined || 'N/A'}</Typography>
-                                </Paper>
-                                <Paper elevation={0} style={{ padding: '15px', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
-                                    <Typography variant="caption" style={{ fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Notas</Typography>
-                                    <Typography variant="body1" style={{ fontWeight: 700, color: '#334155' }}>{estData?.Notes || 'Sin notas'}</Typography>
-                                </Paper>
+                                <TextField 
+                                    label="Nombre Completo" 
+                                    name="Name" 
+                                    value={editFormData.Name} 
+                                    onChange={e => setEditFormData({...editFormData, Name: e.target.value})} 
+                                    disabled={!isEditing} 
+                                    size="small" 
+                                    fullWidth 
+                                />
+                                <TextField 
+                                    label="Teléfono" 
+                                    name="Phone" 
+                                    value={editFormData.Phone} 
+                                    onChange={e => setEditFormData({...editFormData, Phone: e.target.value})} 
+                                    disabled={!isEditing} 
+                                    size="small" 
+                                    fullWidth 
+                                />
+                                <TextField 
+                                    label="Fecha de Nacimiento" 
+                                    type="date" 
+                                    name="BirthDate" 
+                                    value={editFormData.BirthDate} 
+                                    onChange={e => setEditFormData({...editFormData, BirthDate: e.target.value})} 
+                                    disabled={!isEditing} 
+                                    size="small" 
+                                    fullWidth 
+                                    InputLabelProps={{ shrink: true }} 
+                                />
+                                <TextField 
+                                    select 
+                                    label="Idioma Inscrito" 
+                                    name="Language" 
+                                    value={editFormData.Language || ''} 
+                                    onChange={(e) => {
+                                        if (isEditing && estudianteSeleccionado.cursoData) {
+                                            toast.error('No se puede cambiar el idioma mientras el estudiante esté asignado a un curso.', { icon: '⚠️' });
+                                            return;
+                                        }
+                                        setEditFormData({...editFormData, Language: e.target.value});
+                                    }} 
+                                    disabled={!isEditing} 
+                                    size="small" 
+                                    fullWidth
+                                >
+                                    <MenuItem value="Inglés">Inglés</MenuItem>
+                                    <MenuItem value="Francés">Francés</MenuItem>
+                                </TextField>
+                                <TextField 
+                                    select 
+                                    label="Nivel Actual" 
+                                    name="CurrentLevel" 
+                                    value={editFormData.CurrentLevel || ''} 
+                                    onChange={e => setEditFormData({...editFormData, CurrentLevel: e.target.value})} 
+                                    disabled={!isEditing} 
+                                    size="small" 
+                                    fullWidth
+                                >
+                                    <MenuItem value="A1">A1</MenuItem>
+                                    <MenuItem value="A2">A2</MenuItem>
+                                    <MenuItem value="B1">B1</MenuItem>
+                                    <MenuItem value="B2">B2</MenuItem>
+                                    <MenuItem value="C1">C1</MenuItem>
+                                    <MenuItem value="C2">C2</MenuItem>
+                                </TextField>
+                                <TextField 
+                                    label="Fecha de Registro" 
+                                    value={estData?.DateJoined || 'N/A'} 
+                                    disabled 
+                                    size="small" 
+                                    fullWidth 
+                                />
                             </div>
+
+                            <TextField 
+                                label="Notas" 
+                                name="Notes" 
+                                value={editFormData.Notes} 
+                                onChange={e => setEditFormData({...editFormData, Notes: e.target.value})} 
+                                disabled={!isEditing} 
+                                size="small" 
+                                fullWidth 
+                                multiline 
+                                rows={3} 
+                            />
 
                             <Paper elevation={0} style={{ padding: '15px', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
                                 <Typography variant="caption" style={{ fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Estatus de Enrolamiento</Typography>
@@ -392,6 +501,24 @@ export default function ControlEstudiantes() {
                                     {estudianteSeleccionado.cursoData ? `Asignado al curso: ${estudianteSeleccionado.cursoData.Name}` : 'Aún no tiene curso asignado'}
                                 </Typography>
                             </Paper>
+
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                                {isAdmin && !isEditing && (
+                                    <Button variant="contained" onClick={() => setIsEditing(true)} style={{ backgroundColor: '#68899D', textTransform: 'none', fontWeight: 600 }}>
+                                        Editar Datos
+                                    </Button>
+                                )}
+                                {isAdmin && isEditing && (
+                                    <>
+                                        <Button variant="outlined" onClick={() => setIsEditing(false)} style={{ textTransform: 'none', fontWeight: 600 }}>
+                                            Cancelar
+                                        </Button>
+                                        <Button variant="contained" color="success" onClick={handleGuardarDetalles} style={{ textTransform: 'none', fontWeight: 600 }}>
+                                            Guardar Cambios
+                                        </Button>
+                                    </>
+                                )}
+                            </div>
                         </div>
                     )}
                 </div>

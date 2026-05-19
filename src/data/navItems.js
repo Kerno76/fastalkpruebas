@@ -1,11 +1,8 @@
-/* NavBar Items */
 import config from '../assets/config.png'
 import dashboard from '../assets/dashboard.png'
 import register_session from '../assets/session.png'
 import session_history from '../assets/history.png'
 import students from '../assets/people.png'
-import calendar_icon from '../assets/calendar.png'
-import task_icon from '../assets/session.png'
 import agenda from '../assets/agenda.png'
 import tasks from '../assets/clipboard.png'
 import repositorio_icon from "../assets/repositorio.png"
@@ -26,6 +23,8 @@ export const navItems = [
   { icon: students, label: "Control Tutores", path: "/tutores", roles: ['Admin'], section: "Administración" },
   { icon: students, label: "Control Revisores", path: "/revisores", roles: ['Admin'], section: "Administración" },
   { icon: students, label: "Control Cursos", path: "/cursos", roles: ['Admin'], section: "Administración" },
+  { icon: evaluar_icon, label: "Cierre de Cursos", path: "/cierre-cursos", roles: ['Admin'], section: "Administración" },
+  { icon: dashboard, label: "Asistente BD (IA)", path: "/asistente-sql", roles: ['Admin'], section: "Administración" }, // NUEVO ASISTENTE IA
 
   // --- SECCIÓN TUTOR (También para Admin) ---
   { icon: dashboard, label: "Dashboard Tutor", path: "/tutor", roles: ['Tutor'], section: "Tutoría" },
@@ -35,6 +34,7 @@ export const navItems = [
   { icon: register_session, label: "Registro de Sesiones", path: "/registro", roles: ['Tutor', 'Admin'], section: "Tutoría" },
   { icon: session_history, label: "Historial de sesiones", path: "/historial", roles: ['Tutor', 'Admin'], section: "Tutoría" },
   { icon: evaluar_icon, label: "Calificar Tareas", path: "/calificar", roles: ['Tutor'], section: "Tutoría" },
+  { icon: evaluar_icon, label: "Evaluación Final", path: "/evaluacion-cursos", roles: ['Tutor'], section: "Tutoría" },
 
   // --- SECCIÓN ESTUDIANTE (También para Admin) ---
   { icon: dashboard, label: "Dashboard Estudiante", path: "/estudianteDash", roles: ['Student'], section: "Estudiante" },
