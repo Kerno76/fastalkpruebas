@@ -10,8 +10,6 @@ import DownloadIcon from '@mui/icons-material/Download';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
-import ClassIcon from '@mui/icons-material/Class';
-import HistoryIcon from '@mui/icons-material/History';
 import toast from 'react-hot-toast';
 
 import '../../styles/App.css';
@@ -89,59 +87,73 @@ export default function MisTareas() {
 
     return (
         <div className='mainContent'>
-            {/* CABECERA Y BOTONES DE VISTA */}
             <div className="header-container" style={{ marginBottom: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                     <h2 className="dashboard-title">Centro de Tareas</h2>
                     <p className="subtitleMainMS">Revisa asignaciones y envía evidencias.</p>
                 </div>
                 <div style={{ display: 'flex', backgroundColor: '#e2e8f0', borderRadius: '10px', padding: '4px' }}>
-                    <Button onClick={() => setViewMode('Actuales')} style={{ backgroundColor: viewMode === 'Actuales' ? '#fff' : 'transparent', color: viewMode === 'Actuales' ? '#0f172a' : '#64748b', textTransform: 'none', fontWeight: 600, borderRadius: '8px' }}>
-                        Actuales
-                    </Button>
-                    <Button onClick={() => setViewMode('Historial')} style={{ backgroundColor: viewMode === 'Historial' ? '#fff' : 'transparent', color: viewMode === 'Historial' ? '#0f172a' : '#64748b', textTransform: 'none', fontWeight: 600, borderRadius: '8px' }}>
-                        Historial
-                    </Button>
+                    <Button onClick={() => setViewMode('Actuales')} style={{ backgroundColor: viewMode === 'Actuales' ? '#fff' : 'transparent', color: viewMode === 'Actuales' ? '#0f172a' : '#64748b', textTransform: 'none', fontWeight: 600, borderRadius: '8px' }}>Actuales</Button>
+                    <Button onClick={() => setViewMode('Historial')} style={{ backgroundColor: viewMode === 'Historial' ? '#fff' : 'transparent', color: viewMode === 'Historial' ? '#0f172a' : '#64748b', textTransform: 'none', fontWeight: 600, borderRadius: '8px' }}>Historial</Button>
                 </div>
             </div>
 
-            {/* LISTADO DE TAREAS */}
             <div className='dashboard-cards-grid'>
                 {tareasFiltradas.length > 0 ? tareasFiltradas.map((item) => (
                     <Paper key={item.id} elevation={0} style={{ padding: '20px', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
                         <Typography variant="h6" style={{ fontWeight: 800 }}>{item.title}</Typography>
                         <Typography variant="body2" color="textSecondary">{item.courseName} | Tutor: {item.tutorName}</Typography>
-                        
-                        <div style={{ marginTop: '15px' }}>
-                            {viewMode === 'Actuales' ? (
-                                <Button variant="contained" fullWidth onClick={() => abrirEntrega(item)}>Ver Detalles y Entregar</Button>
-                            ) : (
-                                <Button variant="outlined" fullWidth onClick={() => { setTareaActual(item); setOpenFeedback(true); }}>Ver mi Entrega y Calificación</Button>
-                            )}
-                        </div>
+                        <Button variant="contained" fullWidth onClick={() => abrirEntrega(item)} style={{ marginTop: '15px' }}>
+                            {viewMode === 'Actuales' ? "Ver Detalles y Entregar" : "Ver Entrega"}
+                        </Button>
                     </Paper>
                 )) : <Typography>No hay tareas en esta vista.</Typography>}
             </div>
 
-            {/* MODAL DE ENTREGA (REUTILIZABLE) */}
+            {/* MODAL DE ENTREGA */}
             <Dialog open={openEntrega} onClose={() => setOpenEntrega(false)} fullWidth maxWidth="md">
-                {/* ... Aquí va el contenido del formulario de entrega que ya tenías ... */}
+                {tareaActual && (
+                    <div style={{ padding: '30px' }}>
+                        <IconButton onClick={() => setOpenEntrega(false)} style={{ float: 'right' }}><CloseIcon /></IconButton>
+                        <Typography variant="h5">{tareaActual.title}</Typography>
+                        <Typography variant="body2" style={{ marginBottom: '20px' }}>{tareaActual.description}</Typography>
+                        
+                        <div style={{ marginBottom: '20px' }}>
+                            <Typography variant="caption" fontWeight="bold">AGREGAR LINKS</Typography>
+                            <div style={{ display: 'flex', gap: '5px' }}>
+                                <TextField size="small" fullWidth value={nuevoEnlace} onChange={e => setNuevoEnlace(e.target.value)} />
+                                <Button onClick={handleAddLink}><AddCircleOutlineIcon /></Button>
+                            </div>
+                            {enlaces.map((l, i) => <Chip key={i} label={l} onDelete={() => handleRemoveLink(i)} />)}
+                        </div>
+
+                        <div style={{ marginBottom: '20px' }}>
+                            <Typography variant="caption" fontWeight="bold">SUBIR ARCHIVOS</Typography>
+                            <Button component="label" variant="contained" startIcon={<UploadFileIcon />}>
+                                Seleccionar <input type="file" hidden onChange={handleFileChange} />
+                            </Button>
+                            {archivosAdjuntos.map((f, i) => (
+                                <Typography key={i} variant="body2"><InsertDriveFileIcon /> {f.name} <IconButton onClick={() => handleRemoveFile(i)}><DeleteOutlineIcon /></IconButton></Typography>
+                            ))}
+                        </div>
+
+                        <Button variant="contained" fullWidth onClick={handleSubirTarea} disabled={isSubmitting}>Enviar Tarea</Button>
+                    </div>
+                )}
             </Dialog>
 
-            {/* MODAL DE FEEDBACK / HISTORIAL DE ENTREGA */}
+            {/* MODAL DE FEEDBACK */}
             <Dialog open={openFeedback} onClose={() => setOpenFeedback(false)} fullWidth maxWidth="sm">
-                <div style={{ padding: '24px' }}>
-                    <Typography variant="h6">Detalles de tu entrega</Typography>
+                <div style={{ padding: '30px' }}>
+                    <IconButton onClick={() => setOpenFeedback(false)} style={{ float: 'right' }}><CloseIcon /></IconButton>
+                    <Typography variant="h6">Detalles de la entrega</Typography>
                     {tareaActual && (
                         <div>
-                            <Typography><strong>Lo que enviaste:</strong></Typography>
-                            {/* AQUÍ LISTAMOS LOS LINKS Y ARCHIVOS QUE EL ESTUDIANTE ENVIÓ PREVIAMENTE */}
+                            <Typography><strong>Links enviados:</strong></Typography>
                             {safeParse(tareaActual.studentUrl).map((l, i) => <Typography key={i}><LinkIcon/> {l}</Typography>)}
-                            {safeParse(tareaActual.studentFile).map((f, i) => <Typography key={i}><InsertDriveFileIcon/> {f.name}</Typography>)}
-                            
-                            <Divider sx={{ my: 2 }} />
-                            <Typography><strong>Calificación:</strong> {tareaActual.grade}/100</Typography>
-                            <Typography><strong>Comentarios:</strong> {tareaActual.feedback}</Typography>
+                            <Divider sx={{ my: 1 }} />
+                            <Typography><strong>Calificación:</strong> {tareaActual.grade || 0}/100</Typography>
+                            <Typography><strong>Feedback:</strong> {tareaActual.feedback || 'Sin comentarios'}</Typography>
                         </div>
                     )}
                 </div>

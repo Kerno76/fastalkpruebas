@@ -30,7 +30,13 @@ export default function AgendarSesion() {
         if (user?.ID) {
             fetch(`http://localhost:8000/api/tutor/tutor-cursos/${user.ID}`)
                 .then(res => res.json())
-                .then(data => { if (data.success) setCursos(data.cursos); });
+                .then(data => { 
+                    if (data.success) {
+                        // --- FILTRO APLICADO: Solo guardamos los cursos que están activos ---
+                        const cursosActivos = data.cursos.filter(c => c.Status === 'Active');
+                        setCursos(cursosActivos); 
+                    } 
+                });
 
             fetch(`http://localhost:8000/api/tutor/revisores-asignados/${user.ID}`)
                 .then(res => res.json())

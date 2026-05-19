@@ -30,12 +30,15 @@ export default function AsignarTareas() {
     const [nuevoEnlace, setNuevoEnlace] = useState('');
     const [archivosAdjuntos, setArchivosAdjuntos] = useState([]);
 
-    useEffect(() => {
+useEffect(() => {
         const fetchCursos = async () => {
             try {
                 const res = await fetch(`http://localhost:8000/api/tutor/tutor-cursos/${user.ID}`);
                 const data = await res.json();
-                if (data.success) setCursos(data.cursos);
+                if (data.success) {
+                    const cursosActivos = data.cursos.filter(c => c.Status === 'Active');
+                    setCursos(cursosActivos);
+                }
             } catch (err) { console.error(err); } finally { setLoadingCursos(false); }
         };
         if (user?.ID) fetchCursos();
