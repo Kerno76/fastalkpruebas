@@ -716,6 +716,7 @@ router.post('/asignar-tutores-revisor', async (req, res) => {
     }
 });
 
+// --- RUTA MODIFICADA ---
 router.get('/estudiantes-list', async (req, res) => {
     try {
         const { data: students, error: studErr } = await supabaseAdmin
@@ -739,12 +740,23 @@ router.get('/estudiantes-list', async (req, res) => {
             .select('ID, Name');
 
         const estudiantesCompletos = students.map(st => {
-            const enrollment = enrollments.find(e => e.StudentID === st.ID);
+            const studentEnrollments = enrollments.filter(e => e.StudentID === st.ID);
             let cursoData = null;
             let tutorName = 'Sin asignar';
             
-            if (enrollment) {
-                const curso = courses.find(c => c.CourseID === enrollment.CourseID);
+            if (studentEnrollments.length > 0) {
+                // Buscamos primero si tiene un curso activo o próximo
+                let activeEnrollment = studentEnrollments.find(e => {
+                    const c = courses.find(course => course.CourseID === e.CourseID);
+                    return c && c.Status !== 'Past';
+                });
+                
+                // Si no tiene cursos activos, entonces tomamos su último curso del historial
+                if (!activeEnrollment) {
+                    activeEnrollment = studentEnrollments[studentEnrollments.length - 1];
+                }
+
+                const curso = courses.find(c => c.CourseID === activeEnrollment.CourseID);
                 if (curso) {
                     const tutor = profiles?.find(p => p.ID === curso.TutorID);
                     cursoData = { ...curso, tutorName: tutor ? tutor.Name : 'Sin asignar' };

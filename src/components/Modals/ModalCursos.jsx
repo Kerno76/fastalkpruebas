@@ -38,13 +38,35 @@ export default function ModalCursos({ open, onClose }) {
         if (open) {
             const fetchDatosBase = async () => {
                 try {
+                    // 1. Obtenemos a todos los tutores
                     const resTutors = await fetch("http://localhost:8000/api/admin/tutores");
                     const dataTutors = await resTutors.json();
-                    if (Array.isArray(dataTutors)) setTutors(dataTutors);
 
+                    // 2. Obtenemos los cursos para saber quién ya está ocupado
+                    const resCursos = await fetch("http://localhost:8000/api/admin/cursos-list");
+                    const dataCursos = await resCursos.json();
+
+                    // 3. Filtramos los tutores que ya tienen un curso Activo o Próximo
+                    let tutoresLibres = [];
+                    if (Array.isArray(dataTutors)) {
+                        if (dataCursos.success && Array.isArray(dataCursos.cursos)) {
+                            const tutoresOcupados = dataCursos.cursos
+                                .filter(c => c.Status === 'Active' || c.Status === 'Upcoming')
+                                .map(c => c.TutorID);
+                            
+                            tutoresLibres = dataTutors.filter(t => !tutoresOcupados.includes(t.ID));
+                        } else {
+                            tutoresLibres = dataTutors;
+                        }
+                        setTutors(tutoresLibres);
+                    }
+
+                    // 4. Los estudiantes ya vienen filtrados desde el backend 
+                    // (gracias a la ruta /estudiantes-disponibles que actualizamos previamente)
                     const resStudents = await fetch("http://localhost:8000/api/admin/estudiantes-disponibles");
                     const dataStudents = await resStudents.json();
                     if (Array.isArray(dataStudents)) setAvailableStudents(dataStudents);
+                    
                 } catch (error) {
                     toast.error("Error al conectar con la base de datos.");
                 }
@@ -174,7 +196,7 @@ export default function ModalCursos({ open, onClose }) {
                                     <MenuItem key={tutor.ID} value={tutor.ID}>{tutor.Name}</MenuItem>
                                 ))}
                                 {formData.Language && filteredTutors.length === 0 && (
-                                    <MenuItem disabled>No hay tutores de {formData.Language} registrados</MenuItem>
+                                    <MenuItem disabled>Todos los tutores de {formData.Language} ya tienen un curso activo.</MenuItem>
                                 )}
                             </Select>
                         </div>

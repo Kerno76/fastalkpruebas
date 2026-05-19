@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { TextField, Button, Paper, Typography, Table, TableHead, TableRow, TableCell, TableBody, CircularProgress, Box, Chip, InputAdornment, IconButton, TableContainer } from '@mui/material';
+import { TextField, Button, Paper, Typography, Table, TableHead, TableRow, TableCell, TableBody, CircularProgress, Box, Chip, InputAdornment, TableContainer } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import StorageIcon from '@mui/icons-material/Storage';
@@ -15,17 +15,17 @@ export default function ChatBotSQL() {
     const [pendingSql, setPendingSql] = useState(null);
 
     const sugerencias = [
-        "¿Cuántos cursos hay en total?",
+        "¿Cuántos cursos activos hay en total?",
         "Muestra el nombre y rol de todos los usuarios",
         "¿Cuáles cursos son de nivel B1?",
-        "Dame el promedio de las calificaciones finales"
+        "¿Cuántos tutores enseñan Inglés?"
     ];
 
     const handleSend = async (force = false, textToSearch = query) => {
         if (!textToSearch.trim()) return;
         setLoading(true);
         setResponse(null);
-        setQuery(textToSearch); // Actualiza el input si se usó una sugerencia
+        setQuery(textToSearch); 
 
         try {
             const res = await fetch("http://localhost:8000/api/ai/chat-sql", {
@@ -52,10 +52,10 @@ export default function ChatBotSQL() {
                 setResponse({ sql: data.sql, rows: data.data });
                 setPendingSql(null);
             } else {
-                toast.error(data.message);
+                toast.error(data.message, { icon: '🤖', duration: 5000 });
             }
         } catch (error) {
-            toast.error("Error al consultar a la IA");
+            toast.error("Error al comunicarse con la IA.");
         } finally {
             setLoading(false);
         }
@@ -63,21 +63,21 @@ export default function ChatBotSQL() {
 
     const renderTable = (rows) => {
         if (!rows || rows.length === 0) return (
-            <Box textAlign="center" py={4}>
+            <Box textAlign="center" py={4} style={{ backgroundColor: '#f8fafc', borderRadius: '12px' }}>
                 <StorageIcon style={{ fontSize: 40, color: '#cbd5e1', marginBottom: '10px' }} />
-                <Typography style={{ color: '#64748b' }}>La consulta se ejecutó correctamente, pero no devolvió ningún resultado.</Typography>
+                <Typography style={{ color: '#64748b', fontWeight: 600 }}>La consulta se ejecutó, pero no devolvió ningún resultado.</Typography>
             </Box>
         );
         
         const columns = Object.keys(rows[0]);
 
         return (
-            <TableContainer component={Paper} elevation={0} style={{ border: '1px solid #e2e8f0', borderRadius: '12px' }}>
-                <Table size="small">
-                    <TableHead style={{ backgroundColor: '#f8fafc' }}>
+            <TableContainer component={Paper} elevation={0} style={{ border: '1px solid #e2e8f0', borderRadius: '12px', maxHeight: '400px' }}>
+                <Table size="small" stickyHeader>
+                    <TableHead>
                         <TableRow>
                             {columns.map(col => (
-                                <TableCell key={col} style={{ fontWeight: 800, color: '#475569', textTransform: 'uppercase', fontSize: '0.75rem' }}>
+                                <TableCell key={col} style={{ backgroundColor: '#f8fafc', fontWeight: 800, color: '#475569', textTransform: 'uppercase', fontSize: '0.75rem' }}>
                                     {col}
                                 </TableCell>
                             ))}
@@ -156,20 +156,20 @@ export default function ChatBotSQL() {
                     </div>
                 </div>
 
-                {loading && !response && (
+                {loading && (
                     <Box textAlign="center" py={5} style={{ backgroundColor: '#f8fafc', borderRadius: '12px', border: '1px dashed #e2e8f0' }}>
                         <AutoAwesomeIcon className="spin-animation" style={{ fontSize: 40, color: '#0ea5e9', opacity: 0.5, marginBottom: '15px' }} />
-                        <Typography style={{ color: '#475569', fontWeight: 600 }}>Procesando consulta con la IA...</Typography>
+                        <Typography style={{ color: '#475569', fontWeight: 600 }}>Analizando estructura y procesando consulta...</Typography>
                     </Box>
                 )}
 
-                {response && (
+                {!loading && response && (
                     <div className="fade-in">
                         <Box sx={{ p: 2, bgcolor: '#1e293b', borderRadius: '12px', mb: 3, display: 'flex', alignItems: 'flex-start', gap: 1.5, overflowX: 'auto' }}>
                             <CodeIcon style={{ color: '#38bdf8', marginTop: '2px' }} />
                             <div>
                                 <Typography variant="caption" style={{ color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                                    Sentencia SQL Generada por IA (Groq)
+                                    Sentencia SQL Generada por IA
                                 </Typography>
                                 <Typography style={{ color: '#f8fafc', fontFamily: 'monospace', fontSize: '0.95rem', marginTop: '4px', whiteSpace: 'pre-wrap' }}>
                                     {response.sql}

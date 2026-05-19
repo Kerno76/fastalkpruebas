@@ -27,6 +27,13 @@ const SCHEMA_DDL = `
     CREATE TABLE "MaterialRatings" ("ID" int, "MaterialID" int, "TutorID" uuid, "Score" int);
 `;
 
+// Lista maestra de tus tablas exactas para la doble validación
+const TABLAS_VALIDAS = [
+    "UsersProfiles", "Admin", "Reviewer", "Tutors", "Students", 
+    "Courses", "Announcements", "Enrollments", "Enrollments_Reviewers", 
+    "Session", "SessionStudents", "Assignments", "Repository", "MaterialRatings"
+];
+
 const validateSelectOnly = (sql) => {
     const cleanSql = sql.trim().toUpperCase();
     if (!cleanSql.startsWith('SELECT')) return false;
@@ -41,27 +48,22 @@ router.post('/chat-sql', async (req, res) => {
     const { question, forceExecute } = req.body;
 
     try {
-const prompt = `
+        const prompt = `
             Eres un experto analista de bases de datos PostgreSQL. 
             Tu única tarea es traducir la pregunta a una consulta SQL válida.
             Responde ÚNICAMENTE con la consulta SQL pura. Nada de explicaciones, nada de comillas invertidas (\`\`\`), nada de markdown.
             
+            REGLA DE PROTECCIÓN FUERA DE CONTEXTO (MUY IMPORTANTE):
+            Si el usuario hace una pregunta que NO TIENE RELACIÓN con el esquema proporcionado (ej. preguntas sobre el clima, chistes, deportes, historia, o peticiones genéricas), DEBES responder EXACTA Y ÚNICAMENTE con la palabra: IRRELEVANTE.
+
             REGLAS DE SINTAXIS: 
             - Los nombres de tablas y columnas tienen mayúsculas. DEBES envolver SIEMPRE los nombres de las tablas y columnas entre comillas dobles (" ").
-            - Ejemplo correcto: SELECT * FROM "Courses";
+            - Ejemplo correcto: SELECT COUNT(*) FROM "Courses";
             
-            REGLAS DE NEGOCIO (MUY IMPORTANTE):
-            A menos que el usuario especifique explícitamente lo contrario:
-            1. Siempre que consultes la tabla "Courses", filtra por "Status" = 'Active'.
-            2. BÚSQUEDAS FLEXIBLES: Si el usuario busca un nombre o texto, NUNCA uses el signo de igual (=). Usa SIEMPRE el operador ILIKE con comodines (%). Ejemplo: WHERE "Name" ILIKE '%Juan Emmanuel%'
-            3. CUIDADO CON LAS COLUMNAS: Si necesitas verificar que un usuario esté activo, recuerda que la columna "State" SOLO existe en la tabla "UsersProfiles".
-            
-            -- NUEVA REGLA: DATOS LEGIBLES PARA HUMANOS (NUNCA IDs) --
-            4. PROHIBIDO DEVOLVER IDs: En tu cláusula SELECT, NUNCA devuelvas claves primarias, claves foráneas, UUIDs o columnas que terminen en "ID" (ej. "CourseID", "TutorID", "StudentID"). El usuario humano no entiende esos códigos. 
-            SIEMPRE debes hacer los JOINs necesarios para devolver el texto descriptivo:
-            - En lugar de "StudentID", "TutorID" o "ReviewerID", devuelve el "Name" haciendo JOIN con "UsersProfiles".
-            - En lugar de "CourseID", devuelve el "Name" haciendo JOIN con "Courses".
-            - Devuelve métricas útiles directamente (como "TotalHours", "Grade", "Duration").
+            REGLAS DE NEGOCIO:
+            A menos que el usuario especifique explícitamente lo contrario (usando palabras como "todos", "historial", "pasados", "inactivos", "cancelados"):
+            1. Siempre que consultes la tabla "Courses", debes filtrar por "Status" = 'Active'.
+            2. Siempre que consultes usuarios o personas ("UsersProfiles", "Students", "Tutors", "Reviewer"), debes asegurar que estén activos. Si usas "UsersProfiles", filtra por "State" = 'Active'.
             
             Esquema:
             ${SCHEMA_DDL}
@@ -77,20 +79,38 @@ const prompt = `
 
         let generatedSql = chatCompletion.choices[0]?.message?.content?.trim() || "";
         
+        // --- 1. PRIMERA VALIDACIÓN: FUERA DE CONTEXTO ---
+        if (generatedSql === 'IRRELEVANTE' || generatedSql.includes('IRRELEVANTE')) {
+            return res.status(400).json({ success: false, message: "La pregunta formulada no tiene relación con los datos operativos de FasTalk. Intenta preguntar sobre cursos, alumnos o tutores." });
+        }
+
         generatedSql = generatedSql.replace(/```sql/gi, '').replace(/```/g, '').trim();
         if (generatedSql.endsWith(';')) {
             generatedSql = generatedSql.slice(0, -1);
         }
 
         if (!validateSelectOnly(generatedSql)) {
-            return res.status(400).json({ success: false, message: "Operación bloqueada por seguridad. Solo se permiten SELECTs." });
+            return res.status(400).json({ success: false, message: "Operación bloqueada por seguridad. Solo se permiten búsquedas (SELECT)." });
         }
 
+        // --- 2. DOBLE VALIDACIÓN: COMPARACIÓN CON EL ESQUEMA ---
+        const usaTablaReal = TABLAS_VALIDAS.some(tabla => generatedSql.includes(`"${tabla}"`));
+        if (!usaTablaReal && !generatedSql.includes('EXISTS')) {
+            return res.status(400).json({ success: false, message: "La IA generó una consulta, pero no coincide con la estructura de tu Base de Datos (inventó tablas). Por favor, reformula tu pregunta." });
+        }
+
+        // Ejecutamos el EXPLAIN para revisar seguridad
         const { data: explainData, error: explainError } = await supabaseAdmin.rpc('explain_sql', { 
             query: generatedSql 
         });
 
-        if (explainError) throw explainError;
+        // Si postgres falla (ej. si la IA inventó una columna que no existe) lo interceptamos aquí
+        if (explainError) {
+            if (explainError.message.includes("does not exist")) {
+                return res.status(400).json({ success: false, message: "La IA intentó buscar un dato que no existe en el esquema. Intenta ser más específico." });
+            }
+            throw explainError;
+        }
 
         let estimatedRows = 0;
         try {
@@ -127,7 +147,7 @@ const prompt = `
 
     } catch (error) {
         console.error("ERROR EN IA:", error);
-        res.status(500).json({ success: false, message: "Error en la consulta: " + error.message });
+        res.status(500).json({ success: false, message: "Error en el servidor: " + error.message });
     }
 });
 

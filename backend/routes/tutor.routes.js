@@ -660,7 +660,7 @@ router.get('/tareas-calificar/:tutorId', async (req, res) => {
     try {
         const { data: allAssignments, error } = await supabaseAdmin
             .from('Assignments')
-            .select(`*, Courses ( Name, Level )`)
+            .select(`*, Courses ( Name, Level, Status )`) 
             .eq('TutorID', tutorId)
             .order('Deadline', { ascending: false });
 
@@ -706,7 +706,8 @@ router.get('/tareas-calificar/:tutorId', async (req, res) => {
                 status: statusText, 
                 grade: task.Grade ? `${task.Grade}/100` : null,
                 archivoAlumno: task.StudentFile, 
-                urlAlumno: task.StudentUrl
+                urlAlumno: task.StudentUrl,
+                courseStatus: task.Courses?.Status 
             });
             return acc;
         }, {});
@@ -717,17 +718,32 @@ router.get('/tareas-calificar/:tutorId', async (req, res) => {
                 acc[key] = {
                     CourseID: task.CourseID,
                     CourseName: task.Courses?.Name || 'Curso', 
+                    CourseStatus: task.Courses?.Status, 
                     Title: task.Title, 
                     Description: task.Description,
                     Deadline: task.Deadline, 
                     HelpMaterialFile: task.HelpMaterialFile, 
                     HelpMaterialLink: task.HelpMaterialLink, 
                     AssignmentIDs: [], 
-                    StudentIDs: []
+                    StudentIDs: [],
+                    Entregas: [] 
                 };
             }
             acc[key].AssignmentIDs.push(task.AssignmentID);
-            acc[key].StudentIDs.push(task.StudentID);
+            if (!acc[key].StudentIDs.includes(task.StudentID)) {
+                acc[key].StudentIDs.push(task.StudentID);
+            }
+
+            const studentProfile = profiles.find(p => p.ID === task.StudentID);
+            acc[key].Entregas.push({
+                studentName: studentProfile?.Name || 'Alumno',
+                status: task.Status,
+                grade: task.Grade,
+                feedback: task.Feedback,
+                studentFile: task.StudentFile,
+                studentUrl: task.StudentUrl
+            });
+
             return acc;
         }, {});
 

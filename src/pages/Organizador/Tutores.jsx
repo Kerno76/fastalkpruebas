@@ -63,7 +63,6 @@ export default function ControlTutores() {
     const handleAbrirDetalles = async (tutor) => {
         const rawTutorData = Array.isArray(tutor.Tutors) ? tutor.Tutors[0] : (tutor.Tutors || {});
         
-        // Verificamos si el tutor tiene cursos asignados antes de abrir el modal
         let tieneCursos = false;
         try {
             const response = await fetch(`http://localhost:8000/api/admin/tutor-cursos/${tutor.ID}`);
@@ -190,6 +189,26 @@ export default function ControlTutores() {
     const totalTutores = tutores.length;
     const activosCount = tutores.filter(t => (t.State || 'Active') === 'Active').length;
     const inactivosCount = totalTutores - activosCount;
+
+    // --- AGRUPACIÓN DE CURSOS PARA EL MODAL ---
+    const cursosActivos = cursosDelTutor.filter(c => c.Status === 'Active');
+    const cursosProximos = cursosDelTutor.filter(c => c.Status === 'Upcoming');
+    const cursosVencidos = cursosDelTutor.filter(c => c.Status === 'Past');
+
+    const renderCursoItem = (curso) => (
+        <div key={curso.CourseID}>
+            <ListItem style={{ padding: '10px 15px' }}>
+                <ListItemText 
+                    primary={`${curso.Name} (${curso.Level})`} 
+                    secondary={`Periodo: ${curso.Period || 'N/A'}`} 
+                    primaryTypographyProps={{ style: { fontWeight: 800, color: '#1e293b', fontSize: '1rem' } }}
+                    secondaryTypographyProps={{ style: { fontWeight: 600, color: '#64748b', marginTop: '4px' } }}
+                />
+                <Chip label={curso.Language} size="small" style={{ backgroundColor: '#e0f2fe', color: '#0369a1', fontWeight: 700 }} />
+            </ListItem>
+            <Divider />
+        </div>
+    );
 
     return (
         <div className='mainContent'>
@@ -514,45 +533,58 @@ export default function ControlTutores() {
 
             <Dialog open={openCursos} onClose={() => setOpenCursos(false)} maxWidth="sm" fullWidth PaperProps={{ className: 'modal-container' }}>
                 <IconButton onClick={() => setOpenCursos(false)} className="close-button"><CloseIcon /></IconButton>
-                <div className="modal-content">
-                    <Typography className="modal-title">Cursos Asignados</Typography>
+                <div className="modal-content" style={{ padding: '0 0 20px 0' }}>
+                    <Typography className="modal-title" style={{ padding: '25px 25px 0 25px' }}>Cursos Asignados</Typography>
                     
                     {tutorSeleccionado && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '0 25px' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f0f9ff', padding: '15px', borderRadius: '12px', border: '1px solid #bae6fd' }}>
                                 <div>
                                     <Typography variant="caption" style={{ color: '#0369a1', fontWeight: 800 }}>TUTOR: {tutorSeleccionado.Name}</Typography>
-                                    <Typography variant="h6" style={{ color: '#0c4a6e', fontWeight: 800 }}>{cursosDelTutor.length} Cursos Activos</Typography>
+                                    <Typography variant="h6" style={{ color: '#0c4a6e', fontWeight: 800 }}>{cursosActivos.length} Cursos Activos</Typography>
                                 </div>
                                 <ClassIcon style={{ color: '#0ea5e9', fontSize: '40px' }} />
                             </div>
 
-                            <div style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid #f1f5f9', borderRadius: '12px' }}>
-                                <List dense>
-                                    {cursosDelTutor.map((curso) => (
-                                        <div key={curso.CourseID}>
-                                            <ListItem style={{ padding: '15px' }}>
-                                                <ListItemText 
-                                                    primary={`${curso.Name} (${curso.Level})`} 
-                                                    secondary={`Periodo: ${curso.Period || 'N/A'} | Estado: ${curso.Status}`} 
-                                                    primaryTypographyProps={{ style: { fontWeight: 800, color: '#1e293b', fontSize: '1rem' } }}
-                                                    secondaryTypographyProps={{ style: { fontWeight: 600, color: '#64748b', marginTop: '4px' } }}
-                                                />
-                                                <Chip label={curso.Language} size="small" style={{ backgroundColor: '#e0f2fe', color: '#0369a1', fontWeight: 700 }} />
-                                            </ListItem>
-                                            <Divider />
-                                        </div>
-                                    ))}
-                                    {cursosDelTutor.length === 0 && (
-                                        <Typography variant="body2" align="center" style={{ padding: '20px', color: '#94a3b8', fontWeight: 600 }}>
-                                            Este tutor no tiene cursos asignados en este momento.
-                                        </Typography>
-                                    )}
-                                </List>
+                            <div style={{ maxHeight: '450px', overflowY: 'auto', border: '1px solid #f1f5f9', borderRadius: '12px', paddingBottom: '10px' }}>
+                                {cursosDelTutor.length === 0 ? (
+                                    <Typography variant="body2" align="center" style={{ padding: '20px', color: '#94a3b8', fontWeight: 600 }}>
+                                        Este tutor no tiene cursos asignados en este momento.
+                                    </Typography>
+                                ) : (
+                                    <>
+                                        {cursosActivos.length > 0 && (
+                                            <div style={{ marginBottom: '10px' }}>
+                                                <Typography variant="caption" style={{ padding: '10px 15px 5px', display: 'block', fontWeight: 800, color: '#16a34a' }}>ACTIVOS</Typography>
+                                                <List dense style={{ paddingTop: 0 }}>
+                                                    {cursosActivos.map(renderCursoItem)}
+                                                </List>
+                                            </div>
+                                        )}
+                                        
+                                        {cursosProximos.length > 0 && (
+                                            <div style={{ marginBottom: '10px' }}>
+                                                <Typography variant="caption" style={{ padding: '10px 15px 5px', display: 'block', fontWeight: 800, color: '#ca8a04' }}>PRÓXIMOS</Typography>
+                                                <List dense style={{ paddingTop: 0 }}>
+                                                    {cursosProximos.map(renderCursoItem)}
+                                                </List>
+                                            </div>
+                                        )}
+
+                                        {cursosVencidos.length > 0 && (
+                                            <div style={{ marginBottom: '10px' }}>
+                                                <Typography variant="caption" style={{ padding: '10px 15px 5px', display: 'block', fontWeight: 800, color: '#94a3b8' }}>FINALIZADOS / VENCIDOS</Typography>
+                                                <List dense style={{ paddingTop: 0 }}>
+                                                    {cursosVencidos.map(renderCursoItem)}
+                                                </List>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
                             </div>
 
-                            <div className="modal-actions">
-                                <Button onClick={() => setOpenCursos(false)} className="btn-cancel">Cerrar</Button>
+                            <div className="modal-actions" style={{ marginTop: '10px' }}>
+                                <Button onClick={() => setOpenCursos(false)} className="btn-cancel" fullWidth>Cerrar</Button>
                             </div>
                         </div>
                     )}

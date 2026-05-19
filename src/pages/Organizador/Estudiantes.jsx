@@ -65,11 +65,11 @@ export default function ControlEstudiantes() {
         fetchCursos();
     }, []);
 
-    const handleToggleEstado = async (id, estadoActual, tutorAsignado) => {
+    const handleToggleEstado = async (id, estadoActual, tutorAsignado, estaEnrolado) => {
         const nuevoEstado = estadoActual === 'Active' ? 'Inactive' : 'Active';
 
-        if (nuevoEstado === 'Inactive' && tutorAsignado && tutorAsignado !== 'Sin asignar') {
-            toast.error("No se puede desactivar: El estudiante tiene un curso y tutor asignado.", { icon: '⚠️' });
+        if (nuevoEstado === 'Inactive' && estaEnrolado && tutorAsignado !== 'Sin asignar') {
+            toast.error("No se puede desactivar: El estudiante tiene un curso activo.", { icon: '⚠️' });
             return;
         }
 
@@ -181,8 +181,10 @@ export default function ControlEstudiantes() {
     const estIdioma = estData?.Language || '';
     const estNivel = estData?.CurrentLevel || '';
 
+    // --- FILTRO CORREGIDO: SOLO CURSOS ACTIVOS O PRÓXIMOS ---
     const cursosCompatibles = cursosDisponibles.filter(c => 
-        c.Language?.toUpperCase() === estIdioma.toUpperCase()
+        c.Language?.toUpperCase() === estIdioma.toUpperCase() &&
+        c.Status !== 'Past' 
     );
 
     const estudiantesFiltrados = estudiantes.filter((item) => {
@@ -295,9 +297,13 @@ export default function ControlEstudiantes() {
                         
                         const idioma = studentDataList?.Language || 'N/A';
                         const nivel = studentDataList?.CurrentLevel || 'N/A';
-                        const tutorAsignado = item.tutorAsignado || 'Sin asignar'; 
                         const estado = item.State || 'Active'; 
-                        const estaEnrolado = !!item.cursoData;
+                        
+                        // --- LÓGICA CORREGIDA PARA ESTADO ENROLADO ---
+                        // Verificamos si tiene un curso Y si no es un curso del pasado
+                        const estadoCurso = item.cursoData?.Status;
+                        const estaEnrolado = item.cursoData && estadoCurso !== 'Past'; 
+                        const tutorAsignado = estaEnrolado ? (item.tutorAsignado || 'Sin asignar') : 'Sin asignar'; 
 
                         return (
                             <Paper 
@@ -341,7 +347,7 @@ export default function ControlEstudiantes() {
                                                                 backgroundColor: estado === 'Active' ? 'transparent' : '#dcfce7',
                                                                 padding: '4px' 
                                                             }} 
-                                                            onClick={() => handleToggleEstado(item.ID, estado, tutorAsignado)}
+                                                            onClick={() => handleToggleEstado(item.ID, estado, tutorAsignado, estaEnrolado)}
                                                         >
                                                             {estado === 'Active' ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
                                                         </IconButton>
@@ -376,6 +382,7 @@ export default function ControlEstudiantes() {
                                 <div className="bottom-actions" style={{ display: 'flex', gap: '8px', marginTop: 'auto', width: '100%', paddingTop: '15px' }}>
                                     <button className="details" style={{ flex: 1, padding: '8px', fontSize: '0.85rem' }} onClick={() => handleAbrirDetalles(item)}>Ver Detalles</button>
                                     
+                                    {/* --- MOSTRAR ASIGNAR CURSO SI NO ESTÁ ENROLADO ACTUALMENTE --- */}
                                     {estaEnrolado ? (
                                         <button className="assign" style={{ flex: 1, padding: '8px', fontSize: '0.85rem', backgroundColor: '#f9fafb', color: '#4f566b', border: '1px solid #e0e4e8', opacity: estado === 'Inactive' ? 0.5 : 1 }} disabled={estado === 'Inactive'} onClick={() => handleAbrirVerCurso(item)}>Ver Curso</button>
                                     ) : (
@@ -444,8 +451,8 @@ export default function ControlEstudiantes() {
                                     name="Language" 
                                     value={editFormData.Language || ''} 
                                     onChange={(e) => {
-                                        if (isEditing && estudianteSeleccionado.cursoData) {
-                                            toast.error('No se puede cambiar el idioma mientras el estudiante esté asignado a un curso.', { icon: '⚠️' });
+                                        if (isEditing && estudianteSeleccionado.cursoData && estudianteSeleccionado.cursoData.Status !== 'Past') {
+                                            toast.error('No se puede cambiar el idioma mientras el estudiante esté asignado a un curso activo.', { icon: '⚠️' });
                                             return;
                                         }
                                         setEditFormData({...editFormData, Language: e.target.value});
@@ -497,8 +504,10 @@ export default function ControlEstudiantes() {
 
                             <Paper elevation={0} style={{ padding: '15px', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
                                 <Typography variant="caption" style={{ fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Estatus de Enrolamiento</Typography>
-                                <Typography variant="body1" style={{ fontWeight: 700, color: estudianteSeleccionado.cursoData ? '#15803d' : '#b45309', marginTop: '5px' }}>
-                                    {estudianteSeleccionado.cursoData ? `Asignado al curso: ${estudianteSeleccionado.cursoData.Name}` : 'Aún no tiene curso asignado'}
+                                <Typography variant="body1" style={{ fontWeight: 700, color: estudianteSeleccionado.cursoData && estudianteSeleccionado.cursoData.Status !== 'Past' ? '#15803d' : '#b45309', marginTop: '5px' }}>
+                                    {estudianteSeleccionado.cursoData && estudianteSeleccionado.cursoData.Status !== 'Past' 
+                                        ? `Asignado al curso: ${estudianteSeleccionado.cursoData.Name}` 
+                                        : 'Aún no tiene curso activo asignado'}
                                 </Typography>
                             </Paper>
 
@@ -536,12 +545,12 @@ export default function ControlEstudiantes() {
                                 <Typography variant="h6" style={{ color: '#0c4a6e', fontWeight: 800 }}>{estudianteSeleccionado.Name}</Typography>
                                 <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
                                     <Chip label={estIdioma || 'N/A'} size="small" style={{ backgroundColor: '#e0f2fe', color: '#0284c7', fontWeight: 600 }} />
-                                    <Chip label={`Nivel Real: ${estNivel || 'N/A'}`} size="small" style={{ backgroundColor: '#e0f2fe', color: '#0284c7', fontWeight: 600 }} />
+                                    <Chip label={`Nivel Real: ${estNivel || 'N/A'} `} size="small" style={{ backgroundColor: '#e0f2fe', color: '#0284c7', fontWeight: 600 }} />
                                 </div>
                             </div>
 
                             <div className="form-group" style={{ width: '100%' }}>
-                                <label>Cursos Compatibles Disponibles (Mismo Idioma)</label>
+                                <label>Cursos Compatibles Disponibles (Activos / Próximos)</label>
                                 <FormControl fullWidth>
                                     <Select displayEmpty value={cursoElegido} onChange={(e) => setCursoElegido(e.target.value)} input={<OutlinedInput sx={{ borderRadius: '12px' }} />}>
                                         <MenuItem value="" disabled>Selecciona un curso</MenuItem>
