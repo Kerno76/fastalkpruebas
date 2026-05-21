@@ -1086,4 +1086,129 @@ router.put('/rechazar-evaluacion', async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 });
+
+const cron = require('node-cron');
+
+
+router.post('/eventos', async (req, res) => {
+    const { AdminID, Title, Date, Time, Description } = req.body; 
+    try {
+        const { error } = await supabaseAdmin
+            .from('AdminEvents')
+            .insert([{ AdminID, Title, Date, Time, Description }]);
+
+        if (error) throw error;
+        res.status(200).json({ success: true, message: 'Evento agendado con éxito.' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.get('/eventos/:adminId', async (req, res) => {
+    const { adminId } = req.params;
+    try {
+        const { data, error } = await supabaseAdmin
+            .from('AdminEvents')
+            .select('*')
+            .eq('AdminID', adminId)
+            .order('Time', { ascending: true });
+
+        if (error) throw error;
+        res.status(200).json({ success: true, eventos: data });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.put('/eventos/:eventId', async (req, res) => {
+    const { eventId } = req.params;
+    const { Title, Date, Time, Description } = req.body;
+    try {
+        const { error } = await supabaseAdmin
+            .from('AdminEvents')
+            .update({ Title, Date, Time, Description })
+            .eq('EventID', eventId);
+
+        if (error) throw error;
+        res.status(200).json({ success: true, message: 'Evento actualizado.' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.delete('/eventos/:eventId', async (req, res) => {
+    const { eventId } = req.params;
+    try {
+        const { error } = await supabaseAdmin
+            .from('AdminEvents')
+            .delete()
+            .eq('EventID', eventId);
+
+        if (error) throw error;
+        res.status(200).json({ success: true, message: 'Evento eliminado.' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+cron.schedule('* * * * *', async () => {
+    try {
+        const tzOptions = { timeZone: 'America/Mexico_City' };
+        const now = new Date();
+        
+        const currentDate = now.toLocaleDateString('sv-SE', tzOptions); 
+        
+        const currentHourMin = now.toLocaleTimeString('es-MX', { 
+            ...tzOptions, hour: '2-digit', minute: '2-digit', hour12: false 
+        }).substring(0, 5);
+
+        const inOneHour = new Date(now.getTime() + 60 * 60000);
+        const inOneHourMin = inOneHour.toLocaleTimeString('es-MX', { 
+            ...tzOptions, hour: '2-digit', minute: '2-digit', hour12: false 
+        }).substring(0, 5);
+
+        const { data: eventosHoy } = await supabaseAdmin
+            .from('AdminEvents')
+            .select('*')
+            .eq('Date', currentDate);
+
+        if (!eventosHoy || eventosHoy.length === 0) return;
+
+        let notificacionesAInsertar = [];
+
+        eventosHoy.forEach(evento => {
+            if (!evento.Time) return;
+            const eventTime = evento.Time.substring(0, 5); 
+
+            if (eventTime === inOneHourMin) {
+                notificacionesAInsertar.push({
+                    ReceiverID: evento.AdminID,
+                    SenderID: evento.AdminID,
+                    Type: 'SessionAgendada',
+                    Title: 'Evento próximo (1 hora)',
+                    Message: `Tu evento "${evento.Title}" está programado para las ${eventTime}.`,
+                    RelatedEntityID: evento.EventID
+                });
+            }
+            
+            if (eventTime === currentHourMin) {
+                notificacionesAInsertar.push({
+                    ReceiverID: evento.AdminID,
+                    SenderID: evento.AdminID,
+                    Type: 'AlertaAdmin',
+                    Title: '¡Es hora de tu evento!',
+                    Message: `Tu evento "${evento.Title}" está comenzando ahora.`,
+                    RelatedEntityID: evento.EventID
+                });
+            }
+        });
+
+        if (notificacionesAInsertar.length > 0) {
+            await supabaseAdmin.from('Notifications').insert(notificacionesAInsertar);
+        }
+
+    } catch (error) {
+        console.error("Error en el Cron Job de eventos:", error.message);
+    }
+});
 module.exports = router;

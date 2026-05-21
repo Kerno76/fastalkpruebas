@@ -30,6 +30,10 @@ export default function ControlTutores() {
     const [tutorSeleccionado, setTutorSeleccionado] = useState(null);
     const [cursosDelTutor, setCursosDelTutor] = useState([]);
 
+    // --- ESTADOS PARA EL MODAL DE CONFIRMACIÓN DE ESTADO ---
+    const [openConfirmToggle, setOpenConfirmToggle] = useState(false);
+    const [tutorParaToggle, setTutorParaToggle] = useState(null);
+
     const [isEditing, setIsEditing] = useState(false);
     const [editFormData, setEditFormData] = useState({
         Name: '',
@@ -131,7 +135,7 @@ export default function ControlTutores() {
         setOpenCursos(true);
     };
 
-    const handleToggleEstado = async (id, estadoActual, tieneRevisor, numEstudiantes) => {
+    const handleAbrirConfirmacionToggle = (item, estadoActual, tieneRevisor, numEstudiantes) => {
         const nuevoEstado = estadoActual === 'Active' ? 'Inactive' : 'Active';
 
         if (nuevoEstado === 'Inactive') {
@@ -145,6 +149,19 @@ export default function ControlTutores() {
             }
         }
 
+        setTutorParaToggle({
+            id: item.ID,
+            nombre: item.Name,
+            nuevoEstado: nuevoEstado
+        });
+        setOpenConfirmToggle(true);
+    };
+
+    const handleEjecutarToggle = async () => {
+        if (!tutorParaToggle) return;
+
+        setOpenConfirmToggle(false);
+        const { id, nuevoEstado } = tutorParaToggle;
         const loadingToast = toast.loading(`Cambiando estado a ${nuevoEstado}...`);
 
         try {
@@ -190,7 +207,6 @@ export default function ControlTutores() {
     const activosCount = tutores.filter(t => (t.State || 'Active') === 'Active').length;
     const inactivosCount = totalTutores - activosCount;
 
-    // --- AGRUPACIÓN DE CURSOS PARA EL MODAL ---
     const cursosActivos = cursosDelTutor.filter(c => c.Status === 'Active');
     const cursosProximos = cursosDelTutor.filter(c => c.Status === 'Upcoming');
     const cursosVencidos = cursosDelTutor.filter(c => c.Status === 'Past');
@@ -351,7 +367,7 @@ export default function ControlTutores() {
                                                                 backgroundColor: estado === 'Active' ? 'transparent' : '#dcfce7',
                                                                 padding: '4px' 
                                                             }} 
-                                                            onClick={() => handleToggleEstado(item.ID, estado, tieneRevisor, estudiantes)}
+                                                            onClick={() => handleAbrirConfirmacionToggle(item, estado, tieneRevisor, estudiantes)}
                                                         >
                                                             {estado === 'Active' ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
                                                         </IconButton>
@@ -403,6 +419,66 @@ export default function ControlTutores() {
                     </Typography>
                 )}
             </div>
+
+            {/* --- MODAL DE CONFIRMACIÓN AMIGABLE --- */}
+            <Dialog open={openConfirmToggle} onClose={() => setOpenConfirmToggle(false)} maxWidth="xs" fullWidth PaperProps={{ style: { borderRadius: '24px', padding: '8px' } }}>
+                <IconButton onClick={() => setOpenConfirmToggle(false)} style={{ position: 'absolute', right: 12, top: 12, color: '#94a3b8' }}>
+                    <CloseIcon />
+                </IconButton>
+                
+                <div style={{ padding: '30px 20px 20px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    
+                    <div style={{ 
+                        width: '85px', height: '85px', borderRadius: '50%', marginBottom: '20px', display: 'flex', justifyContent: 'center', alignItems: 'center',
+                        backgroundColor: tutorParaToggle?.nuevoEstado === 'Inactive' ? '#fee2e2' : '#dcfce7' 
+                    }}>
+                        {tutorParaToggle?.nuevoEstado === 'Inactive' ? (
+                            <BlockIcon style={{ fontSize: 45, color: '#ef4444' }} />
+                        ) : (
+                            <CheckCircleIcon style={{ fontSize: 45, color: '#10b981' }} />
+                        )}
+                    </div>
+
+                    <Typography variant="h6" style={{ fontWeight: 800, color: '#1e293b', marginBottom: '10px' }}>
+                        ¿{tutorParaToggle?.nuevoEstado === 'Inactive' ? 'Desactivar' : 'Activar'} tutor?
+                    </Typography>
+                    
+                    <Typography variant="body2" style={{ color: '#64748b', marginBottom: '35px', lineHeight: 1.6, fontSize: '0.95rem' }}>
+                        Estás a punto de cambiar el estado del tutor <strong style={{ color: '#0f172a' }}>{tutorParaToggle?.nombre}</strong>.
+                        <br/>
+                        {tutorParaToggle?.nuevoEstado === 'Inactive' 
+                            ? "Al hacer esto, se le restringirá el acceso a la plataforma." 
+                            : "El tutor recuperará el acceso normal a su cuenta."}
+                    </Typography>
+                    
+                    <div style={{ display: 'flex', gap: '15px', width: '100%' }}>
+                        <Button 
+                            variant="outlined" 
+                            onClick={() => setOpenConfirmToggle(false)} 
+                            style={{ 
+                                textTransform: 'none', fontWeight: 700, flex: 1, borderColor: '#e2e8f0', color: '#64748b', borderRadius: '12px', padding: '10px' 
+                            }}
+                        >
+                            Cancelar
+                        </Button>
+                        <Button 
+                            variant="contained" 
+                            onClick={handleEjecutarToggle} 
+                            style={{ 
+                                textTransform: 'none', 
+                                fontWeight: 700, 
+                                flex: 1, 
+                                backgroundColor: tutorParaToggle?.nuevoEstado === 'Inactive' ? '#ef4444' : '#10b981',
+                                boxShadow: 'none',
+                                borderRadius: '12px',
+                                padding: '10px'
+                            }}
+                        >
+                            Sí, {tutorParaToggle?.nuevoEstado === 'Inactive' ? 'desactivar' : 'activar'}
+                        </Button>
+                    </div>
+                </div>
+            </Dialog>
 
             <Dialog open={openDetalles} onClose={() => setOpenDetalles(false)} maxWidth="sm" fullWidth PaperProps={{ className: 'modal-container' }}>
                 <IconButton onClick={() => setOpenDetalles(false)} className="close-button"><CloseIcon /></IconButton>

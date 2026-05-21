@@ -2,13 +2,11 @@ import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import '../../styles/Tutor/RegistroSesiones.css';
 
-// Función para verificar si se permite el reenvío leyendo la BD oculta
 const canResubmit = (comments) => {
     if (!comments) return false;
     return comments.includes('Permite Reenvío: Sí');
 };
 
-// Función para extraer el comentario limpio de la BD oculta
 const getCleanComment = (comments) => {
     if (!comments) return '';
     const split = comments.split('Comentarios: ');
@@ -34,7 +32,6 @@ export default function RegistroSesiones() {
             const res = await fetch(`http://localhost:8000/api/tutor/sesiones-pendientes/${user.ID}`);
             const data = await res.json();
             if (data.success) {
-                // Filtramos: Si está rechazada pero el revisor puso "Permite Reenvío: No", se oculta de esta pantalla
                 const filtradas = data.sesiones.filter(s => {
                     if (s.ReviewerStatus === 'Rechazado') {
                         return canResubmit(s.ReviewerComments);
@@ -251,7 +248,6 @@ export default function RegistroSesiones() {
                     </div>
                 </div>
 
-                {/* CAJA DE NOTAS DE EVALUADOR DIRECTO EN LA LISTA */}
                 {isRejected && (
                     <div style={{ backgroundColor: '#fee2e2', padding: '15px', borderRadius: '8px', marginTop: '15px', border: '1px solid #fca5a5', width: '100%' }}>
                         <span style={{ display: 'block', fontSize: '0.8rem', color: '#b91c1c', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '8px' }}>

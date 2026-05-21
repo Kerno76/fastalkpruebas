@@ -28,7 +28,7 @@ router.post('/login', async (req, res) => {
             .from('UsersProfiles')
             .select('*')
             .ilike('Email', email)
-            .single();
+            .maybeSingle();
 
         if (profileError || !profileData) {
             return res.status(404).json({ success: false, message: "Perfil no encontrado en la base de datos" });
@@ -46,7 +46,7 @@ router.post('/login', async (req, res) => {
                 .from(roleTable)
                 .select('Phone')
                 .eq('ID', profileData.ID)
-                .single();
+                .maybeSingle();
                 
             if (roleData && roleData.Phone) {
                 phone = roleData.Phone;
@@ -138,10 +138,15 @@ router.post('/forgot-password', async (req, res) => {
             .from('UsersProfiles')
             .select('ID, Email')
             .ilike('Email', email)
-            .single();
+            .maybeSingle();
 
-        if (searchError || !userExist) {
-            return res.status(404).json({ success: false, message: "El correo no está registrado en el sistema." });
+        if (searchError) throw searchError;
+
+        if (!userExist) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "Este correo no está registrado en FasTalk. Verifica que esté bien escrito." 
+            });
         }
 
         const { error: dbError } = await supabaseAdmin
@@ -210,7 +215,7 @@ router.post('/update-password', async (req, res) => {
             .from('UsersProfiles')
             .select('ID')
             .ilike('Email', email)
-            .single();
+            .maybeSingle();
         
         if (!user || userError) {
             return res.status(404).json({ success: false, message: "No se encontró el perfil del usuario para actualizar la contraseña." });

@@ -7,6 +7,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CloseIcon from '@mui/icons-material/Close';
 import ClassIcon from '@mui/icons-material/Class';
 import SearchIcon from '@mui/icons-material/Search'; 
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import toast from 'react-hot-toast'; 
 import ModalEstudiante from '../../components/Modals/ModalEstudiante';
 
@@ -27,6 +28,10 @@ export default function ControlEstudiantes() {
     const [openDetalles, setOpenDetalles] = useState(false);
     const [openAsignar, setOpenAsignar] = useState(false);
     const [openVerCurso, setOpenVerCurso] = useState(false);
+    
+    const [openConfirmToggle, setOpenConfirmToggle] = useState(false);
+    const [estudianteParaToggle, setEstudianteParaToggle] = useState(null);
+
     const [estudianteSeleccionado, setEstudianteSeleccionado] = useState(null);
     const [cursoElegido, setCursoElegido] = useState('');
 
@@ -65,7 +70,7 @@ export default function ControlEstudiantes() {
         fetchCursos();
     }, []);
 
-    const handleToggleEstado = async (id, estadoActual, tutorAsignado, estaEnrolado) => {
+    const handleAbrirConfirmacionToggle = (item, estadoActual, tutorAsignado, estaEnrolado) => {
         const nuevoEstado = estadoActual === 'Active' ? 'Inactive' : 'Active';
 
         if (nuevoEstado === 'Inactive' && estaEnrolado && tutorAsignado !== 'Sin asignar') {
@@ -73,6 +78,19 @@ export default function ControlEstudiantes() {
             return;
         }
 
+        setEstudianteParaToggle({
+            id: item.ID,
+            nombre: item.Name,
+            nuevoEstado: nuevoEstado
+        });
+        setOpenConfirmToggle(true);
+    };
+
+    const handleEjecutarToggle = async () => {
+        if (!estudianteParaToggle) return;
+
+        setOpenConfirmToggle(false);
+        const { id, nuevoEstado } = estudianteParaToggle;
         const loadingToast = toast.loading(`Cambiando estado a ${nuevoEstado}...`);
 
         try {
@@ -181,7 +199,6 @@ export default function ControlEstudiantes() {
     const estIdioma = estData?.Language || '';
     const estNivel = estData?.CurrentLevel || '';
 
-    // --- FILTRO CORREGIDO: SOLO CURSOS ACTIVOS O PRÓXIMOS ---
     const cursosCompatibles = cursosDisponibles.filter(c => 
         c.Language?.toUpperCase() === estIdioma.toUpperCase() &&
         c.Status !== 'Past' 
@@ -299,8 +316,6 @@ export default function ControlEstudiantes() {
                         const nivel = studentDataList?.CurrentLevel || 'N/A';
                         const estado = item.State || 'Active'; 
                         
-                        // --- LÓGICA CORREGIDA PARA ESTADO ENROLADO ---
-                        // Verificamos si tiene un curso Y si no es un curso del pasado
                         const estadoCurso = item.cursoData?.Status;
                         const estaEnrolado = item.cursoData && estadoCurso !== 'Past'; 
                         const tutorAsignado = estaEnrolado ? (item.tutorAsignado || 'Sin asignar') : 'Sin asignar'; 
@@ -347,7 +362,7 @@ export default function ControlEstudiantes() {
                                                                 backgroundColor: estado === 'Active' ? 'transparent' : '#dcfce7',
                                                                 padding: '4px' 
                                                             }} 
-                                                            onClick={() => handleToggleEstado(item.ID, estado, tutorAsignado, estaEnrolado)}
+                                                            onClick={() => handleAbrirConfirmacionToggle(item, estado, tutorAsignado, estaEnrolado)}
                                                         >
                                                             {estado === 'Active' ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
                                                         </IconButton>
@@ -382,7 +397,6 @@ export default function ControlEstudiantes() {
                                 <div className="bottom-actions" style={{ display: 'flex', gap: '8px', marginTop: 'auto', width: '100%', paddingTop: '15px' }}>
                                     <button className="details" style={{ flex: 1, padding: '8px', fontSize: '0.85rem' }} onClick={() => handleAbrirDetalles(item)}>Ver Detalles</button>
                                     
-                                    {/* --- MOSTRAR ASIGNAR CURSO SI NO ESTÁ ENROLADO ACTUALMENTE --- */}
                                     {estaEnrolado ? (
                                         <button className="assign" style={{ flex: 1, padding: '8px', fontSize: '0.85rem', backgroundColor: '#f9fafb', color: '#4f566b', border: '1px solid #e0e4e8', opacity: estado === 'Inactive' ? 0.5 : 1 }} disabled={estado === 'Inactive'} onClick={() => handleAbrirVerCurso(item)}>Ver Curso</button>
                                     ) : (
@@ -398,6 +412,65 @@ export default function ControlEstudiantes() {
                     </Typography>
                 )}
             </div>
+
+            <Dialog open={openConfirmToggle} onClose={() => setOpenConfirmToggle(false)} maxWidth="xs" fullWidth PaperProps={{ style: { borderRadius: '24px', padding: '8px' } }}>
+                <IconButton onClick={() => setOpenConfirmToggle(false)} style={{ position: 'absolute', right: 12, top: 12, color: '#94a3b8' }}>
+                    <CloseIcon />
+                </IconButton>
+                
+                <div style={{ padding: '30px 20px 20px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    
+                    <div style={{ 
+                        width: '85px', height: '85px', borderRadius: '50%', marginBottom: '20px', display: 'flex', justifyContent: 'center', alignItems: 'center',
+                        backgroundColor: estudianteParaToggle?.nuevoEstado === 'Inactive' ? '#fee2e2' : '#dcfce7' 
+                    }}>
+                        {estudianteParaToggle?.nuevoEstado === 'Inactive' ? (
+                            <BlockIcon style={{ fontSize: 45, color: '#ef4444' }} />
+                        ) : (
+                            <CheckCircleIcon style={{ fontSize: 45, color: '#10b981' }} />
+                        )}
+                    </div>
+
+                    <Typography variant="h6" style={{ fontWeight: 800, color: '#1e293b', marginBottom: '10px' }}>
+                        ¿{estudianteParaToggle?.nuevoEstado === 'Inactive' ? 'Desactivar' : 'Activar'} estudiante?
+                    </Typography>
+                    
+                    <Typography variant="body2" style={{ color: '#64748b', marginBottom: '35px', lineHeight: 1.6, fontSize: '0.95rem' }}>
+                        Estás a punto de cambiar el estado de <strong style={{ color: '#0f172a' }}>{estudianteParaToggle?.nombre}</strong>.
+                        <br/>
+                        {estudianteParaToggle?.nuevoEstado === 'Inactive' 
+                            ? "Al hacer esto, se le restringirá el acceso a la plataforma." 
+                            : "El estudiante recuperará el acceso normal a su cuenta."}
+                    </Typography>
+                    
+                    <div style={{ display: 'flex', gap: '15px', width: '100%' }}>
+                        <Button 
+                            variant="outlined" 
+                            onClick={() => setOpenConfirmToggle(false)} 
+                            style={{ 
+                                textTransform: 'none', fontWeight: 700, flex: 1, borderColor: '#e2e8f0', color: '#64748b', borderRadius: '12px', padding: '10px' 
+                            }}
+                        >
+                            Cancelar
+                        </Button>
+                        <Button 
+                            variant="contained" 
+                            onClick={handleEjecutarToggle} 
+                            style={{ 
+                                textTransform: 'none', 
+                                fontWeight: 700, 
+                                flex: 1, 
+                                backgroundColor: estudianteParaToggle?.nuevoEstado === 'Inactive' ? '#ef4444' : '#10b981',
+                                boxShadow: 'none',
+                                borderRadius: '12px',
+                                padding: '10px'
+                            }}
+                        >
+                            Sí, {estudianteParaToggle?.nuevoEstado === 'Inactive' ? 'desactivar' : 'activar'}
+                        </Button>
+                    </div>
+                </div>
+            </Dialog>
 
             <Dialog open={openDetalles} onClose={() => setOpenDetalles(false)} maxWidth="sm" fullWidth PaperProps={{ className: 'modal-container' }}>
                 <IconButton onClick={() => setOpenDetalles(false)} className="close-button"><CloseIcon /></IconButton>

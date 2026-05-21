@@ -1,15 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Typography, Button, Paper, Chip, Dialog, IconButton, TextField, Divider } from '@mui/material';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CloseIcon from '@mui/icons-material/Close';
-import AssignmentIcon from '@mui/icons-material/Assignment';
 import LinkIcon from '@mui/icons-material/Link';
-import DownloadIcon from '@mui/icons-material/Download';
+import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import toast from 'react-hot-toast';
 
 import '../../styles/App.css';
@@ -61,6 +57,7 @@ export default function MisTareas() {
     });
 
     const handleSubirTarea = async () => {
+        if (!tareaActual) return;
         setIsSubmitting(true);
         const tid = toast.loading("Enviando...");
         try {
@@ -78,12 +75,14 @@ export default function MisTareas() {
         } catch (err) { toast.error("Error al enviar", { id: tid }); } finally { setIsSubmitting(false); }
     };
 
-    const isImageUrl = (url) => url && url.match(/\.(jpeg|jpg|gif|png)$/i) != null;
     const safeParse = (str) => { try { return JSON.parse(str); } catch { return str ? [str] : []; } };
 
-    const tareasFiltradas = viewMode === 'Actuales' 
-        ? tareas.filter(t => t.status?.toLowerCase() === 'pending')
-        : tareas.filter(t => t.status?.toLowerCase() === 'submitted' || t.status?.toLowerCase() === 'graded');
+    // --- FILTRADO: SOLO CURSOS ACTIVOS ---
+    const tareasFiltradas = tareas.filter(t => {
+        const esActivo = t.courseStatus?.toLowerCase() === 'active';
+        if (viewMode === 'Actuales') return esActivo && t.status?.toLowerCase() === 'pending';
+        return esActivo && (t.status?.toLowerCase() === 'submitted' || t.status?.toLowerCase() === 'graded');
+    });
 
     return (
         <div className='mainContent'>
@@ -124,7 +123,7 @@ export default function MisTareas() {
                                 <TextField size="small" fullWidth value={nuevoEnlace} onChange={e => setNuevoEnlace(e.target.value)} />
                                 <Button onClick={handleAddLink}><AddCircleOutlineIcon /></Button>
                             </div>
-                            {enlaces.map((l, i) => <Chip key={i} label={l} onDelete={() => handleRemoveLink(i)} />)}
+                            {enlaces.map((l, i) => <Chip key={i} label={l} onDelete={() => setEnlaces(enlaces.filter((_, idx) => idx !== i))} />)}
                         </div>
 
                         <div style={{ marginBottom: '20px' }}>
@@ -153,7 +152,7 @@ export default function MisTareas() {
                             {safeParse(tareaActual.studentUrl).map((l, i) => <Typography key={i}><LinkIcon/> {l}</Typography>)}
                             <Divider sx={{ my: 1 }} />
                             <Typography><strong>Calificación:</strong> {tareaActual.grade || 0}/100</Typography>
-                            <Typography><strong>Feedback:</strong> {tareaActual.feedback || 'Sin comentarios'}</Typography>
+                            <Typography><strong>Comentarios:</strong> {tareaActual.feedback || 'Sin comentarios'}</Typography>
                         </div>
                     )}
                 </div>

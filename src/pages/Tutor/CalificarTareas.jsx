@@ -158,7 +158,6 @@ export default function CalificarTareas() {
         setOpenResumen(true);
     };
 
-    // --- FILTROS DE ACTIVOS E INACTIVOS ---
     const estudiantesActivos = estudiantesData.map(est => ({
         ...est,
         tasks: est.tasks.filter(t => t.courseStatus === 'Active')
@@ -203,7 +202,6 @@ export default function CalificarTareas() {
                     </div>
                 </div>
 
-                {/* VISTA 1: POR CALIFICAR */}
                 {viewMode === 'Calificar' && (
                     <div className="students-tasks-grid">
                         {datosFiltrados.length > 0 ? datosFiltrados.map(est => {
@@ -253,7 +251,6 @@ export default function CalificarTareas() {
                     </div>
                 )}
 
-                {/* VISTA 2: GESTIÓN DE TAREAS (CURSOS ACTIVOS) */}
                 {viewMode === 'Gestion' && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                         {tareasActivasPublicadas.length > 0 ? tareasActivasPublicadas.map((tp, idx) => (
@@ -277,7 +274,6 @@ export default function CalificarTareas() {
                     </div>
                 )}
 
-                {/* VISTA 3: HISTORIAL (CURSOS INACTIVOS) */}
                 {viewMode === 'Historial' && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
                         {historialPorCurso.length > 0 ? historialPorCurso.map((grupo, idx) => (
@@ -324,7 +320,6 @@ export default function CalificarTareas() {
                     </div>
                 )}
 
-                {/* --- MODAL: RESUMEN DE TAREA (HISTORIAL Y ENTREGAS DE ALUMNOS) --- */}
                 <Dialog open={openResumen} onClose={() => setOpenResumen(false)} maxWidth="sm" fullWidth PaperProps={{ style: { borderRadius: '16px' } }}>
                     <div style={{ padding: '30px', position: 'relative', maxHeight: '85vh', overflowY: 'auto' }}>
                         <IconButton onClick={() => setOpenResumen(false)} style={{ position: 'absolute', right: 15, top: 15 }}><CloseIcon /></IconButton>
@@ -351,7 +346,6 @@ export default function CalificarTareas() {
                                     <Typography variant="body2" style={{ color: '#334155', whiteSpace: 'pre-wrap' }}>{tareaResumen.Description}</Typography>
                                 </div>
 
-                                {/* SECCIÓN: RESPUESTAS DE LOS ALUMNOS */}
                                 <Divider style={{ margin: '25px 0' }} />
                                 <Typography variant="h6" style={{ fontWeight: 800, color: '#1e293b', marginBottom: '15px' }}>
                                     Registro de Entregas ({tareaResumen.Entregas?.length || 0})
@@ -430,7 +424,6 @@ export default function CalificarTareas() {
                     </div>
                 </Dialog>
 
-                {/* MODAL CALIFICAR (Sin Cambios) */}
                 <Dialog open={openCalificar} onClose={() => setOpenCalificar(false)} maxWidth="sm" fullWidth>
                     <div style={{ padding: '30px', position: 'relative' }}>
                         <IconButton onClick={() => setOpenCalificar(false)} style={{ position: 'absolute', right: 15, top: 15 }}><CloseIcon /></IconButton>
@@ -528,7 +521,6 @@ export default function CalificarTareas() {
                     </div>
                 </Dialog>
 
-                {/* MODAL EDITAR TAREA (Sin Cambios) */}
                 <Dialog open={openEditTask} onClose={() => setOpenEditTask(false)} maxWidth="md" fullWidth PaperProps={{ style: { borderRadius: '16px' } }}>
                     <div style={{ padding: '30px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>

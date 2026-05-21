@@ -87,7 +87,6 @@ const startCourseMonitor = () => {
                             if (!alertasPrevias || alertasPrevias.length === 0) {
                                 const mensaje = `El curso "${curso.Name}" está próximo a finalizar. Ve preparando las calificaciones y comentarios finales de tus alumnos.`;
 
-                                // Guardamos la notificación en BD (esto servirá como bandera para no volverla a enviar)
                                 await supabaseAdmin.from('Notifications').insert([{
                                     ReceiverID: curso.TutorID, Type: 'AlertaAdmin', Title: tituloAdvertencia, Message: mensaje, IsRead: false, RelatedEntityID: curso.CourseID
                                 }]);

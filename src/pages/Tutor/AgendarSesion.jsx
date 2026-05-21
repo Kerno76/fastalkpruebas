@@ -32,7 +32,6 @@ export default function AgendarSesion() {
                 .then(res => res.json())
                 .then(data => { 
                     if (data.success) {
-                        // --- FILTRO APLICADO: Solo guardamos los cursos que están activos ---
                         const cursosActivos = data.cursos.filter(c => c.Status === 'Active');
                         setCursos(cursosActivos); 
                     } 

@@ -4,7 +4,7 @@ import VideocamIcon from '@mui/icons-material/Videocam';
 import HistoryIcon from '@mui/icons-material/History';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
-import ClassIcon from '@mui/icons-material/Class'; // Importado para el botón
+import ClassIcon from '@mui/icons-material/Class'; 
 import toast from 'react-hot-toast';
 
 import '../../styles/App.css';
@@ -15,7 +15,7 @@ export default function MisSesiones() {
     
     const [sesiones, setSesiones] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [viewMode, setViewMode] = useState('Actuales'); // Cambiado a 'Actuales' / 'Historial'
+    const [viewMode, setViewMode] = useState('Actuales'); 
 
     useEffect(() => {
         const fetchSesiones = async () => {
@@ -67,7 +67,6 @@ export default function MisSesiones() {
     return (
         <div className='mainContent'>
             
-            {/* HEADER CON BOTONES TIPO TOGGLE */}
             <div className="header-container" style={{ marginBottom: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <h2 className="dashboard-title" style={{ margin: 0 }}>Mis Sesiones</h2>
@@ -104,7 +103,6 @@ export default function MisSesiones() {
 
             <hr className="divisor" style={{ marginBottom: '25px', borderTop: '1px solid #e0e4e8' }} />
 
-            {/* VISTA: ACTUALES */}
             {viewMode === 'Actuales' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     {proximasSesiones.length > 0 ? proximasSesiones.map((item) => {
@@ -141,7 +139,6 @@ export default function MisSesiones() {
                 </div>
             )}
 
-            {/* VISTA: HISTORIAL */}
             {viewMode === 'Historial' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                     {sesionesPasadas.length > 0 ? sesionesPasadas.map((item) => {

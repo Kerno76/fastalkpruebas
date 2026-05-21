@@ -35,7 +35,13 @@ export default function HistorialSesiones() {
             fetch(endpoint)
                 .then(res => res.json())
                 .then(data => {
-                    if (data.success) setHistorial(data.sesiones);
+                    if (data.success) {
+                    const sesionesEfectivas = data.sesiones.filter(
+                        s => s.Status !== 'Cancelled'
+                    );
+
+                    setHistorial(sesionesEfectivas);
+                    }
                 })
                 .catch(err => console.error("Error al cargar historial:", err));
         }
@@ -45,6 +51,7 @@ export default function HistorialSesiones() {
         switch(status) {
             case 'Completed': return <Chip label="Completada" color="success" size="small" />;
             case 'Absent': return <Chip label="Inasistencia" color="error" size="small" />;
+            case 'Cancelado': 
             case 'Canceled': return <Chip label="Cancelada" color="error" size="small" />;
             case 'Reviewed': return <Chip label="Revisada" color="info" size="small" />;
             case 'Scheduled': return <Chip label="Pendiente de Bitácora" color="warning" size="small" />;

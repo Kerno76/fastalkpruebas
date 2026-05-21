@@ -11,15 +11,21 @@ router.get('/dashboard/:tutorId', async (req, res) => {
         const { data: tutorInfo } = await supabaseAdmin.from('Tutors').select('TotalHours').eq('ID', tutorId).single();
         const totalHours = tutorInfo?.TotalHours || 0;
 
-        const { data: courses, error: courErr } = await supabaseAdmin.from('Courses').select('CourseID, Level').eq('TutorID', tutorId);
+        const { data: courses, error: courErr } = await supabaseAdmin
+            .from('Courses')
+            .select('CourseID, Level')
+            .eq('TutorID', tutorId)
+            .in('Status', ['Active', 'Upcoming']);
+            
         if (courErr) throw courErr;
 
         let totalEstudiantes = 0;
         let niveles = new Set(); 
+        let courseIds = [];
 
         if (courses && courses.length > 0) {
             courses.forEach(c => { if (c.Level) niveles.add(c.Level); });
-            const courseIds = courses.map(c => c.CourseID);
+            courseIds = courses.map(c => c.CourseID);
             const { data: enrollments } = await supabaseAdmin.from('Enrollments').select('StudentID').in('CourseID', courseIds);
             totalEstudiantes = enrollments ? enrollments.length : 0;
         }
@@ -28,26 +34,29 @@ router.get('/dashboard/:tutorId', async (req, res) => {
         const localISOTime = (new Date(Date.now() - tzOffset)).toISOString().slice(0, -1);
         const hoyLocal = localISOTime.split('T')[0];
 
-        const { data: proximaData } = await supabaseAdmin
-            .from('Session')
-            .select(`Date, StartTime, Topic, Url, SessionStudents ( UsersProfiles (Name) )`)
-            .eq('TutorID', tutorId)
-            .eq('Status', 'Scheduled')
-            .gte('Date', hoyLocal)
-            .order('Date', { ascending: true })
-            .order('StartTime', { ascending: true })
-            .limit(1);
-
         let proximaSesion = null;
-        if (proximaData && proximaData.length > 0) {
-            const proxima = proximaData[0];
-            let nombres = 'Varios alumnos';
-            if (proxima.SessionStudents && proxima.SessionStudents.length === 1) {
-                nombres = proxima.SessionStudents[0].UsersProfiles?.Name;
-            } else if (proxima.SessionStudents && proxima.SessionStudents.length > 1) {
-                nombres = `${proxima.SessionStudents[0].UsersProfiles?.Name} y ${proxima.SessionStudents.length - 1} más`;
+
+        if (courseIds.length > 0) {
+            const { data: proximaData } = await supabaseAdmin
+                .from('Session')
+                .select(`Date, StartTime, Topic, Url, SessionStudents ( UsersProfiles (Name) )`)
+                .in('CourseID', courseIds) 
+                .eq('Status', 'Scheduled')
+                .gte('Date', hoyLocal)
+                .order('Date', { ascending: true })
+                .order('StartTime', { ascending: true })
+                .limit(1);
+
+            if (proximaData && proximaData.length > 0) {
+                const proxima = proximaData[0];
+                let nombres = 'Varios alumnos';
+                if (proxima.SessionStudents && proxima.SessionStudents.length === 1) {
+                    nombres = proxima.SessionStudents[0].UsersProfiles?.Name;
+                } else if (proxima.SessionStudents && proxima.SessionStudents.length > 1) {
+                    nombres = `${proxima.SessionStudents[0].UsersProfiles?.Name} y ${proxima.SessionStudents.length - 1} más`;
+                }
+                proximaSesion = { date: proxima.Date, time: proxima.StartTime, student: nombres, topic: proxima.Topic, url: proxima.Url };
             }
-            proximaSesion = { date: proxima.Date, time: proxima.StartTime, student: nombres, topic: proxima.Topic, url: proxima.Url };
         }
 
         res.status(200).json({
@@ -62,7 +71,12 @@ router.get('/dashboard/:tutorId', async (req, res) => {
 router.get('/mis-estudiantes/:tutorId', async (req, res) => {
     const { tutorId } = req.params;
     try {
-        const { data: courses } = await supabaseAdmin.from('Courses').select('*').eq('TutorID', tutorId);
+        const { data: courses } = await supabaseAdmin
+            .from('Courses')
+            .select('*')
+            .eq('TutorID', tutorId)
+            .in('Status', ['Active', 'Upcoming']);
+
         if (!courses || courses.length === 0) return res.status(200).json({ success: true, estudiantes: [] });
 
         const courseIds = courses.map(c => c.CourseID);
@@ -82,6 +96,7 @@ router.get('/mis-estudiantes/:tutorId', async (req, res) => {
                 courseName: course?.Name || 'N/A',
                 language: course?.Language || 'N/A',
                 level: course?.Level || 'N/A',
+                courseStatus: course?.Status || 'Active', 
                 horasTotales: '0 hrs',
                 ultimaSesion: 'Sin registro'
             };
@@ -290,19 +305,19 @@ router.post('/agendar-sesion', async (req, res) => {
 router.get('/sesiones-pendientes/:tutorId', async (req, res) => {
     const { tutorId } = req.params;
     try {
+        const { data: activeCourses } = await supabaseAdmin
+            .from('Courses')
+            .select('CourseID')
+            .eq('TutorID', tutorId)
+            .in('Status', ['Active', 'Upcoming']);
+            
+        const activeCourseIds = activeCourses ? activeCourses.map(c => c.CourseID) : [];
+        if (activeCourseIds.length === 0) return res.status(200).json({ success: true, sesiones: [] });
+
         const { data: sesiones, error } = await supabaseAdmin
             .from('Session')
-            .select(`
-                *,
-                Courses ( Name ),
-                SessionStudents (
-                    StudentID,
-                    Attendance,
-                    IncidentReport,
-                    UsersProfiles ( Name )
-                )
-            `)
-            .eq('TutorID', tutorId)
+            .select(`*, Courses ( Name ), SessionStudents ( StudentID, Attendance, IncidentReport, UsersProfiles ( Name ) )`)
+            .in('CourseID', activeCourseIds) 
             .in('Status', ['Scheduled', 'Completed']) 
             .or('ReviewerStatus.eq.Rechazado,Status.eq.Scheduled')
             .order('Date', { ascending: false })
@@ -314,18 +329,59 @@ router.get('/sesiones-pendientes/:tutorId', async (req, res) => {
             ...s,
             courseName: s.Courses?.Name || 'Curso Desconocido',
             studentCount: s.SessionStudents ? s.SessionStudents.length : 0,
-            estudiantes: s.SessionStudents.map(st => ({
-                StudentID: st.StudentID,
-                Name: st.UsersProfiles?.Name || 'Alumno',
-                Attendance: st.Attendance,
-                IncidentReport: st.IncidentReport || ''
-            }))
+            estudiantes: s.SessionStudents.map(st => ({ StudentID: st.StudentID, Name: st.UsersProfiles?.Name || 'Alumno', Attendance: st.Attendance, IncidentReport: st.IncidentReport || '' }))
         }));
-
         res.status(200).json({ success: true, sesiones: formateadas });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
+    } catch (error) { res.status(500).json({ success: false, message: error.message }); }
+});
+
+router.get('/tareas-calificar/:tutorId', async (req, res) => {
+    const { tutorId } = req.params;
+    try {
+        const { data: allAssignments, error } = await supabaseAdmin
+            .from('Assignments')
+            .select(`*, Courses ( Name, Level, Status )`) 
+            .eq('TutorID', tutorId)
+            .order('Deadline', { ascending: false });
+
+        if (error) throw error;
+        const assignments = allAssignments.filter(a => a.Status?.toLowerCase() !== 'canceled');
+        const studentIds = [...new Set(assignments.map(a => a.StudentID).filter(Boolean))];
+        let profiles = [];
+        
+        if (studentIds.length > 0) {
+            const { data: profData, error: profErr } = await supabaseAdmin.from('UsersProfiles').select('ID, Name, Email').in('ID', studentIds);
+            if (!profErr) profiles = profData;
+        }
+
+        const porEstudiante = assignments.reduce((acc, task) => {
+            const statusNormal = task.Status?.toLowerCase();
+            if (statusNormal === 'pending') return acc; 
+            const studentProfile = profiles.find(p => p.ID === task.StudentID);
+            if (!acc[task.StudentID]) {
+                acc[task.StudentID] = { id: task.StudentID, name: studentProfile?.Name || 'Alumno', course: `${task.Courses?.Name || ''} ${task.Courses?.Level || ''}`.trim(), tasks: [] };
+            }
+            let statusText = statusNormal === 'graded' ? 'Calificada' : 'Pendiente por Calificar';
+            acc[task.StudentID].tasks.push({ id: task.AssignmentID, title: task.Title, description: task.Description, date: task.Deadline, status: statusText, grade: task.Grade ? `${task.Grade}/100` : null, archivoAlumno: task.StudentFile, urlAlumno: task.StudentUrl, courseStatus: task.Courses?.Status });
+            return acc;
+        }, {});
+
+        const porTarea = assignments.reduce((acc, task) => {
+            const key = `${task.CourseID}_${task.Title}`;
+            if (!acc[key]) {
+                acc[key] = {
+                    CourseID: task.CourseID, CourseName: task.Courses?.Name || 'Curso', CourseStatus: task.Courses?.Status, Title: task.Title, Description: task.Description, Deadline: task.Deadline, HelpMaterialFile: task.HelpMaterialFile, HelpMaterialLink: task.HelpMaterialLink, AssignmentIDs: [], StudentIDs: [], Entregas: [] 
+                };
+            }
+            acc[key].AssignmentIDs.push(task.AssignmentID);
+            if (!acc[key].StudentIDs.includes(task.StudentID)) acc[key].StudentIDs.push(task.StudentID);
+            const studentProfile = profiles.find(p => p.ID === task.StudentID);
+            acc[key].Entregas.push({ studentName: studentProfile?.Name || 'Alumno', status: task.Status, grade: task.Grade, feedback: task.Feedback, studentFile: task.StudentFile, studentUrl: task.StudentUrl });
+            return acc;
+        }, {});
+
+        res.status(200).json({ success: true, estudiantes: Object.values(porEstudiante), publicadas: Object.values(porTarea) });
+    } catch (error) { res.status(500).json({ success: false, message: error.message }); }
 });
 
 router.put('/completar-sesion', async (req, res) => {
@@ -579,7 +635,7 @@ router.put('/cancelar-sesion', async (req, res) => {
     const { SessionID, TutorID, Estudiantes, Topic } = req.body;
     try {
         const { error } = await supabaseAdmin.from('Session')
-            .update({ Status: 'Canceled' })
+            .update({ Status: 'Cancelled' })
             .eq('SessionID', SessionID);
         if (error) throw error;
 

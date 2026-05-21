@@ -4,6 +4,7 @@ import { Typography, Avatar, Paper, TextField, IconButton, Dialog, Chip } from '
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import SearchIcon from '@mui/icons-material/Search';
 import CloseIcon from '@mui/icons-material/Close';
+import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 
 import '../../styles/App.css';
 import '../../styles/Organizador/Estudiantes.css'; 
@@ -37,6 +38,7 @@ export default function MisEstudiantes() {
                             courseName: e.cursoData.Name,
                             language: e.cursoData.Language,
                             level: e.cursoData.Level,
+                            courseStatus: e.cursoData.Status || 'Active',
                             horasTotales: '0 hrs',
                             ultimaSesion: 'Sin registro'
                         }));
@@ -64,40 +66,19 @@ export default function MisEstudiantes() {
         return isAdmin ? (matchName || matchTutor) : matchName;
     });
 
+    // Separamos a los estudiantes por el estatus de su curso
+    const activos = estudiantesFiltrados.filter(e => e.courseStatus === 'Active');
+    const proximos = estudiantesFiltrados.filter(e => e.courseStatus === 'Upcoming');
+
     const handleAbrirExpediente = (estudiante) => {
         setEstudianteSeleccionado(estudiante);
         setOpenExpediente(true);
     };
 
-    return (
-        <div className='mainContent'>
-            
-            <div className="header-text-container">
-                <h2 className="header-title-students">
-                    {isAdmin ? "Directorio Global de Estudiantes" : "Mis Estudiantes"}
-                </h2>
-                <p className="header-subtitle-students">
-                    {isAdmin ? "Modo Administrador: Supervisión de todos los alumnos enrolados a un curso." : "Aquí puedes ver el progreso y gestionar a los alumnos inscritos en tus cursos."}
-                </p>
-            </div>
-
-            <div className="search-container">
-                <SearchIcon className="search-icon" />
-                <TextField 
-                    fullWidth 
-                    variant="outlined" 
-                    size="small" 
-                    placeholder={isAdmin ? "Buscar por nombre de alumno o tutor responsable..." : "Buscar alumno por nombre..."}
-                    value={busqueda}
-                    onChange={(e) => setBusqueda(e.target.value)}
-                    className="search-input"
-                />
-            </div>
-
-            <hr className="divisor divisor-spaced" />
-
-            <div className='cards-grid'>
-                {estudiantesFiltrados.map((item) => {
+    const renderTarjetas = (lista, esProximo) => {
+        return (
+            <div className='cards-grid' style={{ marginBottom: '40px' }}>
+                {lista.map((item) => {
                     const colorClase = item.language ? courseColors[item.language.toUpperCase()] : 'bg-default';
 
                     return (
@@ -135,7 +116,7 @@ export default function MisEstudiantes() {
 
                             <div className="bottom-actions" style={{ marginTop: '5px' }}>
                                 <button className="details" onClick={() => handleAbrirExpediente(item)}>Ver Expediente</button>
-                                {!isAdmin && (
+                                {!isAdmin && !esProximo && ( // Solo agendan tareas/clases a cursos activos
                                     <>
                                         <button className="assign btn-agendar" onClick={() => navigate('/agendar', { state: { courseId: item.courseId, studentId: item.id } })}>Agendar Clase</button>
                                         <button className="assign" onClick={() => navigate('/tareas', { state: { courseId: item.courseId, studentId: item.id } })}>Dejar Tarea</button>
@@ -146,9 +127,58 @@ export default function MisEstudiantes() {
                     );
                 })}
             </div>
+        );
+    };
+
+    return (
+        <div className='mainContent'>
+            
+            <div className="header-text-container">
+                <h2 className="header-title-students">
+                    {isAdmin ? "Directorio Global de Estudiantes" : "Mis Estudiantes"}
+                </h2>
+                <p className="header-subtitle-students">
+                    {isAdmin ? "Modo Administrador: Supervisión de todos los alumnos enrolados a un curso." : "Aquí puedes ver el progreso y gestionar a los alumnos inscritos en tus cursos."}
+                </p>
+            </div>
+
+            <div className="search-container">
+                <SearchIcon className="search-icon" />
+                <TextField 
+                    fullWidth 
+                    variant="outlined" 
+                    size="small" 
+                    placeholder={isAdmin ? "Buscar por nombre de alumno o tutor responsable..." : "Buscar alumno por nombre..."}
+                    value={busqueda}
+                    onChange={(e) => setBusqueda(e.target.value)}
+                    className="search-input"
+                />
+            </div>
+
+            {activos.length > 0 && (
+                <>
+                    <h3 style={{ marginTop: '30px', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px', color: '#1e293b' }}>
+                        <FiberManualRecordIcon style={{ color: '#10b981', fontSize: '1rem' }} /> 
+                        Alumnos en Cursos Activos
+                    </h3>
+                    <hr className="divisor" style={{ marginBottom: '20px' }} />
+                    {renderTarjetas(activos, false)}
+                </>
+            )}
+
+            {proximos.length > 0 && (
+                <>
+                    <h3 style={{ marginTop: '10px', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px', color: '#1e293b' }}>
+                        <FiberManualRecordIcon style={{ color: '#f59e0b', fontSize: '1rem' }} /> 
+                        Alumnos en Cursos Próximos
+                    </h3>
+                    <hr className="divisor" style={{ marginBottom: '20px' }} />
+                    {renderTarjetas(proximos, true)}
+                </>
+            )}
 
             {estudiantesFiltrados.length === 0 && (
-                <Typography className="empty-state-text">
+                <Typography className="empty-state-text" style={{ marginTop: '40px' }}>
                     No se encontraron estudiantes con los criterios de búsqueda.
                 </Typography>
             )}
@@ -168,7 +198,16 @@ export default function MisEstudiantes() {
                                 <div>
                                     <Typography variant="h5" className="modal-student-name">{estudianteSeleccionado.name}</Typography>
                                     <Typography variant="body2" className="modal-student-email">{estudianteSeleccionado.email}</Typography>
-                                    <Chip label="Estudiante Activo" size="small" className="chip-active-student" />
+                                    <Chip 
+                                        label={estudianteSeleccionado.courseStatus === 'Upcoming' ? 'Inicio Pendiente' : 'Estudiante Activo'} 
+                                        size="small" 
+                                        style={{ 
+                                            backgroundColor: estudianteSeleccionado.courseStatus === 'Upcoming' ? '#fef3c7' : '#e6f4ea',
+                                            color: estudianteSeleccionado.courseStatus === 'Upcoming' ? '#d97706' : '#1e7e34',
+                                            fontWeight: 600,
+                                            marginTop: '8px'
+                                        }} 
+                                    />
                                 </div>
                             </div>
 

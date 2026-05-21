@@ -7,6 +7,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CloseIcon from '@mui/icons-material/Close';
 import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
 import SearchIcon from '@mui/icons-material/Search'; 
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import toast from 'react-hot-toast'; 
 import ModalRevisor from '../../components/Modals/ModalRevisor';
 
@@ -33,6 +34,9 @@ export default function ControlRevisores() {
     const [openTutores, setOpenTutores] = useState(false);
     const [revisorSeleccionado, setRevisorSeleccionado] = useState(null);
     
+    const [openConfirmToggle, setOpenConfirmToggle] = useState(false);
+    const [revisorParaToggle, setRevisorParaToggle] = useState(null);
+
     const [tutoresAsignados, setTutoresAsignados] = useState([]);
     const [tutoresDisponibles, setTutoresDisponibles] = useState([]);
     const [nuevosTutores, setNuevosTutores] = useState([]);
@@ -81,7 +85,7 @@ export default function ControlRevisores() {
         fetchTutoresDisponibles();
     }, []);
 
-    const handleToggleEstado = async (id, estadoActual, tutoresAsig) => {
+    const handleAbrirConfirmacionToggle = (item, estadoActual, tutoresAsig) => {
         const nuevoEstado = estadoActual === 'Active' ? 'Inactive' : 'Active';
 
         if (nuevoEstado === 'Inactive' && parseInt(tutoresAsig) > 0) {
@@ -89,6 +93,19 @@ export default function ControlRevisores() {
             return;
         }
 
+        setRevisorParaToggle({
+            id: item.ID,
+            nombre: item.Name,
+            nuevoEstado: nuevoEstado
+        });
+        setOpenConfirmToggle(true);
+    };
+
+    const handleEjecutarToggle = async () => {
+        if (!revisorParaToggle) return;
+
+        setOpenConfirmToggle(false);
+        const { id, nuevoEstado } = revisorParaToggle;
         const loadingToast = toast.loading(`Cambiando estado a ${nuevoEstado}...`);
 
         try {
@@ -232,7 +249,6 @@ export default function ControlRevisores() {
                             <Typography style={{ fontWeight: 800, color: '#166534', fontSize: '0.85rem', letterSpacing: '0.5px' }}>ACTIVOS</Typography>
                         </div>
 
-                        {/* Inactivos */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#fee2e2', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                                 <Typography style={{ fontWeight: 800, fontSize: '0.95rem', color: '#b91c1c' }}>{inactivosCount}</Typography>
@@ -339,7 +355,7 @@ export default function ControlRevisores() {
                                                             backgroundColor: estado === 'Active' ? 'transparent' : '#dcfce7',
                                                             padding: '4px' 
                                                         }} 
-                                                        onClick={() => handleToggleEstado(item.ID, estado, tutoresAsig)}
+                                                        onClick={() => handleAbrirConfirmacionToggle(item, estado, tutoresAsig)}
                                                     >
                                                         {estado === 'Active' ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
                                                     </IconButton>
@@ -372,7 +388,7 @@ export default function ControlRevisores() {
 
                                 <div className="bottom-actions" style={{ display: 'flex', gap: '8px', marginTop: 'auto', width: '100%', paddingTop: '15px' }}>
                                     <button className="details" style={{ flex: 1, padding: '8px', fontSize: '0.85rem' }} onClick={() => handleAbrirDetalles(item)}>Ver Detalles</button>
-                                    <button className="details" style={{ flex: 1, padding: '8px', fontSize: '0.85rem' }} onClick={() => handleAbrirTutores(item)}>Ver Tutores</button>
+                                    <button className="details" style={{ flex: 1, padding: '8px', fontSize: '0.85rem', opacity: estado === 'Inactive' ? 0.5 : 1 }} disabled={estado === 'Inactive'} onClick={() => handleAbrirTutores(item)}>Ver Tutores</button>
                                 </div>
                             </Paper>
                         );
@@ -383,6 +399,65 @@ export default function ControlRevisores() {
                     </Typography>
                 )}
             </div>
+
+            <Dialog open={openConfirmToggle} onClose={() => setOpenConfirmToggle(false)} maxWidth="xs" fullWidth PaperProps={{ style: { borderRadius: '24px', padding: '8px' } }}>
+                <IconButton onClick={() => setOpenConfirmToggle(false)} style={{ position: 'absolute', right: 12, top: 12, color: '#94a3b8' }}>
+                    <CloseIcon />
+                </IconButton>
+                
+                <div style={{ padding: '30px 20px 20px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    
+                    <div style={{ 
+                        width: '85px', height: '85px', borderRadius: '50%', marginBottom: '20px', display: 'flex', justifyContent: 'center', alignItems: 'center',
+                        backgroundColor: revisorParaToggle?.nuevoEstado === 'Inactive' ? '#fee2e2' : '#dcfce7' 
+                    }}>
+                        {revisorParaToggle?.nuevoEstado === 'Inactive' ? (
+                            <BlockIcon style={{ fontSize: 45, color: '#ef4444' }} />
+                        ) : (
+                            <CheckCircleIcon style={{ fontSize: 45, color: '#10b981' }} />
+                        )}
+                    </div>
+
+                    <Typography variant="h6" style={{ fontWeight: 800, color: '#1e293b', marginBottom: '10px' }}>
+                        ¿{revisorParaToggle?.nuevoEstado === 'Inactive' ? 'Desactivar' : 'Activar'} revisor?
+                    </Typography>
+                    
+                    <Typography variant="body2" style={{ color: '#64748b', marginBottom: '35px', lineHeight: 1.6, fontSize: '0.95rem' }}>
+                        Estás a punto de cambiar el estado del revisor <strong style={{ color: '#0f172a' }}>{revisorParaToggle?.nombre}</strong>.
+                        <br/>
+                        {revisorParaToggle?.nuevoEstado === 'Inactive' 
+                            ? "Al hacer esto, se le restringirá el acceso a la plataforma." 
+                            : "El revisor recuperará el acceso normal a su cuenta."}
+                    </Typography>
+                    
+                    <div style={{ display: 'flex', gap: '15px', width: '100%' }}>
+                        <Button 
+                            variant="outlined" 
+                            onClick={() => setOpenConfirmToggle(false)} 
+                            style={{ 
+                                textTransform: 'none', fontWeight: 700, flex: 1, borderColor: '#e2e8f0', color: '#64748b', borderRadius: '12px', padding: '10px' 
+                            }}
+                        >
+                            Cancelar
+                        </Button>
+                        <Button 
+                            variant="contained" 
+                            onClick={handleEjecutarToggle} 
+                            style={{ 
+                                textTransform: 'none', 
+                                fontWeight: 700, 
+                                flex: 1, 
+                                backgroundColor: revisorParaToggle?.nuevoEstado === 'Inactive' ? '#ef4444' : '#10b981',
+                                boxShadow: 'none',
+                                borderRadius: '12px',
+                                padding: '10px'
+                            }}
+                        >
+                            Sí, {revisorParaToggle?.nuevoEstado === 'Inactive' ? 'desactivar' : 'activar'}
+                        </Button>
+                    </div>
+                </div>
+            </Dialog>
 
             <Dialog open={openDetalles} onClose={() => setOpenDetalles(false)} maxWidth="sm" fullWidth PaperProps={{ className: 'modal-container' }}>
                 <IconButton onClick={() => setOpenDetalles(false)} className="close-button"><CloseIcon /></IconButton>

@@ -15,9 +15,9 @@ export default function ModalOlvidoPassword({ open, onClose }) {
         const cleanEmail = email.trim().toLowerCase();
 
         if (step === 1) {
-            if (!email) return toast.error("Ingresa tu correo");
+            if (!email) return toast.error("Por favor, ingresa tu correo electrónico.");
             
-            const loading = toast.loading('Enviando código...');
+            const loading = toast.loading('Buscando cuenta y enviando código...');
             try {
                 const res = await fetch("http://localhost:8000/api/auth/forgot-password", {
                     method: "POST",
@@ -27,21 +27,21 @@ export default function ModalOlvidoPassword({ open, onClose }) {
                 const data = await res.json();
                 
                 if (data.success) {
-                    toast.success('¡Código enviado!', { id: loading });
+                    toast.success('¡Código enviado a tu correo!', { id: loading, icon: '📩' });
                     setStep(2);
                 } else {
-                    throw new Error(data.message || "Error al enviar");
+                    throw new Error(data.message || "Error al enviar código.");
                 }
             } catch (err) {
-                toast.error(err.message, { id: loading });
+                toast.error(err.message, { id: loading, icon: '⚠️', duration: 5000 });
             }
             return; 
         }
 
         if (step === 2) {
-            if (otp.length < 6) return toast.error("Ingresa el código completo");
+            if (otp.length < 6) return toast.error("Ingresa el código completo de 6 dígitos.");
 
-            const loading = toast.loading('Verificando...');
+            const loading = toast.loading('Verificando código...');
             try {
                 const res = await fetch("http://localhost:8000/api/auth/verify-otp", {
                     method: "POST",
@@ -51,7 +51,7 @@ export default function ModalOlvidoPassword({ open, onClose }) {
                 const data = await res.json();
 
                 if (data.success) {
-                    toast.success('Código verificado', { id: loading });
+                    toast.success('Código verificado correctamente', { id: loading, icon: '✅' });
                     setStep(3);
                 } else {
                     throw new Error(data.message || "Código incorrecto");
@@ -64,10 +64,10 @@ export default function ModalOlvidoPassword({ open, onClose }) {
 
         if (step === 3) {
             if (newPassword.length < 6) {
-                return toast.error("La contraseña debe tener al menos 6 caracteres");
+                return toast.error("La nueva contraseña debe tener al menos 6 caracteres.");
             }
             if (newPassword !== confirmPassword) {
-                return toast.error("Las contraseñas no coinciden");
+                return toast.error("Las contraseñas no coinciden. Intenta de nuevo.");
             }
 
             const loading = toast.loading('Actualizando contraseña...');
@@ -80,7 +80,7 @@ export default function ModalOlvidoPassword({ open, onClose }) {
                 const data = await res.json();
 
                 if (data.success) {
-                    toast.success('Contraseña restablecida', { id: loading, icon: '🔒' });
+                    toast.success('¡Contraseña restablecida con éxito!', { id: loading, icon: '🔒' });
                     handleReset(); 
                 } else {
                     throw new Error(data.message);
@@ -121,7 +121,7 @@ export default function ModalOlvidoPassword({ open, onClose }) {
                                 value={email} 
                                 onChange={(e) => setEmail(e.target.value)}
                             />
-                            <p className="modal-info-text">Te enviaremos un código de seguridad.</p>
+                            <p className="modal-info-text" style={{ marginTop: '10px' }}>Te enviaremos un código de seguridad para verificar tu identidad.</p>
                         </div>
                     )}
 
@@ -138,7 +138,7 @@ export default function ModalOlvidoPassword({ open, onClose }) {
                                     style: { textAlign: 'center', letterSpacing: '10px', fontSize: '20px' } 
                                 }} 
                             />
-                            <p className="modal-info-text">Enviado a: {email.toLowerCase()}</p>
+                            <p className="modal-info-text" style={{ marginTop: '10px' }}>Enviado a: <strong>{email.toLowerCase()}</strong></p>
                         </div>
                     )}
 
@@ -155,9 +155,9 @@ export default function ModalOlvidoPassword({ open, onClose }) {
                         </>
                     )}
 
-                    <div className="modal-actions">
+                    <div className="modal-actions" style={{ marginTop: '20px' }}>
                         <Button variant="contained" onClick={handleAction} className="btn-save" fullWidth>
-                            {step === 1 ? "Enviar Código" : step === 2 ? "Verificar Código" : "Restablecer Contraseña"}
+                            {step === 1 ? "Enviar Código" : step === 2 ? "Verificar Código" : "Guardar Contraseña"}
                         </Button>
                     </div>
                 </form>

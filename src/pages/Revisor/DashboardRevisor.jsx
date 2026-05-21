@@ -380,12 +380,29 @@ export default function DashboardRevisor() {
 
             <div className="bottomSection" style={{ gridTemplateColumns: '1fr', marginTop: '30px' }}>
                 <div className="recentActivity" style={{ width: '100%' }}>
-                    <h2 style={{ fontSize: '1.4rem', fontWeight: 'bold', color: '#1e293b', marginBottom: '15px' }}>Actividad Reciente</h2>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <h2 style={{ fontSize: '1.4rem', fontWeight: 'bold', color: '#1e293b', marginBottom: '15px' }}>
+                        Actividad Reciente
+                    </h2>
+
+                    <div 
+                        style={{ 
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '10px',
+                            maxHeight: '450px',
+                            overflowY: 'auto',
+                            paddingRight: '6px'
+                        }}
+                    >
                         {notificaciones.length > 0 ? notificaciones.map((item) => {
                             const style = getNotifStyle(item.Type);
                             const localDate = new Date(item.CreatedAt.replace(' ', 'T') + 'Z');
-                            const timeString = localDate.toLocaleString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+                            const timeString = localDate.toLocaleString('es-MX', { 
+                                day: '2-digit', 
+                                month: 'short', 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                            });
 
                             return (
                                 <Paper 
@@ -395,21 +412,64 @@ export default function DashboardRevisor() {
                                     onClick={() => handleOpenNotification(item)}
                                     style={{ cursor: 'pointer' }}
                                 >
-                                    <Avatar style={{ backgroundColor: style.bg, color: style.color, width: 40, height: 40 }}>
+                                    <Avatar 
+                                        style={{ 
+                                            backgroundColor: style.bg, 
+                                            color: style.color, 
+                                            width: 40, 
+                                            height: 40 
+                                        }}
+                                    >
                                         {style.icon}
                                     </Avatar>
+
                                     <Box className="activity-info">
-                                        <Typography className="activity-title">{item.Title}</Typography>
-                                        <Typography className="activity-desc" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                        <Typography className="activity-title">
+                                            {item.Title}
+                                        </Typography>
+
+                                        <Typography 
+                                            className="activity-desc" 
+                                            style={{ 
+                                                whiteSpace: 'nowrap',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis'
+                                            }}
+                                        >
                                             {item.Message}
                                         </Typography>
                                     </Box>
-                                    <Typography className="activity-time">{timeString}</Typography>
-                                    {!item.IsRead && <div className="unread-dot" style={{ backgroundColor: '#ef4444', width: '8px', height: '8px', borderRadius: '50%', marginLeft: '10px' }}></div>}
+
+                                    <Typography className="activity-time">
+                                        {timeString}
+                                    </Typography>
+
+                                    {!item.IsRead && (
+                                        <div 
+                                            className="unread-dot" 
+                                            style={{ 
+                                                backgroundColor: '#ef4444',
+                                                width: '8px',
+                                                height: '8px',
+                                                borderRadius: '50%',
+                                                marginLeft: '10px'
+                                            }}
+                                        />
+                                    )}
                                 </Paper>
                             );
                         }) : (
-                            <p style={{ textAlign: 'center', color: '#94a3b8', padding: '20px', backgroundColor: '#f8fafc', borderRadius: '12px' }}>Aún no tienes notificaciones.</p>
+                            <p 
+                                style={{ 
+                                    textAlign: 'center',
+                                    color: '#94a3b8',
+                                    padding: '20px',
+                                    backgroundColor: '#f8fafc',
+                                    borderRadius: '12px'
+                                }}
+                            >
+                                Aún no tienes notificaciones.
+                            </p>
                         )}
                     </div>
                 </div>
