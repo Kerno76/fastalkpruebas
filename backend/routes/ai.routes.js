@@ -27,87 +27,176 @@ const SCHEMA_DDL = `
     CREATE TABLE "MaterialRatings" ("ID" int, "MaterialID" int, "TutorID" uuid, "Score" int);
 `;
 
-// Lista maestra de tus tablas exactas para la doble validación
+// tablas validas del esquema
 const TABLAS_VALIDAS = [
     "UsersProfiles", "Admin", "Reviewer", "Tutors", "Students", 
     "Courses", "Announcements", "Enrollments", "Enrollments_Reviewers", 
     "Session", "SessionStudents", "Assignments", "Repository", "MaterialRatings"
 ];
 
+// solo permite SELECT, bloquea cualquier keyword destructivo con word boundary
 const validateSelectOnly = (sql) => {
     const cleanSql = sql.trim().toUpperCase();
     if (!cleanSql.startsWith('SELECT')) return false;
-    const forbidden = ['INSERT', 'UPDATE', 'DELETE', 'DROP', 'ALTER', 'TRUNCATE', 'GRANT', 'REVOKE'];
-    for (let word of forbidden) {
-        if (cleanSql.includes(` ${word} `) || cleanSql.includes(`;${word}`)) return false;
-    }
-    return true;
+    const forbidden = ['INSERT', 'UPDATE', 'DELETE', 'DROP', 'ALTER', 'TRUNCATE', 'GRANT', 'REVOKE', 'EXECUTE', 'EXEC', 'CREATE'];
+    const pattern = new RegExp(`\\b(${forbidden.join('|')})\\b`);
+    return !pattern.test(cleanSql);
+};
+
+// normaliza la respuesta del llm antes de comparar tokens de control
+const extractControlToken = (text) => {
+    const normalized = text.trim().toUpperCase().replace(/[^A-Z]/g, '');
+    if (normalized === 'IRRELEVANTE') return 'IRRELEVANTE';
+    if (normalized === 'MIXTA') return 'MIXTA';
+    return null;
 };
 
 router.post('/chat-sql', async (req, res) => {
     const { question, forceExecute } = req.body;
 
+    if (!question || !question.trim()) {
+        return res.status(400).json({ success: false, message: "La pregunta no puede estar vacía." });
+    }
+
     try {
         const prompt = `
-            Eres un experto analista de bases de datos PostgreSQL. 
-            Tu única tarea es traducir la pregunta a una consulta SQL válida.
-            Responde ÚNICAMENTE con la consulta SQL pura. Nada de explicaciones, nada de comillas invertidas (\`\`\`), nada de markdown.
-            
-            REGLA DE PROTECCIÓN FUERA DE CONTEXTO (MUY IMPORTANTE):
-            Si el usuario hace una pregunta que NO TIENE RELACIÓN con el esquema proporcionado (ej. preguntas sobre el clima, chistes, deportes, historia, o peticiones genéricas), DEBES responder EXACTA Y ÚNICAMENTE con la palabra: IRRELEVANTE.
+Eres un experto analista de bases de datos PostgreSQL para la plataforma FasTalk.
+Tu ÚNICA tarea es traducir preguntas en español a consultas SQL válidas para PostgreSQL.
+Responde ÚNICAMENTE con la consulta SQL pura. Sin explicaciones, sin comillas invertidas, sin markdown.
 
-            REGLAS DE SINTAXIS: 
-            - Los nombres de tablas y columnas tienen mayúsculas. DEBES envolver SIEMPRE los nombres de las tablas y columnas entre comillas dobles (" ").
-            - Ejemplo correcto: SELECT COUNT(*) FROM "Courses";
-            
-            REGLAS DE NEGOCIO:
-            A menos que el usuario especifique explícitamente lo contrario (usando palabras como "todos", "historial", "pasados", "inactivos", "cancelados"):
-            1. Siempre que consultes la tabla "Courses", debes filtrar por "Status" = 'Active'.
-            2. Siempre que consultes usuarios o personas ("UsersProfiles", "Students", "Tutors", "Reviewer"), debes asegurar que estén activos. Si usas "UsersProfiles", filtra por "State" = 'Active'.
-            
-            Esquema:
-            ${SCHEMA_DDL}
+══════════════════════════════════════════
+REGLA CRÍTICA DE CLASIFICACIÓN (evalúa esto PRIMERO, antes de generar SQL):
+══════════════════════════════════════════
+Determina si la pregunta está relacionada con la plataforma FasTalk (cursos, tutores,
+estudiantes, sesiones, tareas, materiales, usuarios, inscripciones, revisores).
 
-            Pregunta: ${question}
-        `;
+CASO 1 — Pregunta 100% fuera de contexto (clima, chistes, recetas, deportes, historia, etc.):
+  → Responde EXACTAMENTE con la palabra: IRRELEVANTE
+
+CASO 2 — Pregunta MIXTA: contiene una parte válida de FasTalk Y una parte irrelevante
+  (ej: "¿Cuántos tutores hay y cómo hago un café?", "Lista los cursos y dime un chiste"):
+  → Responde EXACTAMENTE con la palabra: MIXTA
+
+CASO 3 — Pregunta totalmente relacionada con FasTalk:
+  → Genera el SQL correspondiente.
+
+══════════════════════════════════════════
+REGLAS DE SINTAXIS:
+══════════════════════════════════════════
+- SIEMPRE usa comillas dobles para nombres de tablas y columnas. NUNCA uses nombres sin comillas.
+- Correcto:   SELECT COUNT(*) FROM "Courses" WHERE "Status" = 'Active'
+- Incorrecto: SELECT COUNT(*) FROM Courses WHERE Status = 'Active'
+
+══════════════════════════════════════════
+TABLAS DISPONIBLES — SOLO puedes referenciar estas, con exactamente estos nombres:
+══════════════════════════════════════════
+"UsersProfiles", "Admin", "Reviewer", "Tutors", "Students",
+"Courses", "Announcements", "Enrollments", "Enrollments_Reviewers",
+"Session", "SessionStudents", "Assignments", "Repository", "MaterialRatings"
+
+Si la pregunta requiere datos que no existen en estas tablas → responde: IRRELEVANTE
+
+══════════════════════════════════════════
+REGLAS DE NEGOCIO (aplica por defecto salvo que el usuario diga explícitamente
+"todos", "historial", "pasados", "inactivos" o "cancelados"):
+══════════════════════════════════════════
+1. Al consultar "Courses" → filtrar por "Status" = 'Active'
+2. Al consultar personas en "UsersProfiles" → filtrar por "State" = 'Active'
+
+══════════════════════════════════════════
+EJEMPLOS (few-shot):
+══════════════════════════════════════════
+Pregunta: ¿Cuántos cursos activos hay?
+SQL: SELECT COUNT(*) AS total_cursos FROM "Courses" WHERE "Status" = 'Active'
+
+Pregunta: ¿Cuántos tutores enseñan inglés?
+SQL: SELECT COUNT(*) AS total_tutores FROM "Tutors" WHERE "Language" = 'English'
+
+Pregunta: Muestra los 5 tutores con más horas totales
+SQL: SELECT "ID", "TotalHours" FROM "Tutors" ORDER BY "TotalHours" DESC LIMIT 5
+
+Pregunta: ¿Cuántos estudiantes hay inscritos en cursos de nivel B1?
+SQL: SELECT COUNT(DISTINCT "e"."StudentID") AS total FROM "Enrollments" e JOIN "Courses" c ON "e"."CourseID" = "c"."CourseID" WHERE "c"."Level" = 'B1' AND "c"."Status" = 'Active'
+
+Pregunta: ¿Qué tiempo hace hoy?
+SQL: IRRELEVANTE
+
+Pregunta: ¿Cuántos tutores hay y cómo hago pasta?
+SQL: MIXTA
+
+══════════════════════════════════════════
+Esquema completo:
+══════════════════════════════════════════
+${SCHEMA_DDL}
+
+Pregunta: ${question}
+        `.trim();
 
         const chatCompletion = await groq.chat.completions.create({
-            messages: [{ role: "system", content: prompt }],
+            messages: [{ role: "user", content: prompt }],
             model: "llama-3.3-70b-versatile",
-            temperature: 0, 
+            temperature: 0,
         });
 
-        let generatedSql = chatCompletion.choices[0]?.message?.content?.trim() || "";
-        
-        // --- 1. PRIMERA VALIDACIÓN: FUERA DE CONTEXTO ---
-        if (generatedSql === 'IRRELEVANTE' || generatedSql.includes('IRRELEVANTE')) {
-            return res.status(400).json({ success: false, message: "La pregunta formulada no tiene relación con los datos operativos de FasTalk. Intenta preguntar sobre cursos, alumnos o tutores." });
+        let rawResponse = chatCompletion.choices[0]?.message?.content?.trim() || "";
+
+        // limpiar markdown primero, luego revisar tokens
+        let generatedSql = rawResponse
+            .replace(/```sql/gi, '')
+            .replace(/```/g, '')
+            .trim();
+
+        // ─── validacion 1: tokens de control
+        const controlToken = extractControlToken(generatedSql);
+
+        if (controlToken === 'IRRELEVANTE') {
+            return res.status(400).json({ 
+                success: false, 
+                message: "La pregunta no está relacionada con los datos de FasTalk. Intenta preguntar sobre cursos, alumnos, tutores, sesiones o tareas." 
+            });
         }
 
-        generatedSql = generatedSql.replace(/```sql/gi, '').replace(/```/g, '').trim();
+        if (controlToken === 'MIXTA') {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Tu pregunta mezcla temas de FasTalk con contenido fuera de contexto. Por favor, haz una pregunta a la vez sobre la plataforma." 
+            });
+        }
+
+        // limpiar punto y coma final
         if (generatedSql.endsWith(';')) {
             generatedSql = generatedSql.slice(0, -1);
         }
 
+        // ─── validacion 2: solo select
         if (!validateSelectOnly(generatedSql)) {
-            return res.status(400).json({ success: false, message: "Operación bloqueada por seguridad. Solo se permiten búsquedas (SELECT)." });
+            return res.status(400).json({ 
+                success: false, 
+                message: "Operación bloqueada por seguridad. Solo se permiten consultas de lectura (SELECT)." 
+            });
         }
 
-        // --- 2. DOBLE VALIDACIÓN: COMPARACIÓN CON EL ESQUEMA ---
+        // ─── validacion 3: tablas reales
         const usaTablaReal = TABLAS_VALIDAS.some(tabla => generatedSql.includes(`"${tabla}"`));
-        if (!usaTablaReal && !generatedSql.includes('EXISTS')) {
-            return res.status(400).json({ success: false, message: "La IA generó una consulta, pero no coincide con la estructura de tu Base de Datos (inventó tablas). Por favor, reformula tu pregunta." });
+        if (!usaTablaReal) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "La IA generó una consulta que no corresponde al esquema de FasTalk (posibles tablas inventadas). Intenta reformular tu pregunta." 
+            });
         }
 
-        // Ejecutamos el EXPLAIN para revisar seguridad
+        // ─── explain: estimacion de costo
         const { data: explainData, error: explainError } = await supabaseAdmin.rpc('explain_sql', { 
             query: generatedSql 
         });
 
-        // Si postgres falla (ej. si la IA inventó una columna que no existe) lo interceptamos aquí
         if (explainError) {
+            // postgres falla si la ia invento una columna o tabla
             if (explainError.message.includes("does not exist")) {
-                return res.status(400).json({ success: false, message: "La IA intentó buscar un dato que no existe en el esquema. Intenta ser más específico." });
+                return res.status(400).json({ 
+                    success: false, 
+                    message: "La IA referenció un campo o tabla que no existe en el esquema. Intenta ser más específico en tu pregunta." 
+                });
             }
             throw explainError;
         }
@@ -125,10 +214,11 @@ router.post('/chat-sql', async (req, res) => {
                 requiresConfirmation: true, 
                 estimatedRows, 
                 sql: generatedSql,
-                message: `Advertencia: ~${estimatedRows} filas estimadas. ¿Deseas continuar?` 
+                message: `Advertencia: la consulta podría escanear ~${estimatedRows.toLocaleString()} filas. ¿Deseas continuar de todas formas?` 
             });
         }
 
+        // ─── ejecucion
         const { data: queryResults, error: queryError } = await supabaseAdmin.rpc('execute_dynamic_sql', { 
             query: generatedSql 
         });
@@ -137,17 +227,31 @@ router.post('/chat-sql', async (req, res) => {
 
         const filasDevueltas = queryResults ? queryResults.length : 0;
 
-        await supabaseAdmin.from('QueryAudit').insert([{
-            Question: question,
-            GeneratedSQL: generatedSql,
-            RowsReturned: filasDevueltas
-        }]);
+        // ─── auditoria
+        const auditEntry = {
+            timestamp: new Date().toISOString(),
+            question,
+            generated_sql: generatedSql,
+            rows_returned: filasDevueltas
+        };
+        console.log('\n========== logsito de auditoria ==========');
+        console.log(JSON.stringify(auditEntry, null, 2));
+
+        try {
+            await supabaseAdmin.from('QueryAudit').insert([{
+                Question: question,
+                GeneratedSQL: generatedSql,
+                RowsReturned: filasDevueltas
+            }]);
+        } catch (auditError) {
+            console.warn('[AUDIT LOG] no se pudo insertar en supabase:', auditError.message);
+        }
 
         res.status(200).json({ success: true, sql: generatedSql, data: queryResults });
 
     } catch (error) {
         console.error("ERROR EN IA:", error);
-        res.status(500).json({ success: false, message: "Error en el servidor: " + error.message });
+        res.status(500).json({ success: false, message: "Error interno del servidor: " + error.message });
     }
 });
 
