@@ -44,7 +44,6 @@ router.put('/notificaciones/leer/:notifId', async (req, res) => {
     }
 });
 
-
 router.get('/bitacoras/:reviewerId', async (req, res) => {
     const { reviewerId } = req.params;
     try {
@@ -107,7 +106,6 @@ router.get('/bitacoras/:reviewerId', async (req, res) => {
         res.status(500).json({ success: false, message: error.message }); 
     }
 });
-
 
 router.put('/evaluar-bitacora', async (req, res) => {
     const { SessionID, TutorID, ReviewerID, NewStatus, Topic, ReviewerComments, allowResubmit } = req.body;
@@ -230,6 +228,63 @@ router.get('/stats/:reviewerId', async (req, res) => {
             validationsCompleted: data?.ValidationsCompleted || 0 
         });
     } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.get('/eventos-calendario/:reviewerId', async (req, res) => {
+    const { reviewerId } = req.params;
+    try {
+        const { data: perfil } = await supabaseAdmin.from('UsersProfiles').select('Rol').eq('ID', reviewerId).single();
+        const isAdmin = perfil?.Rol === 'Admin';
+
+        let query = supabaseAdmin.from('Session').select('*, Courses(Name)');
+
+        if (!isAdmin) {
+            const { data: asignaciones } = await supabaseAdmin.from('Enrollments_Reviewers').select('TutorID').eq('ReviewerID', reviewerId);
+            
+            let tutorIds = [];
+            if (asignaciones && asignaciones.length > 0) {
+                tutorIds = asignaciones.map(a => a.TutorID);
+            }
+
+            if (tutorIds.length > 0) {
+                query = query.or(`ReviewerID.eq.${reviewerId},TutorID.in.(${tutorIds.join(',')})`);
+            } else {
+                query = query.eq('ReviewerID', reviewerId);
+            }
+        }
+
+        const { data: sessions, error } = await query;
+        if (error) throw error;
+
+        let eventos = [];
+        if (sessions && sessions.length > 0) {
+            const sesionesValidas = sessions.filter(s => s.Status !== 'Canceled' && s.Status !== 'Cancelado');
+
+            const tutorIds = [...new Set(sesionesValidas.map(s => s.TutorID))];
+            const { data: profiles } = await supabaseAdmin.from('UsersProfiles').select('ID, Name').in('ID', tutorIds);
+
+            sesionesValidas.forEach(s => {
+                if (s.Date) {
+                    const tutor = profiles?.find(p => p.ID === s.TutorID);
+                    eventos.push({
+                        id: `ses_${s.SessionID}`,
+                        type: 'Sesión',
+                        title: s.Topic,
+                        date: s.Date,
+                        time: s.StartTime ? s.StartTime.substring(0, 5) : '',
+                        course: s.Courses?.Name || 'Curso',
+                        tutorName: tutor?.Name || 'Tutor sin nombre',
+                        description: s.Description || 'Clase virtual programada.'
+                    });
+                }
+            });
+        }
+
+        res.status(200).json({ success: true, eventos });
+    } catch (error) {
+        console.error("Error en eventos-calendario revisor:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 });

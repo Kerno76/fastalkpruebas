@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Chip, Snackbar, Alert, Box, Avatar, Dialog, IconButton, Grid, TextField, InputAdornment, FormControlLabel, Checkbox } from '@mui/material';
 
+import { CalendarWidget } from "../../components/CalendarWidget";
 import CheckIcon from '@mui/icons-material/Check';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CloseIcon from '@mui/icons-material/Close';
@@ -12,6 +13,8 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import SearchIcon from '@mui/icons-material/Search';
 import HistoryIcon from '@mui/icons-material/History';
 import PendingActionsIcon from '@mui/icons-material/PendingActions';
+import ClassIcon from '@mui/icons-material/Class';
+import EventNoteIcon from '@mui/icons-material/EventNote';
 
 import '../../styles/App.css';
 import '../../styles/Tutor/RegistroSesiones.css'; 
@@ -62,6 +65,13 @@ export default function DashboardRevisor() {
 
     const [evalModal, setEvalModal] = useState({ open: false, row: null, status: '', comments: '', allowResubmit: true });
 
+    // ESTADOS DEL CALENDARIO
+    const [eventosBD, setEventosBD] = useState([]);
+    const [fechasConEventos, setFechasConEventos] = useState([]); 
+    const [openEventModal, setOpenEventModal] = useState(false);
+    const [eventosDelDia, setEventosDelDia] = useState([]);
+    const [fechaSeleccionada, setFechaSeleccionada] = useState('');
+
     const fetchData = async () => {
         if (!userId) return;
 
@@ -88,6 +98,16 @@ export default function DashboardRevisor() {
                 if (dataStats.success) setValidationsCount(dataStats.validationsCompleted);
             } catch (err) { console.error("Error cargando stats de revisor:", err); }
         }
+
+        try {
+            const resCalendar = await fetch(`http://localhost:8000/api/revisor/eventos-calendario/${userId}`);
+            const dataCalendar = await resCalendar.json();
+            if (dataCalendar.success) {
+                setEventosBD(dataCalendar.eventos);
+                const fechasUnicas = [...new Set(dataCalendar.eventos.map(e => e.date))];
+                setFechasConEventos(fechasUnicas);
+            }
+        } catch (err) { console.error("Error cargando calendario revisor:", err); }
     };
 
     useEffect(() => { 
@@ -153,6 +173,20 @@ export default function DashboardRevisor() {
         setOpenDetailsModal(true);
     };
 
+    const handleDateSelect = (newDate) => {
+        const fechaFormateada = (newDate && typeof newDate.format === 'function') ? newDate.format('YYYY-MM-DD') : '';
+        setFechaSeleccionada(fechaFormateada);
+
+        const eventosHoy = eventosBD.filter(e => e.date === fechaFormateada);
+        
+        if (eventosHoy.length > 0) {
+            setEventosDelDia(eventosHoy);
+            setOpenEventModal(true);
+        } else {
+            setOpenAlert({ show: true, message: 'No hay clases programadas para este día.', type: 'info' });
+        }
+    };
+
     let evidenciasMostradas = evidencias.filter(item => {
         if (viewMode === 'Pendientes') return item.status === 'Pendiente';
         return item.status !== 'Pendiente'; 
@@ -170,6 +204,12 @@ export default function DashboardRevisor() {
     return (
         <div className='mainContent' style={{ paddingBottom: '50px' }}>
             
+            <Snackbar open={openAlert.show} autoHideDuration={4000} onClose={() => setOpenAlert({ ...openAlert, show: false })} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
+                <Alert onClose={() => setOpenAlert({ ...openAlert, show: false })} severity={openAlert.type} sx={{ width: '100%', fontWeight: 'bold' }}>
+                    {openAlert.message}
+                </Alert>
+            </Snackbar>
+
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <h2 style={{ margin: 0, fontSize: '1.8rem', fontWeight: 'bold', color: 'var(--text-main)' }}>
@@ -378,31 +418,18 @@ export default function DashboardRevisor() {
                 )}
             </TableContainer>
 
-            <div className="bottomSection" style={{ gridTemplateColumns: '1fr', marginTop: '30px' }}>
-                <div className="recentActivity" style={{ width: '100%' }}>
-                    <h2 style={{ fontSize: '1.4rem', fontWeight: 'bold', color: '#1e293b', marginBottom: '15px' }}>
+            <div style={{ display: 'flex', gap: '20px', marginTop: '30px' }}>
+                
+                <div className="recentActivity" style={{ flex: 1.2 }}>
+                    <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#1e293b', marginBottom: '15px' }}>
                         Actividad Reciente
                     </h2>
 
-                    <div 
-                        style={{ 
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '10px',
-                            maxHeight: '450px',
-                            overflowY: 'auto',
-                            paddingRight: '6px'
-                        }}
-                    >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '420px', overflowY: 'auto', paddingRight: '6px' }}>
                         {notificaciones.length > 0 ? notificaciones.map((item) => {
                             const style = getNotifStyle(item.Type);
                             const localDate = new Date(item.CreatedAt.replace(' ', 'T') + 'Z');
-                            const timeString = localDate.toLocaleString('es-MX', { 
-                                day: '2-digit', 
-                                month: 'short', 
-                                hour: '2-digit', 
-                                minute: '2-digit' 
-                            });
+                            const timeString = localDate.toLocaleString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 
                             return (
                                 <Paper 
@@ -412,69 +439,85 @@ export default function DashboardRevisor() {
                                     onClick={() => handleOpenNotification(item)}
                                     style={{ cursor: 'pointer' }}
                                 >
-                                    <Avatar 
-                                        style={{ 
-                                            backgroundColor: style.bg, 
-                                            color: style.color, 
-                                            width: 40, 
-                                            height: 40 
-                                        }}
-                                    >
+                                    <Avatar style={{ backgroundColor: style.bg, color: style.color, width: 40, height: 40 }}>
                                         {style.icon}
                                     </Avatar>
 
                                     <Box className="activity-info">
-                                        <Typography className="activity-title">
-                                            {item.Title}
-                                        </Typography>
-
-                                        <Typography 
-                                            className="activity-desc" 
-                                            style={{ 
-                                                whiteSpace: 'nowrap',
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis'
-                                            }}
-                                        >
+                                        <Typography className="activity-title">{item.Title}</Typography>
+                                        <Typography className="activity-desc" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                             {item.Message}
                                         </Typography>
                                     </Box>
 
-                                    <Typography className="activity-time">
-                                        {timeString}
-                                    </Typography>
+                                    <Typography className="activity-time">{timeString}</Typography>
 
                                     {!item.IsRead && (
-                                        <div 
-                                            className="unread-dot" 
-                                            style={{ 
-                                                backgroundColor: '#ef4444',
-                                                width: '8px',
-                                                height: '8px',
-                                                borderRadius: '50%',
-                                                marginLeft: '10px'
-                                            }}
-                                        />
+                                        <div className="unread-dot" style={{ backgroundColor: '#ef4444', width: '8px', height: '8px', borderRadius: '50%', marginLeft: '10px' }} />
                                     )}
                                 </Paper>
                             );
                         }) : (
-                            <p 
-                                style={{ 
-                                    textAlign: 'center',
-                                    color: '#94a3b8',
-                                    padding: '20px',
-                                    backgroundColor: '#f8fafc',
-                                    borderRadius: '12px'
-                                }}
-                            >
+                            <p style={{ textAlign: 'center', color: '#94a3b8', padding: '20px', backgroundColor: '#f8fafc', borderRadius: '12px' }}>
                                 Aún no tienes notificaciones.
                             </p>
                         )}
                     </div>
                 </div>
+
+                <div className="calendar" style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                        <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 'bold', color: '#1e293b' }}>
+                            {isAdmin ? 'Agenda Global de Clases' : 'Agenda de Tutores'}
+                        </h2>
+                    </div>
+                    <Paper elevation={0} style={{ border: '1px solid #e2e8f0', borderRadius: '16px', padding: '10px' }}>
+                        <Typography variant="caption" style={{ display: 'block', textAlign: 'center', color: '#94a3b8', marginBottom: '5px' }}>
+                            {isAdmin ? 'Revisa las clases de toda la plataforma' : 'Revisa las clases programadas de tus tutores a cargo'}
+                        </Typography>
+                        <CalendarWidget fechasAgendadas={fechasConEventos} onDateSelect={handleDateSelect} />
+                    </Paper>
+                </div>
             </div>
 
+            <Dialog open={openEventModal} onClose={() => setOpenEventModal(false)} maxWidth="sm" fullWidth PaperProps={{ style: { borderRadius: '20px', padding: '15px' } }}>
+                <div style={{ padding: '20px', position: 'relative' }}>
+                    <IconButton onClick={() => setOpenEventModal(false)} style={{ position: 'absolute', right: 0, top: 0, color: '#94a3b8' }}>
+                        <CloseIcon />
+                    </IconButton>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                        <Avatar style={{ backgroundColor: '#e0f2fe', color: '#0284c7' }}><EventNoteIcon /></Avatar>
+                        <div>
+                            <Typography variant="h6" style={{ fontWeight: 800, color: '#1e293b', lineHeight: 1.1 }}>Agenda del día</Typography>
+                            <Typography variant="caption" style={{ color: '#64748b', fontWeight: 600 }}>{fechaSeleccionada}</Typography>
+                        </div>
+                    </div>
+
+                    <div style={{ maxHeight: '350px', overflowY: 'auto', marginBottom: '25px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        {eventosDelDia.map(e => (
+                            <Paper key={e.id} elevation={0} style={{ padding: '15px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                                    
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <ClassIcon style={{ color: '#3b82f6', fontSize: '1.2rem' }}/>
+                                        <Typography variant="subtitle1" style={{ fontWeight: 800, color: '#0f172a' }}>{e.title}</Typography>
+                                    </div>
+                                    <Chip label={e.time} size="small" style={{ backgroundColor: '#fffbeb', color: '#d97706', fontWeight: 800 }} />
+                                </div>
+                                
+                                <Typography variant="body2" style={{ color: '#0369a1', fontWeight: 700, marginBottom: '4px' }}>
+                                    Tutor: <span style={{ fontWeight: 500, color: '#475569' }}>{e.tutorName}</span> | Curso: <span style={{ fontWeight: 500, color: '#475569' }}>{e.course}</span>
+                                </Typography>
+                                
+                                <Typography variant="body2" style={{ color: '#475569', marginTop: '6px' }}>{e.description}</Typography>
+                            </Paper>
+                        ))}
+                    </div>
+                </div>
+            </Dialog>
+
+            {/* RESTO DE MODALES EXISTENTES */}
             <Dialog open={openNotifModal} onClose={() => setOpenNotifModal(false)} maxWidth="xs" fullWidth PaperProps={{ style: { borderRadius: '16px', padding: '10px' } }}>
                 {selectedNotif && (
                     <div style={{ padding: '20px', position: 'relative' }}>

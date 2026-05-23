@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { supabaseAdmin } = require('../config/supabase');
+const cron = require('node-cron');
 
 router.get('/notificaciones/:userId', async (req, res) => {
     const { userId } = req.params;
@@ -84,13 +85,16 @@ router.get('/tareas/:studentId', async (req, res) => {
     try {
         const { data: allAssignments, error } = await supabaseAdmin
             .from('Assignments')
-            .select(`*, Courses ( Name, Level )`)
+            .select(`*, Courses ( Name, Level, Status )`)
             .eq('StudentID', studentId)
             .order('Deadline', { ascending: true });
 
         if (error) throw error;
 
-        const assignments = allAssignments.filter(a => a.Status?.toLowerCase() !== 'canceled');
+        // Filtramos tareas canceladas en inglés y español
+        const assignments = allAssignments.filter(a => 
+            a.Status?.toLowerCase() !== 'canceled' && a.Status?.toLowerCase() !== 'cancelado'
+        );
 
         const tutorIds = [...new Set(assignments.map(a => a.TutorID).filter(Boolean))];
         let profiles = [];
@@ -100,7 +104,7 @@ router.get('/tareas/:studentId', async (req, res) => {
                 .from('UsersProfiles')
                 .select('ID, Name')
                 .in('ID', tutorIds);
-            if (!profErr) profiles = profData;
+            if (!profErr && profData) profiles = profData;
         }
 
         const tareasFormateadas = assignments.map(t => {
@@ -110,6 +114,7 @@ router.get('/tareas/:studentId', async (req, res) => {
                 tutorId: t.TutorID,
                 tutorName: tutorProfile?.Name || 'Tu Tutor',
                 courseName: `${t.Courses?.Name || ''} ${t.Courses?.Level || ''}`.trim(),
+                courseStatus: t.Courses?.Status || null, 
                 title: t.Title,
                 description: t.Description,
                 deadline: t.Deadline,
@@ -126,6 +131,7 @@ router.get('/tareas/:studentId', async (req, res) => {
 
         res.status(200).json({ success: true, tareas: tareasFormateadas });
     } catch (error) {
+        console.error("Error en tareas:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 });
@@ -245,16 +251,21 @@ router.get('/dashboard-summary/:studentId', async (req, res) => {
 
         const { data: enrollments } = await supabaseAdmin
             .from('Enrollments')
-            .select(`CourseID, Courses ( Name, TutorID )`)
-            .eq('StudentID', studentId)
-            .order('EnrollmentID', { ascending: false })
-            .limit(1); 
+            .select(`CourseID, Courses ( Name, TutorID, Status )`)
+            .eq('StudentID', studentId);
+
+        const currentEnrollment = enrollments?.find(e => 
+            e.Courses && ['Active', 'Upcoming'].includes(e.Courses.Status)
+        );
 
         let courseData = null;
         let tutorData = null;
+        let pendingCount = 0;
+        let submittedCount = 0;
+        let missingCount = 0;
 
-        if (enrollments && enrollments.length > 0) {
-            courseData = enrollments[0].Courses;
+        if (currentEnrollment) {
+            courseData = currentEnrollment.Courses;
 
             if (courseData && courseData.TutorID) {
                 const { data: tutorProfile } = await supabaseAdmin
@@ -274,22 +285,56 @@ router.get('/dashboard-summary/:studentId', async (req, res) => {
                     career: tutorDetails?.Career || 'Profesional de Idiomas'
                 };
             }
+
+            const { data: assignments, error: assignmentsError } = await supabaseAdmin
+    .from('Assignments')
+    .select('AssignmentID, Status, Deadline')
+    .eq('StudentID', studentId)
+    .eq('CourseID', currentEnrollment.CourseID);
+
+    if (assignmentsError) throw assignmentsError;
+
+    const now = new Date();
+
+    assignments.forEach(task => {
+
+        const status = task.Status?.toLowerCase();
+
+        if (status === 'submitted' || status === 'graded') {
+            submittedCount++;
+            return;
         }
 
-        const { count: pendingCount } = await supabaseAdmin
-            .from('Assignments')
-            .select('AssignmentID', { count: 'exact', head: true })
-            .eq('StudentID', studentId)
-            .eq('Status', 'Pending');
+        if (status === 'pending') {
+
+            if (!task.Deadline) {
+                pendingCount++;
+                return;
+            }
+
+            const deadline = new Date(task.Deadline);
+
+            if (deadline < now) {
+                missingCount++;
+            }
+
+            else {
+                pendingCount++;
+            }
+        }
+    });
+        }
 
         res.status(200).json({
             success: true,
             summary: {
                 language: studentBase?.Language || 'Sin idioma',
                 level: studentBase?.CurrentLevel || 'Sin nivel',
-                courseName: courseData?.Name || 'Sin asignar',
+                courseName: courseData?.Name || 'Sin curso activo',
                 tutor: tutorData || { name: 'Por asignar', career: '-' },
-                pendingTasks: pendingCount || 0
+                pendingTasks: pendingCount,
+                submittedTasks: submittedCount,
+                missingTasks: missingCount
             }
         });
 
@@ -303,15 +348,20 @@ router.get('/mi-tutor/:studentId', async (req, res) => {
     try {
         const { data: enrollments, error: enrollErr } = await supabaseAdmin
             .from('Enrollments')
-            .select(`CourseID, Courses ( TutorID )`)
-            .eq('StudentID', studentId)
-            .limit(1);
+            .select(`CourseID, Courses ( TutorID, Status )`)
+            .eq('StudentID', studentId);
 
-        if (enrollErr || !enrollments || enrollments.length === 0 || !enrollments[0].Courses?.TutorID) {
+        if (enrollErr) throw enrollErr;
+
+        const currentEnrollment = enrollments?.find(e => 
+            e.Courses && ['Active', 'Upcoming'].includes(e.Courses.Status)
+        );
+
+        if (!currentEnrollment || !currentEnrollment.Courses.TutorID) {
             return res.status(200).json({ success: true, tutor: null, sesiones: [] });
         }
 
-        const tutorId = enrollments[0].Courses.TutorID;
+        const tutorId = currentEnrollment.Courses.TutorID;
 
         const { data: profile } = await supabaseAdmin.from('UsersProfiles').select('Name, Email, AvatarUrl').eq('ID', tutorId).single();
         const { data: tutorDetails } = await supabaseAdmin.from('Tutors').select('Phone, Career, Hobbies').eq('ID', tutorId).single();
@@ -335,6 +385,7 @@ router.get('/mi-tutor/:studentId', async (req, res) => {
                 .from('Session')
                 .select('SessionID, Date, StartTime')
                 .in('SessionID', sessionIds)
+                .eq('CourseID', currentEnrollment.CourseID)
                 .eq('Status', 'Scheduled')
                 .gte('Date', hoy)
                 .order('Date', { ascending: true })
@@ -363,22 +414,121 @@ router.get('/ultima-calificacion/:studentId', async (req, res) => {
             .from('Enrollments')
             .select('FinalGrade, CourseID')
             .eq('StudentID', studentId)
-            .not('FinalGrade', 'is', null)
+            .not('FinalGrade', 'is', null) 
             .order('EnrollmentID', { ascending: false })
             .limit(1);
 
         if (error) throw error;
-        if (!enrollments || enrollments.length === 0) return res.status(200).json({ success: true, data: null });
+        
+        if (!enrollments || enrollments.length === 0) {
+            return res.status(200).json({ success: true, data: null }); 
+        }
 
-        const courseInfo = await supabaseAdmin.from('Courses').select('Name').eq('CourseID', enrollments[0].CourseID).single();
+        const courseInfo = await supabaseAdmin
+            .from('Courses')
+            .select('Name')
+            .eq('CourseID', enrollments[0].CourseID)
+            .single();
 
         res.status(200).json({ 
             success: true, 
-            data: { grade: enrollments[0].FinalGrade, courseName: courseInfo.data?.Name || 'Curso' } 
+            data: { 
+                grade: enrollments[0].FinalGrade, 
+                courseName: courseInfo.data?.Name || 'Curso Anterior' 
+            } 
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 });
+
+router.get('/eventos-calendario/:studentId', async (req, res) => {
+    const { studentId } = req.params;
+    try {
+        const { data: enrollments } = await supabaseAdmin.from('Enrollments').select('CourseID').eq('StudentID', studentId);
+        if (!enrollments || enrollments.length === 0) return res.status(200).json({ success: true, eventos: [] });
+
+        const courseIds = enrollments.map(e => e.CourseID);
+        const { data: activeCourses } = await supabaseAdmin.from('Courses')
+            .select('CourseID, Name')
+            .in('CourseID', courseIds)
+            .in('Status', ['Active', 'Upcoming']);
+            
+        if (!activeCourses || activeCourses.length === 0) return res.status(200).json({ success: true, eventos: [] });
+        const activeCourseIds = activeCourses.map(c => c.CourseID);
+
+        const { data: assignments } = await supabaseAdmin.from('Assignments').select('*').eq('StudentID', studentId).in('CourseID', activeCourseIds);
+        const { data: sessions } = await supabaseAdmin.from('Session').select('*').in('CourseID', activeCourseIds);
+
+        const tzOptions = { timeZone: 'America/Mexico_City' };
+        const now = new Date();
+        const hoyStr = now.toLocaleDateString('sv-SE', tzOptions); 
+        const horaStr = now.toLocaleTimeString('es-MX', { ...tzOptions, hour: '2-digit', minute: '2-digit', hour12: false }).substring(0, 5);
+
+        let eventos = [];
+
+        if (assignments) {
+            const tareasValidas = assignments.filter(a => {
+                if (['Canceled', 'Cancelado', 'Submitted', 'Graded'].includes(a.Status)) return false;
+                if (!a.Deadline) return false;
+                
+                const partes = a.Deadline.split(/[T ]/);
+                const dDate = partes[0];
+                const dTime = partes[1];
+                const tTime = dTime ? dTime.substring(0, 5) : '23:59';
+                
+                if (dDate < hoyStr) return false; 
+                if (dDate === hoyStr && tTime <= horaStr) return false; 
+                return true;
+            });
+            
+            tareasValidas.forEach(a => {
+                const curso = activeCourses.find(c => c.CourseID === a.CourseID);
+                const partes = a.Deadline.split(/[T ]/);
+                const dDate = partes[0];
+                const dTime = partes[1];
+                eventos.push({
+                    id: `tar_${a.AssignmentID}`,
+                    type: 'Tarea',
+                    title: a.Title,
+                    date: dDate,
+                    time: dTime ? dTime.substring(0, 5) : '23:59',
+                    course: curso?.Name || 'Curso',
+                    description: a.Description || 'Fecha límite para entregar tarea.'
+                });
+            });
+        }
+
+        if (sessions) {
+            const sesionesValidas = sessions.filter(s => {
+                if (['Canceled', 'Cancelado', 'Completed'].includes(s.Status)) return false;
+                if (!s.Date || !s.StartTime) return false;
+                
+                if (s.Date < hoyStr) return false; 
+                if (s.Date === hoyStr && s.StartTime.substring(0, 5) <= horaStr) return false; 
+                return true;
+            });
+            
+            sesionesValidas.forEach(s => {
+                const curso = activeCourses.find(c => c.CourseID === s.CourseID);
+                eventos.push({
+                    id: `ses_${s.SessionID}`,
+                    type: 'Sesión',
+                    title: s.Topic,
+                    date: s.Date,
+                    time: s.StartTime.substring(0, 5),
+                    course: curso?.Name || 'Curso',
+                    description: s.Description || 'Sesión virtual de clase programada.'
+                });
+            });
+        }
+
+        res.status(200).json({ success: true, eventos });
+    } catch (error) {
+        console.error("Error en eventos-calendario:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
 
 module.exports = router;

@@ -65,7 +65,6 @@ export default function TutorDashboard() {
 
                 let allEvents = [];
 
-                // 1. Mapeamos las Sesiones
                 if (resSesiones.success && resSesiones.sesiones.length > 0) {
                     resSesiones.sesiones.forEach(s => {
                         allEvents.push({
@@ -80,7 +79,6 @@ export default function TutorDashboard() {
                     });
                 }
 
-                // 2. Mapeamos las Tareas (Solo de cursos Activos/Upcoming)
                 if (resTareas.success && resTareas.publicadas.length > 0) {
                     resTareas.publicadas.forEach(t => {
                         if (t.CourseStatus === 'Active' || t.CourseStatus === 'Upcoming') {
@@ -125,7 +123,6 @@ export default function TutorDashboard() {
         }
     };
 
-    // Al hacer clic en un día del calendario
     const handleDateSelect = (newDate) => {
         const fechaFormateada = (newDate && typeof newDate.format === 'function') ? newDate.format('YYYY-MM-DD') : '';
         setFechaSeleccionada(fechaFormateada);
@@ -242,7 +239,6 @@ export default function TutorDashboard() {
                 </div>
             </div>
 
-            {/* MODAL DE SOLO LECTURA (EVENTOS DEL DÍA) */}
             <Dialog open={openEventModal} onClose={() => setOpenEventModal(false)} maxWidth="sm" fullWidth PaperProps={{ style: { borderRadius: '20px', padding: '15px' } }}>
                 <div style={{ padding: '20px', position: 'relative' }}>
                     <IconButton onClick={() => setOpenEventModal(false)} style={{ position: 'absolute', right: 0, top: 0, color: '#94a3b8' }}>
@@ -263,12 +259,10 @@ export default function TutorDashboard() {
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                                     
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        {/* Ícono de la actividad */}
                                         {e.type === 'Sesión' ? <ClassIcon style={{ color: '#3b82f6', fontSize: '1.2rem' }}/> : <AssignmentIcon style={{ color: '#8b5cf6', fontSize: '1.2rem' }}/>}
                                         
                                         <Typography variant="subtitle1" style={{ fontWeight: 800, color: '#0f172a' }}>{e.title}</Typography>
                                         
-                                        {/* NUEVO: Etiqueta visual para distinguir Tarea de Reunión */}
                                         <Chip 
                                             label={e.type === 'Sesión' ? 'Reunión' : 'Tarea'} 
                                             size="small" 
@@ -283,7 +277,6 @@ export default function TutorDashboard() {
                                         />
                                     </div>
 
-                                    {/* Hora del evento */}
                                     <Chip label={e.time} size="small" style={{ backgroundColor: '#fffbeb', color: '#d97706', fontWeight: 800 }} />
                                 </div>
                                 
@@ -301,7 +294,6 @@ export default function TutorDashboard() {
                 </div>
             </Dialog>
 
-            {/* Modal de Notificaciones */}
             <Dialog open={openNotifModal} onClose={() => setOpenNotifModal(false)} maxWidth="xs" fullWidth PaperProps={{ style: { borderRadius: '16px', padding: '10px' } }}>
                 {selectedNotif && (
                     <div style={{ padding: '20px', position: 'relative' }}>
