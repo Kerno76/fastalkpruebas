@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, Avatar, IconButton, CircularProgress } from '@mui/material';
 
-import { recursos } from "../../data/dataEstudiantes"
 import toast from 'react-hot-toast';
 
 import '../../styles/Estudiante/MiTutor.css'; 
@@ -19,19 +18,33 @@ export default function MiTutor() {
     
     const [tutorInfo, setTutorInfo] = useState(null);
     const [sesiones, setSesiones] = useState([]);
+    const [recursosCompartidos, setRecursosCompartidos] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchMiTutor = async () => {
+        const fetchMiTutorYRecursos = async () => {
+            if (!user?.ID) return;
+            
             try {
-                const res = await fetch(`http://localhost:8000/api/student/mi-tutor/${user?.ID}`);
-                const data = await res.json();
-                if (data.success) {
-                    setTutorInfo(data.tutor);
-                    setSesiones(data.sesiones);
+                // Obtener Info del Tutor y Sesiones
+                const resTutor = await fetch(`http://localhost:8000/api/student/mi-tutor/${user.ID}`);
+                const dataTutor = await resTutor.json();
+                
+                if (dataTutor.success) {
+                    setTutorInfo(dataTutor.tutor);
+                    setSesiones(dataTutor.sesiones);
                 } else {
-                    toast.error("Error al cargar perfil del tutor: " + data.message);
+                    toast.error("Error al cargar perfil del tutor: " + dataTutor.message);
                 }
+
+                // Obtener Recursos Compartidos
+                const resRecursos = await fetch(`http://localhost:8000/api/student/recursos-compartidos/${user.ID}`);
+                const dataRecursos = await resRecursos.json();
+                
+                if (dataRecursos.success) {
+                    setRecursosCompartidos(dataRecursos.recursos);
+                }
+
             } catch (error) {
                 console.error(error);
                 toast.error("Error de conexión al servidor.");
@@ -40,7 +53,7 @@ export default function MiTutor() {
             }
         };
 
-        if (user?.ID) fetchMiTutor();
+        fetchMiTutorYRecursos();
     }, [user?.ID]);
 
     if (loading) {
@@ -59,7 +72,6 @@ export default function MiTutor() {
 
     return (
         <div className="mainContent">
-
             <div className="header-container">
                 <h2 className="dashboard-title">Mi Tutor ({tutorInfo.name})</h2>
             </div>
@@ -68,6 +80,7 @@ export default function MiTutor() {
 
             <div className="tutor-grid">
                 
+                {/* --- SECCIÓN DE PERFIL --- */}
                 <div className="tutor-card-main profile-card">
                     <h1 className="card-subtitle-tutor">Perfil Completo</h1>
                     <div className="profile-section-content">
@@ -78,6 +91,7 @@ export default function MiTutor() {
                     </div>
                 </div>
 
+                {/* --- SECCIÓN MEDIOS DE CONTACTO Y PRÓXIMAS SESIONES --- */}
                 <div className="tutor-col-2">
                     <div className="tutor-card-main contact-card">
                         <h1 className="card-subtitle-tutor">Medios de Contacto</h1>
@@ -126,22 +140,56 @@ export default function MiTutor() {
                     </div>
                 </div>
 
+                {/* ---  SECCIÓN DE RECURSOS CON BD --- */}
                 <div className="tutor-card-main resources-card">
                     <h1 className="card-subtitle-tutor">Recursos Compartidos</h1>
                     <div className="resources-list-tutor" style={{ marginTop: '15px' }}>
-                        {recursos.map(rec => (
-                        <div key={rec.id} className="resource-item-tutor" style={{ padding: '15px', borderBottom: '1px solid #f1f5f9' }}>
-                            <div className="resource-info" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                {rec.type === 'pdf' && <PictureAsPdfIcon style={{ color: '#ef4444' }} />}
-                                {rec.type === 'doc' && <DescriptionIcon style={{ color: '#3b82f6' }} />}
-                                {rec.type === 'link' && <OpenInNewIcon style={{ color: '#8b5cf6' }} />}
-                                <Typography style={{ fontSize: '0.95rem', color: '#334155', fontWeight: 500 }}>{rec.name}</Typography>
-                            </div>
-                            <div className="resource-actions">
-                                <IconButton size="small" style={{ color: '#64748b' }}><DownloadIcon /></IconButton>
-                            </div>
-                        </div>
-                        ))}
+                        
+                        {recursosCompartidos.length > 0 ? (
+                            recursosCompartidos.map(rec => {
+                                let Icon = DescriptionIcon;
+                                let iconColor = '#3b82f6';
+                                if (rec.Type === 'pdf') { Icon = PictureAsPdfIcon; iconColor = '#ef4444'; }
+                                if (rec.Type === 'link') { Icon = OpenInNewIcon; iconColor = '#8b5cf6'; }
+
+                                return (
+                                    <div key={rec.ResourceID} className="resource-item-tutor" style={{ padding: '15px', borderBottom: '1px solid #f1f5f9' }}>
+                                        <div className="resource-info" style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, overflow: 'hidden' }}>
+                                            <Icon style={{ color: iconColor }} />
+                                            <Typography style={{ fontSize: '0.95rem', color: '#334155', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={rec.Name}>
+                                                {rec.Name}
+                                            </Typography>
+                                        </div>
+                                        <div className="resource-actions">
+                                            <IconButton 
+                                                size="small" 
+                                                style={{ color: '#64748b', backgroundColor: '#f1f5f9' }}
+                                                onClick={() => {
+                                                    if (rec.Type === 'link') {
+                                                        window.open(rec.Url, '_blank', 'noopener,noreferrer');
+                                                    } else {
+                                                        const a = document.createElement('a');
+                                                        a.href = rec.Url;
+                                                        a.target = '_blank';
+                                                        a.download = rec.Name;
+                                                        document.body.appendChild(a);
+                                                        a.click();
+                                                        document.body.removeChild(a);
+                                                    }
+                                                }}
+                                            >
+                                                {rec.Type === 'link' ? <OpenInNewIcon fontSize="small" /> : <DownloadIcon fontSize="small" />}
+                                            </IconButton>
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        ) : (
+                            <Typography style={{ color: '#94a3b8', fontStyle: 'italic', textAlign: 'center', padding: '20px 0' }}>
+                                Aún no tienes recursos adicionales compartidos por tu tutor.
+                            </Typography>
+                        )}
+
                     </div>
                 </div>
 

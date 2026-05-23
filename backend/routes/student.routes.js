@@ -530,5 +530,20 @@ router.get('/eventos-calendario/:studentId', async (req, res) => {
     }
 });
 
+router.get('/recursos-compartidos/:studentId', async (req, res) => {
+    const { studentId } = req.params;
+    try {
+        const { data, error } = await supabaseAdmin
+            .from('SharedResources')
+            .select('*')
+            .eq('StudentID', studentId)
+            .order('CreatedAt', { ascending: false });
+
+        if (error) throw error;
+        res.status(200).json({ success: true, recursos: data });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
 
 module.exports = router;

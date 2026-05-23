@@ -1089,4 +1089,31 @@ router.get('/historial-evaluaciones-tutor/:tutorId', async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 });
+
+router.post('/compartir-recurso', async (req, res) => {
+    const { TutorID, StudentID, Name, Type, fileBase64, fileName, fileType, LinkUrl } = req.body;
+    
+    try {
+        let finalUrl = LinkUrl;
+
+        if (Type !== 'link' && fileBase64) {
+            const buffer = Buffer.from(fileBase64.split(',')[1], 'base64');
+            const uniqueName = `recurso_${StudentID}_${Date.now()}_${fileName.replace(/\s+/g, '_')}`;
+            
+            await supabaseAdmin.storage.from('recursos-compartidos').upload(`public/${uniqueName}`, buffer, { contentType: fileType });
+            const { data } = supabaseAdmin.storage.from('recursos-compartidos').getPublicUrl(`public/${uniqueName}`);
+            finalUrl = data.publicUrl;
+        }
+
+        const { error } = await supabaseAdmin
+            .from('SharedResources')
+            .insert([{ TutorID, StudentID, Name, Type, Url: finalUrl }]);
+
+        if (error) throw error;
+        res.status(200).json({ success: true, message: "Recurso compartido con éxito." });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
 module.exports = router;

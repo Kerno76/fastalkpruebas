@@ -5,6 +5,11 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import SearchIcon from '@mui/icons-material/Search';
 import CloseIcon from '@mui/icons-material/Close';
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
+import AttachFileIcon from '@mui/icons-material/AttachFile';
+import toast from 'react-hot-toast';
+
+import ModalEstudiante from '../../components/Modals/ModalEstudiante';
+import ModalCompartirRecurso from '../../components/Modals/ModalCompartirRecurso';
 
 import '../../styles/App.css';
 import '../../styles/Organizador/Estudiantes.css'; 
@@ -21,6 +26,7 @@ export default function MisEstudiantes() {
     
     const [openExpediente, setOpenExpediente] = useState(false);
     const [estudianteSeleccionado, setEstudianteSeleccionado] = useState(null);
+    const [estudianteParaCompartir, setEstudianteParaCompartir] = useState(null);
 
     useEffect(() => {
         const fetchEstudiantes = async () => {
@@ -66,7 +72,6 @@ export default function MisEstudiantes() {
         return isAdmin ? (matchName || matchTutor) : matchName;
     });
 
-    // Separamos a los estudiantes por el estatus de su curso
     const activos = estudiantesFiltrados.filter(e => e.courseStatus === 'Active');
     const proximos = estudiantesFiltrados.filter(e => e.courseStatus === 'Upcoming');
 
@@ -114,12 +119,24 @@ export default function MisEstudiantes() {
                                 </div>
                             </div>
 
-                            <div className="bottom-actions" style={{ marginTop: '5px' }}>
+                            <div className="bottom-actions" style={{ marginTop: '5px', flexWrap: 'wrap' }}>
                                 <button className="details" onClick={() => handleAbrirExpediente(item)}>Ver Expediente</button>
-                                {!isAdmin && !esProximo && ( // Solo agendan tareas/clases a cursos activos
+                                
+                                {/* NUEVO BOTÓN DE COMPARTIR */}
+                                {!isAdmin && (
+                                    <button 
+                                        className="details" 
+                                        onClick={() => setEstudianteParaCompartir(item)}
+                                        style={{ backgroundColor: '#eff6ff', color: '#3b82f6', border: '1px solid #bfdbfe' }}
+                                    >
+                                        <AttachFileIcon style={{ fontSize: '1rem', marginRight: '4px' }}/> Compartir
+                                    </button>
+                                )}
+
+                                {!isAdmin && !esProximo && (
                                     <>
-                                        <button className="assign btn-agendar" onClick={() => navigate('/agendar', { state: { courseId: item.courseId, studentId: item.id } })}>Agendar Clase</button>
-                                        <button className="assign" onClick={() => navigate('/tareas', { state: { courseId: item.courseId, studentId: item.id } })}>Dejar Tarea</button>
+                                        <button className="assign btn-agendar" onClick={() => navigate('/agendar', { state: { courseId: item.courseId, studentId: item.id } })}>Clase</button>
+                                        <button className="assign" onClick={() => navigate('/tareas', { state: { courseId: item.courseId, studentId: item.id } })}>Tarea</button>
                                     </>
                                 )}
                             </div>
@@ -177,20 +194,13 @@ export default function MisEstudiantes() {
                 </>
             )}
 
-            {estudiantesFiltrados.length === 0 && (
-                <Typography className="empty-state-text" style={{ marginTop: '40px' }}>
-                    No se encontraron estudiantes con los criterios de búsqueda.
-                </Typography>
-            )}
-
+            {/* MODAL DE EXPEDIENTE */}
             <Dialog open={openExpediente} onClose={() => setOpenExpediente(false)} maxWidth="sm" fullWidth PaperProps={{ className: 'modal-container' }}>
                 <IconButton onClick={() => setOpenExpediente(false)} className="close-button"><CloseIcon /></IconButton>
                 <div className="modal-content">
                     <Typography className="modal-title">Expediente del Estudiante</Typography>
-                    
                     {estudianteSeleccionado && (
                         <div className="modal-body-container">
-                            
                             <div className="modal-header-card">
                                 <Avatar className="modal-avatar-large">
                                     <AccountCircleIcon sx={{ fontSize: 40 }} />
@@ -198,19 +208,8 @@ export default function MisEstudiantes() {
                                 <div>
                                     <Typography variant="h5" className="modal-student-name">{estudianteSeleccionado.name}</Typography>
                                     <Typography variant="body2" className="modal-student-email">{estudianteSeleccionado.email}</Typography>
-                                    <Chip 
-                                        label={estudianteSeleccionado.courseStatus === 'Upcoming' ? 'Inicio Pendiente' : 'Estudiante Activo'} 
-                                        size="small" 
-                                        style={{ 
-                                            backgroundColor: estudianteSeleccionado.courseStatus === 'Upcoming' ? '#fef3c7' : '#e6f4ea',
-                                            color: estudianteSeleccionado.courseStatus === 'Upcoming' ? '#d97706' : '#1e7e34',
-                                            fontWeight: 600,
-                                            marginTop: '8px'
-                                        }} 
-                                    />
                                 </div>
                             </div>
-
                             <div className="modal-course-info">
                                 <Typography variant="caption" className="modal-course-title">Información del Curso</Typography>
                                 <div className="modal-course-details">
@@ -218,31 +217,25 @@ export default function MisEstudiantes() {
                                         <Typography variant="body2" className="detail-label">Curso Inscrito</Typography>
                                         <Typography variant="body1" className="detail-value">{estudianteSeleccionado.courseName}</Typography>
                                     </div>
-                                    <div>
-                                        <Typography variant="body2" className="detail-label">Nivel</Typography>
-                                        <Typography variant="body1" className="detail-value">{estudianteSeleccionado.level}</Typography>
-                                    </div>
-                                    <div>
-                                        <Typography variant="body2" className="detail-label">Idioma</Typography>
-                                        <Typography variant="body1" className="detail-value-cap">{estudianteSeleccionado.language}</Typography>
-                                    </div>
                                 </div>
-                            </div>
-
-                            <div className="modal-stats-grid">
-                                <Paper elevation={0} className="modal-stat-paper">
-                                    <Typography variant="caption" className="modal-stat-label">Horas Acreditadas</Typography>
-                                    <Typography variant="body1" className="modal-stat-value">{estudianteSeleccionado.horasTotales}</Typography>
-                                </Paper>
-                                <Paper elevation={0} className="modal-stat-paper">
-                                    <Typography variant="caption" className="modal-stat-label">Última Sesión</Typography>
-                                    <Typography variant="body1" className="modal-stat-value">{estudianteSeleccionado.ultimaSesion}</Typography>
-                                </Paper>
                             </div>
                         </div>
                     )}
                 </div>
             </Dialog>
+
+            {/* MODAL DE COMPARTIR RECURSO */}
+            <ModalCompartirRecurso 
+                isOpen={estudianteParaCompartir !== null} 
+                onClose={() => setEstudianteParaCompartir(null)}
+                studentId={estudianteParaCompartir?.id}
+                tutorId={user?.ID}
+                onUploadSuccess={() => {
+                    toast.success('Recurso enviado');
+                    setEstudianteParaCompartir(null);
+                }}
+            />
+
         </div>
     );
 }
