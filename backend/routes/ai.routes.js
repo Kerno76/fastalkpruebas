@@ -5,26 +5,147 @@ const Groq = require('groq-sdk');
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
+// Esquema actualizado con los datos reales conforme a la base de datos
 const SCHEMA_DDL = `
-    CREATE TABLE "UsersProfiles" ("ID" uuid, "Name" varchar, "Email" varchar, "Rol" varchar, "State" varchar, "AvatarUrl" varchar, "BirthDate" date, "CreatedAt" timestamp);
-    CREATE TABLE "Admin" ("ID" uuid, "Phone" varchar);
-    CREATE TABLE "Reviewer" ("ID" uuid, "Phone" varchar, "Career" varchar, "AsignedTutors" int, "ValidationsCompleted" int, "Notes" text, "DateJoined" text);
-    CREATE TABLE "Tutors" ("ID" uuid, "Phone" varchar, "DateJoined" date, "TotalHours" int, "Hobbies" text, "Language" varchar, "Career" varchar, "Notes" text);
-    CREATE TABLE "Students" ("ID" uuid, "EnrollmentNum" varchar, "Phone" varchar, "CurrentLevel" varchar, "DateJoined" date, "Notes" text, "Photo" varchar, "Language" varchar);
-    
-    CREATE TABLE "Courses" ("CourseID" int, "Name" varchar, "Language" varchar, "StartDate" timestamp, "EndDate" timestamp, "Period" varchar, "Status" varchar, "TutorID" uuid, "Level" varchar, "GradingStatus" varchar, "AdminComments" text);
-    CREATE TABLE "Announcements" ("AnnounceID" int, "CourseID" int, "Zoomlink" varchar, "Date" date);
-    
-    CREATE TABLE "Enrollments" ("EnrollmentID" int, "CourseID" int, "StudentID" uuid, "FinalGrade" real, "FinalTutorComments" text);
-    CREATE TABLE "Enrollments_Reviewers" ("Enrollment_ReviewerID" int, "TutorID" uuid, "ReviewerID" uuid);
-    
-    CREATE TABLE "Session" ("SessionID" int, "CourseID" int, "TutorID" uuid, "ReviewerID" uuid, "Date" date, "Duration" float, "Topic" varchar, "Status" varchar, "EvidencePhoto" varchar, "Url" varchar, "TypeAssistence" varchar, "Description" text, "NextSession" text, "StartTime" time, "TutorComments" text, "ReviewerStatus" varchar, "ReviewerComments" text, "CreatedAt" timestamp);
-    CREATE TABLE "SessionStudents" ("ID" int, "SessionID" int, "StudentID" uuid, "Attendance" varchar, "IncidentReport" text);
-    
-    CREATE TABLE "Assignments" ("AssignmentID" int, "CourseID" int, "StudentID" uuid, "TutorID" uuid, "Title" varchar, "StudentFile" varchar, "Status" varchar, "Feedback" text, "Deadline" timestamp, "Description" varchar, "HelpMaterialLink" varchar, "Grade" int, "HelpMaterialFile" varchar, "StudentUrl" varchar, "AllowResubmit" boolean);
-    
-    CREATE TABLE "Repository" ("MaterialID" int, "CourseID" int, "TutorID" uuid, "Topic" varchar, "FileUrl" varchar, "Rating" int, "Level" varchar, "Language" varchar);
-    CREATE TABLE "MaterialRatings" ("ID" int, "MaterialID" int, "TutorID" uuid, "Score" int);
+    CREATE TABLE "UsersProfiles" (
+        "ID" INT, 
+        "Name" VARCHAR(100), 
+        "Email" VARCHAR(100), 
+        "Rol" VARCHAR(20), 
+        "AvatarUrl" VARCHAR(255), 
+        "CreatedAt" TIMESTAMPTZ, 
+        "BirthDate" DATE
+    );
+
+    CREATE TABLE "Students" (
+        "ID" INT, 
+        "EnrollmentNum" VARCHAR(50), 
+        "Phone" VARCHAR(10), 
+        "CurrentLevel" VARCHAR(20), 
+        "DateJoined" DATE, 
+        "Notes" TEXT, 
+        "Language" VARCHAR(20)
+    );
+
+    CREATE TABLE "Tutors" (
+        "ID" INT, 
+        "Phone" VARCHAR(10), 
+        "DateJoined" DATE, 
+        "TotalHours" INT, 
+        "Language" VARCHAR(20), 
+        "Hobbies" VARCHAR(500), 
+        "Career" VARCHAR(6), 
+        "Notes" TEXT
+    );
+
+    CREATE TABLE "Reviewer" (
+        "ID" INT, 
+        "Phone" VARCHAR(10), 
+        "Career" VARCHAR(6), 
+        "ValidationsCompleted" INT, 
+        "Notes" TEXT, 
+        "DateJoined" DATE
+    );
+
+    CREATE TABLE "Admin" (
+        "ID" VARCHAR(100), 
+        "Phone" VARCHAR(10)
+    );
+
+    CREATE TABLE "Courses" (
+        "CourseID" INT, 
+        "Name" VARCHAR(255), 
+        "Language" VARCHAR(20), 
+        "StartDate" TIMESTAMP, 
+        "EndDate" TIMESTAMP, 
+        "Period" VARCHAR(255), 
+        "Status" VARCHAR(20), 
+        "TutorID" INT, 
+        "Level" VARCHAR(20), 
+        "GradingStatus" VARCHAR(50)
+    );
+
+    CREATE TABLE "Enrollments" (
+        "EnrollmentID" INT, 
+        "CourseID" INT, 
+        "StudentID" INT, 
+        "TutorID" INT
+    );
+
+    CREATE TABLE "Announcements" (
+        "AnnounceID" INT, 
+        "CourseID" INT, 
+        "Zoomlink" VARCHAR(255), 
+        "Date" DATE
+    );
+
+    CREATE TABLE "Enrollments_Reviewers" (
+        "Enrollment_ReviewerID" INT, 
+        "TutorID" INT, 
+        "ReviewerID" INT
+    );
+
+    CREATE TABLE "Session" (
+        "SessionID" INT, 
+        "CourseID" INT, 
+        "TutorID" INT, 
+        "ReviewerID" INT, 
+        "Date" DATE, 
+        "Duration" FLOAT, 
+        "Topic" VARCHAR(255), 
+        "ReviewerStatus" VARCHAR(50), 
+        "EvidencePhoto" VARCHAR(255), 
+        "Url" VARCHAR(255), 
+        "TypeAssistence" VARCHAR(50), 
+        "Description" VARCHAR(1000), 
+        "NextSession" VARCHAR(1000), 
+        "StartTime" TIME, 
+        "TutorComments" TEXT, 
+        "ReviewerComments" TEXT
+    );
+
+    CREATE TABLE "SessionStudents" (
+        "SessionID" INT, 
+        "StudentID" INT, 
+        "Attendance" VARCHAR(50), 
+        "IncidentReport" TEXT
+    );
+
+    CREATE TABLE "Assignments" (
+        "AssignmentID" INT, 
+        "CourseID" INT, 
+        "StudentID" INT, 
+        "TutorID" INT, 
+        "Title" VARCHAR(150), 
+        "StudentFile" VARCHAR(255), 
+        "Status" VARCHAR(50), 
+        "Feedback" TEXT, 
+        "Deadline" TIMESTAMP, 
+        "Description" VARCHAR(1000), 
+        "HelpMaterialLink" VARCHAR(255), 
+        "Grade" INT, 
+        "HelpMaterialFile" VARCHAR(255), 
+        "AllowResubmit" BOOLEAN, 
+        "StudentUrl" VARCHAR(255)
+    );
+
+    CREATE TABLE "Repository" (
+        "MaterialID" INT, 
+        "CourseID" INT, 
+        "TutorID" INT, 
+        "Topic" VARCHAR(200), 
+        "FileUrl" VARCHAR(255), 
+        "Rating" INT, 
+        "Level" VARCHAR(20), 
+        "Language" VARCHAR(50)
+    );
+
+    CREATE TABLE "MaterialRatings" (
+        "RatingID" INT, 
+        "MaterialID" INT, 
+        "TutorID" INT, 
+        "Score" INT
+    );
 `;
 
 // tablas validas del esquema
@@ -60,76 +181,80 @@ router.post('/chat-sql', async (req, res) => {
 
     try {
         const prompt = `
-Eres un experto analista de bases de datos PostgreSQL para la plataforma FasTalk.
-Tu ÚNICA tarea es traducir preguntas en español a consultas SQL válidas para PostgreSQL.
-Responde ÚNICAMENTE con la consulta SQL pura. Sin explicaciones, sin comillas invertidas, sin markdown.
+    Eres un experto analista de bases de datos PostgreSQL para la plataforma FasTalk.
+    Tu ÚNICA tarea es traducir preguntas en español a consultas SQL válidas para PostgreSQL.
+    Responde ÚNICAMENTE con la consulta SQL pura. Sin explicaciones, sin comillas invertidas, sin markdown[cite: 35].
 
-══════════════════════════════════════════
-REGLA CRÍTICA DE CLASIFICACIÓN (evalúa esto PRIMERO, antes de generar SQL):
-══════════════════════════════════════════
-Determina si la pregunta está relacionada con la plataforma FasTalk (cursos, tutores,
-estudiantes, sesiones, tareas, materiales, usuarios, inscripciones, revisores).
+    ══════════════════════════════════════════
+    REGLA CRÍTICA DE CLASIFICACIÓN (evalúa esto PRIMERO, antes de generar SQL):
+    ══════════════════════════════════════════
+    Determina si la pregunta está relacionada con la plataforma FasTalk (cursos, tutores, estudiantes, sesiones, tareas, materiales, usuarios, inscripciones, revisores).
 
-CASO 1 — Pregunta 100% fuera de contexto (clima, chistes, recetas, deportes, historia, etc.):
-  → Responde EXACTAMENTE con la palabra: IRRELEVANTE
+    CASO 1 — Pregunta 100% fuera de contexto (clima, chistes, recetas, deportes, historia, etc.):
+    → Responde EXACTAMENTE con la palabra: IRRELEVANTE
 
-CASO 2 — Pregunta MIXTA: contiene una parte válida de FasTalk Y una parte irrelevante
-  (ej: "¿Cuántos tutores hay y cómo hago un café?", "Lista los cursos y dime un chiste"):
-  → Responde EXACTAMENTE con la palabra: MIXTA
+    CASO 2 — Pregunta MIXTA: contiene una parte válida de FasTalk Y una parte irrelevante 
+    (ej: "¿Cuántos tutores hay y cómo hago un café?", "Lista los cursos y dime un chiste"):
+    → Responde EXACTAMENTE con la palabra: MIXTA
 
-CASO 3 — Pregunta totalmente relacionada con FasTalk:
-  → Genera el SQL correspondiente.
+    CASO 3 — Pregunta totalmente relacionada con FasTalk:
+    → Genera el SQL correspondiente.
 
-══════════════════════════════════════════
-REGLAS DE SINTAXIS:
-══════════════════════════════════════════
-- SIEMPRE usa comillas dobles para nombres de tablas y columnas. NUNCA uses nombres sin comillas.
-- Correcto:   SELECT COUNT(*) FROM "Courses" WHERE "Status" = 'Active'
-- Incorrecto: SELECT COUNT(*) FROM Courses WHERE Status = 'Active'
+    ══════════════════════════════════════════
+    REGLAS DE SINTAXIS OBLIGATORIAS:
+    ══════════════════════════════════════════
+    - SIEMPRE usa comillas dobles para nombres de tablas y columnas. NUNCA uses nombres sin comillas.
+    * Correcto: SELECT "Name" FROM "UsersProfiles";
+    * Incorrecto: SELECT Name FROM UsersProfiles;
 
-══════════════════════════════════════════
-TABLAS DISPONIBLES — SOLO puedes referenciar estas, con exactamente estos nombres:
-══════════════════════════════════════════
-"UsersProfiles", "Admin", "Reviewer", "Tutors", "Students",
-"Courses", "Announcements", "Enrollments", "Enrollments_Reviewers",
-"Session", "SessionStudents", "Assignments", "Repository", "MaterialRatings"
+    ══════════════════════════════════════════
+    TABLAS DISPONIBLES — SOLO puedes referenciar estas, con exactamente estos nombres:
+    ══════════════════════════════════════════
+    "UsersProfiles", "Admin", "Reviewer", "Tutors", "Students", 
+    "Courses", "Announcements", "Enrollments", "Enrollments_Reviewers", 
+    "Session", "SessionStudents", "Assignments", "Repository", "MaterialRatings"
 
-Si la pregunta requiere datos que no existen en estas tablas → responde: IRRELEVANTE
+    Si la pregunta requiere datos que no existen en estas tablas → responde: IRRELEVANTE
 
-══════════════════════════════════════════
-REGLAS DE NEGOCIO (aplica por defecto salvo que el usuario diga explícitamente
-"todos", "historial", "pasados", "inactivos" o "cancelados"):
-══════════════════════════════════════════
-1. Al consultar "Courses" → filtrar por "Status" = 'Active'
-2. Al consultar personas en "UsersProfiles" → filtrar por "State" = 'Active'
+    ══════════════════════════════════════════
+    REGLAS DE NEGOCIO (aplica por defecto salvo que el usuario diga "todos" o "historial"):
+    ══════════════════════════════════════════
+    1. Al consultar "Courses" → filtrar por "Status" = 'Active'. ¡EL ENUM ES ESTRICTO! El valor es EXACTAMENTE 'Active'. NUNCA uses 'activo' o 'active'.
+    2. Al consultar personas en "UsersProfiles" → filtrar por "State" = 'Active'.
+    3. Para el campo "Language" (Idioma) ¡EL ENUM ES ESTRICTO!. Los ÚNICOS valores válidos son 'Inglés' y 'Francés' (respetando las mayúsculas y los acentos). NUNCA uses 'English', 'French', 'ingles' o 'frances'.
 
-══════════════════════════════════════════
-EJEMPLOS (few-shot):
-══════════════════════════════════════════
-Pregunta: ¿Cuántos cursos activos hay?
-SQL: SELECT COUNT(*) AS total_cursos FROM "Courses" WHERE "Status" = 'Active'
+    ══════════════════════════════════════════
+    MAPA DE UNIONES PARA JOINS (Basado en IDs de tipo INT):
+    ══════════════════════════════════════════
+    - Para obtener el Nombre o Email de un Alumno: "UsersProfiles"."ID" = "Students"."ID"
+    - Para obtener el Nombre o Email de un Tutor: "UsersProfiles"."ID" = "Tutors"."ID"
+    - Alumnos inscritos en un curso: "Enrollments"."CourseID" = "Courses"."CourseID" AND "Enrollments"."StudentID" = "Students"."ID"
 
-Pregunta: ¿Cuántos tutores enseñan inglés?
-SQL: SELECT COUNT(*) AS total_tutores FROM "Tutors" WHERE "Language" = 'English'
+    ══════════════════════════════════════════
+    EJEMPLOS (few-shot):
+    ══════════════════════════════════════════
+    Pregunta: ¿Cuántos tutores enseñan inglés?
+    SQL: SELECT COUNT(*) AS total_tutores FROM "Tutors" WHERE "Language" = 'Inglés';
 
-Pregunta: Muestra los 5 tutores con más horas totales
-SQL: SELECT "ID", "TotalHours" FROM "Tutors" ORDER BY "TotalHours" DESC LIMIT 5
+    Pregunta: ¿Qué tiempo hace hoy?
+    SQL: IRRELEVANTE
 
-Pregunta: ¿Cuántos estudiantes hay inscritos en cursos de nivel B1?
-SQL: SELECT COUNT(DISTINCT "e"."StudentID") AS total FROM "Enrollments" e JOIN "Courses" c ON "e"."CourseID" = "c"."CourseID" WHERE "c"."Level" = 'B1' AND "c"."Status" = 'Active'
+    Pregunta: ¿Cuántos tutores hay y cómo hago pasta?
+    SQL: MIXTA
 
-Pregunta: ¿Qué tiempo hace hoy?
-SQL: IRRELEVANTE
+    Pregunta: ¿Cuántos cursos activos hay en total?
+    SQL: SELECT COUNT(*) FROM "Courses" WHERE "Status" = 'Active';
 
-Pregunta: ¿Cuántos tutores hay y cómo hago pasta?
-SQL: MIXTA
+    Pregunta: Dame la lista de estudiantes en el curso a2 (muestra nombre y correo)
+    SQL: SELECT u."Name", u."Email" FROM "Enrollments" e JOIN "Students" s ON e."StudentID" = s."ID" JOIN "UsersProfiles" u ON s."ID" = u."ID" JOIN "Courses" c ON e."CourseID" = c."CourseID" WHERE c."Name" = 'a2';
 
-══════════════════════════════════════════
-Esquema completo:
-══════════════════════════════════════════
-${SCHEMA_DDL}
+    ══════════════════════════════════════════
+    Esquema completo:
+    ══════════════════════════════════════════
+    ${SCHEMA_DDL}
 
-Pregunta: ${question}
+    Pregunta: ${question}
+    SQL:
         `.trim();
 
         const chatCompletion = await groq.chat.completions.create({
@@ -234,7 +359,7 @@ Pregunta: ${question}
             generated_sql: generatedSql,
             rows_returned: filasDevueltas
         };
-        console.log('\n========== logsito de auditoria ==========');
+        console.log('\nlogsito de auditoria ');
         console.log(JSON.stringify(auditEntry, null, 2));
 
         try {
