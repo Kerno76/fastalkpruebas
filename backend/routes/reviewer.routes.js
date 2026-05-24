@@ -289,4 +289,60 @@ router.get('/eventos-calendario/:reviewerId', async (req, res) => {
     }
 });
 
+router.get('/sesiones-monitoreo/:reviewerId', async (req, res) => {
+    const { reviewerId } = req.params;
+    try {
+        const { data: perfil } = await supabaseAdmin.from('UsersProfiles').select('Rol').eq('ID', reviewerId).single();
+        const isAdmin = perfil?.Rol === 'Admin';
+
+        let query = supabaseAdmin
+            .from('Session')
+            .select('*, Courses ( Name )')
+            .eq('Status', 'Scheduled')
+            .order('Date', { ascending: true })
+            .order('StartTime', { ascending: true });
+
+        let tutorIds = [];
+        if (!isAdmin) {
+            const { data: asignaciones } = await supabaseAdmin
+                .from('Enrollments_Reviewers')
+                .select('TutorID')
+                .eq('ReviewerID', reviewerId);
+            
+            if (!asignaciones || asignaciones.length === 0) {
+                return res.status(200).json({ success: true, sesiones: [] });
+            }
+            tutorIds = asignaciones.map(a => a.TutorID);
+            query = query.in('TutorID', tutorIds);
+        }
+
+        const { data: sesiones, error: sesErr } = await query;
+        if (sesErr) throw sesErr;
+
+        const allTutorIds = isAdmin ? [...new Set(sesiones.map(s => s.TutorID))] : tutorIds;
+        const { data: perfiles } = await supabaseAdmin
+            .from('UsersProfiles')
+            .select('ID, Name')
+            .in('ID', allTutorIds);
+
+        const formateadas = sesiones.map(s => {
+            const tutor = perfiles?.find(p => p.ID === s.TutorID);
+            return {
+                id: s.SessionID,
+                tutorName: tutor ? tutor.Name : 'Desconocido',
+                course: s.Courses?.Name || 'N/A',
+                date: s.Date,
+                startTime: s.StartTime,
+                topic: s.Topic,
+                duration: s.Duration,
+                url: s.Url
+            };
+        });
+
+        res.status(200).json({ success: true, sesiones: formateadas });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
 module.exports = router;

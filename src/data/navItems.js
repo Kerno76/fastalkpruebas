@@ -44,6 +44,7 @@ export const navItems = [
 
   // --- SECCIÓN REVISOR (También para Admin) ---
   { icon: revisar_icon, label: "Aprobaciones Pendientes", path: "/dashboard-revisor", roles: ['Reviewer', 'Admin'], section: "Revisión" },
+  { icon: agenda, label: "Visitas a Clases", path: "/visitas", roles: ['Reviewer', 'Admin'], section: "Revisión" },
 
   // --- GENERAL ---
   { icon: repositorio_icon, label: "Repositorio", path: "/repositorio", roles: ['Tutor', 'Admin'], section: "General" },

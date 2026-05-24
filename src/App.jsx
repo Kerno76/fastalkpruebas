@@ -22,6 +22,7 @@ import ProtectedRoute from "./components/ProtectedRoute"
 import PublicRoute from "./components/PublicRoute"
 import Cursos from "./pages/Organizador/Cursos"
 import CalificarTareas from "./pages/Tutor/CalificarTareas"
+import VisitasRevisor from "./pages/Revisor/VisitasRevisor"
 
 // NUEVAS PANTALLAS DE CIERRE DE CURSOS
 import EvaluacionCursos from "./pages/Tutor/EvaluacionCursos"
@@ -95,6 +96,7 @@ function App() {
 
         {/* --- RUTAS DE REVISOR --- */}
         <Route path="/dashboard-revisor" element={<ProtectedRoute allowedRoles={['Reviewer', 'Admin']}><DashboardRevisor /></ProtectedRoute>} />
+        <Route path="/visitas" element={<ProtectedRoute allowedRoles={['Reviewer', 'Admin']}><VisitasRevisor /></ProtectedRoute>} />
 
         {/* --- RUTAS COMPARTIDAS --- */}
         <Route path="/settings" element={<ProtectedRoute allowedRoles={['Admin', 'Tutor', 'Student', 'Reviewer']}><Settings/></ProtectedRoute>} />
