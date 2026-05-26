@@ -70,9 +70,16 @@ export default function MisTareas() {
     };
 
     const handleFileChange = (e) => {
-        if (e.target.files) setArchivosAdjuntos(prev => [...prev, ...Array.from(e.target.files)]);
-        e.target.value = null;
-    };
+    if (e.target.files) {
+        const newFiles = Array.from(e.target.files);
+        const archivoPesado = newFiles.find(f => f.size > 52428800); // 50MB
+        if (archivoPesado) {
+            return toast.error("El archivo excede el límite de 50MB.");
+        }
+        setArchivosAdjuntos(prev => [...prev, ...newFiles]);
+    }
+    e.target.value = null;
+};
 
     const handleRemoveFile = (index) => setArchivosAdjuntos(archivosAdjuntos.filter((_, i) => i !== index));
 

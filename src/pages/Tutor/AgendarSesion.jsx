@@ -103,7 +103,14 @@ export default function AgendarSesion() {
         }
 
         const toastId = toast.loading("Procesando agendamiento...");
+        const fechaSeleccionada = new Date(sesion.fecha);
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
 
+        if (fechaSeleccionada < hoy) {
+            return toast.error("La fecha de la sesión no puede ser en el pasado.");
+        }
+        
         try {
             const res = await fetch("http://localhost:8000/api/tutor/agendar-sesion", {
                 method: "POST",
