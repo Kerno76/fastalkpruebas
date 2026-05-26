@@ -121,8 +121,8 @@
 .sidebar-logo {
   width: 45px;
   height: 45px;
-  border-radius: 10px; /* Bordes redondeados para el logo */
-  object-fit: cover;
+  border-radius: 10px; /* Se cambio a contain para no recortar el logo */
+  object-fit: contain;
 }
 
 .sidebar h2 {

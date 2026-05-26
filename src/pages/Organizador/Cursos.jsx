@@ -59,7 +59,7 @@ export default function ControlCursos() {
 
     const [viewMode, setViewMode] = useState('Actuales'); 
 
-    const [filtros, setFiltros] = useState({ anio: 'Todos', idioma: 'Todos', nivel: 'Todos', estado: 'Todos' });
+    const [filtros, setFiltros] = useState({ año: 'Todos', idioma: 'Todos', nivel: 'Todos', estado: 'Todos' });
     const [searchTerm, setSearchTerm] = useState(''); 
 
     const [isEditing, setIsEditing] = useState(false);
@@ -140,8 +140,8 @@ export default function ControlCursos() {
             filtrados = filtrados.filter(c => getCourseStatus(c) === 'Past' || getCourseStatus(c) === 'Canceled');
         }
 
-        if (filtros.anio !== 'Todos') {
-            filtrados = filtrados.filter(c => c.StartDate && new Date(c.StartDate).getFullYear().toString() === filtros.anio);
+        if (filtros.año !== 'Todos') {
+            filtrados = filtrados.filter(c => c.StartDate && new Date(c.StartDate).getFullYear().toString() === filtros.año);
         }
         if (filtros.idioma !== 'Todos') {
             filtrados = filtrados.filter(c => c.Language && c.Language.toUpperCase() === filtros.idioma.toUpperCase());
@@ -321,7 +321,7 @@ export default function ControlCursos() {
         }) 
         : [];
 
-    const aniosDisponibles = [...new Set(
+    const añosDisponibles = [...new Set(
         Array.isArray(rawCursos) 
         ? rawCursos.map(c => c.StartDate && !isNaN(new Date(c.StartDate)) ? new Date(c.StartDate).getFullYear().toString() : 'Desconocido').filter(a => a !== 'Desconocido')
         : []
@@ -393,7 +393,7 @@ export default function ControlCursos() {
                     }}
                 />
 
-                {['anio', 'idioma', 'nivel', 'estado'].map((f) => {
+                {['año', 'idioma', 'nivel', 'estado'].map((f) => {
                     if (viewMode === 'Historial' && f === 'estado') return null;
 
                     return (
@@ -402,7 +402,7 @@ export default function ControlCursos() {
                             <FormControl size="small" style={{ minWidth: 100 }}>
                                 <Select name={f} value={filtros[f]} onChange={handleFilterChange} sx={{ borderRadius: '10px', backgroundColor: '#fff' }}>
                                     <MenuItem value="Todos">Todos</MenuItem>
-                                    {f === 'anio' && aniosDisponibles.map(a => <MenuItem key={a} value={a}>{a}</MenuItem>)}
+                                    {f === 'año' && añosDisponibles.map(a => <MenuItem key={a} value={a}>{a}</MenuItem>)}
                                     {f === 'idioma' && ['INGLÉS', 'FRANCÉS'].map(i => <MenuItem key={i} value={i}>{i.charAt(0) + i.slice(1).toLowerCase()}</MenuItem>)}
                                     {f === 'nivel' && ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].map(n => <MenuItem key={n} value={n}>{n}</MenuItem>)}
                                     {f === 'estado' && [['Active', 'Activos'], ['Upcoming', 'Próximos']].map(s => <MenuItem key={s[0]} value={s[0]}>{s[1]}</MenuItem>)}
