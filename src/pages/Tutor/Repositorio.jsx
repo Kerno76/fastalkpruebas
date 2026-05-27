@@ -73,6 +73,31 @@ export default function Repositorio() {
         }
     };
 
+    const handleDownload = async (url, topicName) => {
+        const tid = toast.loading('Preparando descarga...');
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error("Network response was not ok");
+            const blob = await response.blob();
+            
+            const blobUrl = window.URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = `${topicName.replace(/\s+/g, '_')}`; 
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            window.URL.revokeObjectURL(blobUrl);
+            toast.success('Descarga completada', { id: tid });
+        } catch (error) {
+            console.error("Error al descargar archivo como blob:", error);
+            window.open(`${url}?download=`, '_blank');
+            toast.success('Abriendo archivo...', { id: tid });
+        }
+    };
+
     return (
         <div className='mainContent'>
             <div className="header-container">
@@ -139,18 +164,10 @@ export default function Repositorio() {
                         </div>
 
                         <div style={{ display: 'flex', gap: '8px' }}>
-                            <Button variant="outlined" fullWidth onClick={() => window.open(item.FileUrl, '_blank')} style={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, color: '#475569', borderColor: '#cbd5e1' }}>
+                            <Button variant="outlined" fullWidth onClick={() => window.open(item.FileUrl, '_blank', 'noopener,noreferrer')} style={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, color: '#475569', borderColor: '#cbd5e1' }}>
                                 Ver
                             </Button>
-                            <Button variant="contained" fullWidth onClick={() => {
-                                const l = document.createElement('a'); 
-                                l.href = item.FileUrl; 
-                                l.target = '_blank';
-                                l.download = `${item.Topic}.pdf`; 
-                                document.body.appendChild(l);
-                                l.click();
-                                document.body.removeChild(l);
-                            }} style={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, backgroundColor: '#0ea5e9', boxShadow: 'none' }}>
+                            <Button variant="contained" fullWidth onClick={() => handleDownload(item.FileUrl, item.Topic)} style={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, backgroundColor: '#0ea5e9', boxShadow: 'none' }}>
                                 Descargar
                             </Button>
                             

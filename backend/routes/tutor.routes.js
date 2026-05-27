@@ -154,8 +154,12 @@ router.get('/materiales/:tutorId', async (req, res) => {
 router.post('/materiales', async (req, res) => {
     const { CourseID, TutorID, Topic, Level, Language, fileBase64, fileName, fileType } = req.body;
     try {
-        const buffer = Buffer.from(fileBase64.split(',')[1], 'base64');
-        const uniqueName = `${Date.now()}_${fileName.replace(/\s+/g, '_')}`;
+        const base64Data = fileBase64.includes(',') ? fileBase64.split(',')[1] : fileBase64;
+        const buffer = Buffer.from(base64Data, 'base64');
+        
+        const cleanFileName = fileName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9.\-_]/g, "");
+        const uniqueName = `${Date.now()}_${cleanFileName}`;
+        
         await supabaseAdmin.storage.from('materiales').upload(`public/${uniqueName}`, buffer, { contentType: fileType });
 
         const { data: publicUrlData } = supabaseAdmin.storage.from('materiales').getPublicUrl(`public/${uniqueName}`);
@@ -166,6 +170,7 @@ router.post('/materiales', async (req, res) => {
 
         res.status(200).json({ success: true });
     } catch (error) {
+        console.error("Error al subir material:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 });
@@ -209,7 +214,14 @@ router.delete('/materiales/:id', async (req, res) => {
 
 router.get('/tutor-cursos/:tutorId', async (req, res) => {
     try {
-        const { data } = await supabaseAdmin.from('Courses').select('*').eq('TutorID', req.params.tutorId);
+        const { data, error } = await supabaseAdmin
+            .from('Courses')
+            .select('*')
+            .eq('TutorID', req.params.tutorId)
+            .order('StartDate', { ascending: false });
+
+        if (error) throw error;
+
         res.status(200).json({ success: true, cursos: data });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
