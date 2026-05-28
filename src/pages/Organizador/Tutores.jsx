@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Typography, Avatar, Paper, Button, IconButton, Dialog, Chip, List, ListItem, ListItemText, Divider, TextField, InputAdornment, FormControl, Select, MenuItem } from '@mui/material';
+import { Typography, Avatar, Paper, Button, IconButton, Dialog, Chip, List, ListItem, ListItemText, Divider, TextField, InputAdornment, FormControl, Select, MenuItem, Tooltip } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import BlockIcon from '@mui/icons-material/Block'; 
@@ -360,17 +360,19 @@ export default function ControlTutores() {
                                                         {estado}
                                                     </span>
                                                     {isAdmin && (
-                                                        <IconButton 
-                                                            size="small" 
-                                                            style={{ 
-                                                                color: estado === 'Active' ? '#ef4444' : '#10b981', 
-                                                                backgroundColor: estado === 'Active' ? 'transparent' : '#dcfce7',
-                                                                padding: '4px' 
-                                                            }} 
-                                                            onClick={() => handleAbrirConfirmacionToggle(item, estado, tieneRevisor, estudiantes)}
-                                                        >
-                                                            {estado === 'Active' ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
-                                                        </IconButton>
+                                                        <Tooltip title={estado === 'Active' ? 'Deshabilitar tutor' : 'Habilitar tutor'} arrow>
+                                                            <IconButton 
+                                                                size="small" 
+                                                                style={{ 
+                                                                    color: estado === 'Active' ? '#ef4444' : '#10b981', 
+                                                                    backgroundColor: estado === 'Active' ? 'transparent' : '#dcfce7',
+                                                                    padding: '4px' 
+                                                                }} 
+                                                                onClick={() => handleAbrirConfirmacionToggle(item, estado, tieneRevisor, estudiantes)}
+                                                            >
+                                                                {estado === 'Active' ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
+                                                            </IconButton>
+                                                        </Tooltip>
                                                     )}
                                                 </div>
                                             </div>

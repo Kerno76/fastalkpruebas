@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Typography, Avatar, Paper, Button, IconButton, Dialog, Chip, List, ListItem, ListItemAvatar, ListItemText as MuiListItemText, Divider, Select, MenuItem, OutlinedInput, Checkbox, Box, TextField, InputAdornment, FormControl } from '@mui/material';
+import { Typography, Avatar, Paper, Button, IconButton, Dialog, Chip, List, ListItem, ListItemAvatar, ListItemText as MuiListItemText, Divider, Select, MenuItem, OutlinedInput, Checkbox, Box, TextField, InputAdornment, FormControl, Tooltip } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import BlockIcon from '@mui/icons-material/Block';
@@ -348,17 +348,19 @@ export default function ControlRevisores() {
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                                                 <span className={`status ${estado === 'Inactive' ? 'status-inactive' : ''}`}>{estado}</span>
                                                 {isAdmin && (
-                                                    <IconButton 
-                                                        size="small" 
-                                                        style={{ 
-                                                            color: estado === 'Active' ? '#ef4444' : '#10b981', 
-                                                            backgroundColor: estado === 'Active' ? 'transparent' : '#dcfce7',
-                                                            padding: '4px' 
-                                                        }} 
-                                                        onClick={() => handleAbrirConfirmacionToggle(item, estado, tutoresAsig)}
-                                                    >
-                                                        {estado === 'Active' ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
-                                                    </IconButton>
+                                                    <Tooltip title={estado === 'Active' ? 'Deshabilitar revisor' : 'Habilitar revisor'} arrow>
+                                                        <IconButton 
+                                                            size="small" 
+                                                            style={{ 
+                                                                color: estado === 'Active' ? '#ef4444' : '#10b981', 
+                                                                backgroundColor: estado === 'Active' ? 'transparent' : '#dcfce7',
+                                                                padding: '4px' 
+                                                            }} 
+                                                            onClick={() => handleAbrirConfirmacionToggle(item, estado, tutoresAsig)}
+                                                        >
+                                                            {estado === 'Active' ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
+                                                        </IconButton>
+                                                    </Tooltip>
                                                 )}
                                             </div>
                                         </div>
