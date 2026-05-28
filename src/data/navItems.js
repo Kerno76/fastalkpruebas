@@ -35,6 +35,7 @@ export const navItems = [
   { icon: session_history, label: "Historial de sesiones", path: "/historial", roles: ['Tutor', 'Admin'], section: "Tutoría" },
   { icon: evaluar_icon, label: "Calificar Tareas", path: "/calificar", roles: ['Tutor'], section: "Tutoría" },
   { icon: evaluar_icon, label: "Evaluación Final", path: "/evaluacion-cursos", roles: ['Tutor'], section: "Tutoría" },
+  { icon: repositorio_icon, label: "Repositorio", path: "/repositorio", roles: ['Tutor'], section: "Tutoría" },
 
   // --- SECCIÓN ESTUDIANTE (También para Admin) ---
   { icon: dashboard, label: "Dashboard Estudiante", path: "/estudianteDash", roles: ['Student'], section: "Estudiante" },
@@ -47,7 +48,7 @@ export const navItems = [
   { icon: agenda, label: "Visitas a Clases", path: "/visitas", roles: ['Reviewer', 'Admin'], section: "Revisión" },
 
   // --- GENERAL ---
-  { icon: repositorio_icon, label: "Repositorio", path: "/repositorio", roles: ['Tutor', 'Admin'], section: "General" },
+  { icon: repositorio_icon, label: "Repositorio", path: "/repositorio-admin", roles: ['Admin'], section: "Administración" }, // NUEVO REPOSITORIO SOLO PARA ADMIN
   { icon: config, label: "Configuración", path: "/settings", roles: ['Admin', 'Tutor', 'Student', 'Reviewer'], section: "General" }
 ];
 

@@ -141,7 +141,7 @@ router.get('/materiales/:tutorId', async (req, res) => {
         const formatData = materiales.map(m => ({
             ...m,
             courseName: m.Courses?.Name || 'Material General',
-            tutorName: profiles.find(p => p.ID === m.TutorID)?.Name || 'Desconocido',
+            tutorName: profiles.find(p => p.ID === m.TutorID)?.Name || 'FasTalk',
             miVoto: misVotos.find(v => v.MaterialID === m.MaterialID)?.Score || 0
         }));
 

@@ -23,6 +23,7 @@ import PublicRoute from "./components/PublicRoute"
 import Cursos from "./pages/Organizador/Cursos"
 import CalificarTareas from "./pages/Tutor/CalificarTareas"
 import VisitasRevisor from "./pages/Revisor/VisitasRevisor"
+import RepositorioAdmin from "./pages/Organizador/RepositorioAdmin" // NUEVO REPOSITORIO SOLO PARA ADMIN, NO CONFUNDIR CON EL DE TUTOR
 
 // NUEVAS PANTALLAS DE CIERRE DE CURSOS
 import EvaluacionCursos from "./pages/Tutor/EvaluacionCursos"
@@ -73,6 +74,7 @@ function App() {
         <Route path="/revisores" element={<ProtectedRoute allowedRoles={['Admin']}><ControlRevisores /></ProtectedRoute>} />
         <Route path="/cursos" element={<ProtectedRoute allowedRoles={['Admin']}><Cursos /></ProtectedRoute>} />
         <Route path="/cierre-cursos" element={<ProtectedRoute allowedRoles={['Admin']}><RevisionFinalCursos /></ProtectedRoute>} />
+        <Route path="/repositorio-admin" element={<ProtectedRoute allowedRoles={['Admin']}><RepositorioAdmin /></ProtectedRoute>} /> {/* NUEVO REPOSITORIO SOLO PARA ADMIN */}
         
         {/* Nueva Ruta Admin Asistente IA */}
         <Route path="/asistente-sql" element={<ProtectedRoute allowedRoles={['Admin']}><ChatBotSQL /></ProtectedRoute>} />
@@ -84,9 +86,9 @@ function App() {
         <Route path="/agendar" element={<ProtectedRoute allowedRoles={['Tutor']}><AgendarSesion /></ProtectedRoute>} />
         <Route path="/tareas" element={<ProtectedRoute allowedRoles={['Tutor', 'Admin']}><AsignarTareas /></ProtectedRoute>} />
         <Route path="/mis-estudiantes" element={<ProtectedRoute allowedRoles={['Tutor', 'Admin']}><MisEstudiantes /></ProtectedRoute>} />
-        <Route path="/repositorio" element={<ProtectedRoute allowedRoles={['Tutor', 'Admin']}><Repositorio /></ProtectedRoute>} />
         <Route path="/calificar" element={<ProtectedRoute allowedRoles={['Tutor']}><CalificarTareas /></ProtectedRoute>} />
         <Route path="/evaluacion-cursos" element={<ProtectedRoute allowedRoles={['Tutor']}><EvaluacionCursos /></ProtectedRoute>} />
+        <Route path="/repositorio" element={<ProtectedRoute allowedRoles={['Tutor']}><Repositorio /></ProtectedRoute>} /> {/* Repositorio de tutor, solo pueden ver y calificar */}
 
         {/* --- RUTAS DE ESTUDIANTE --- */}
         <Route path="/estudianteDash" element={<ProtectedRoute allowedRoles={['Student']}><EstudianteDashboard /></ProtectedRoute>} />

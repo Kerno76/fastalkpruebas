@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Typography, Paper, Rating, Button, TextField, Box, Dialog, Chip, IconButton } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
+import { Typography, Paper, Rating, Button, TextField, Box, Chip} from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import DescriptionIcon from '@mui/icons-material/Description';
 import toast from 'react-hot-toast';
-import ModalMaterial from '../../components/Modals/ModalMaterial.jsx';
 import '../../styles/App.css';
 import '../../styles/Organizador/Estudiantes.css'; 
 import '../../styles/Tutor/Repositorio.css';
+
+
+// ahora solo el admin puede editar el repositorio, los tutores solo ven sus materiales y no pueden eliminar ni editar, solo calificar y descargar
 
 export default function Repositorio() {
     const user = JSON.parse(localStorage.getItem('user'));
@@ -17,9 +17,7 @@ export default function Repositorio() {
     const [filtroIdioma, setFiltroIdioma] = useState('');
     const [filtroNivel, setFiltroNivel] = useState('');
     const [busquedaAdmin, setBusquedaAdmin] = useState("");
-    const [openModal, setOpenModal] = useState(false);
     
-    const [itemToDelete, setItemToDelete] = useState(null);
 
     const fetchMateriales = async () => {
         if (!user?.ID) return;
@@ -56,22 +54,6 @@ export default function Repositorio() {
         } catch (error) { toast.error("Error al calificar"); }
     };
 
-    const handleDelete = async () => {
-        if (!itemToDelete) return;
-        const loadingToast = toast.loading('Eliminando material...');
-        try {
-            const res = await fetch(`http://localhost:8000/api/tutor/materiales/${itemToDelete.MaterialID}`, { method: 'DELETE' });
-            if ((await res.json()).success) {
-                toast.success("Material eliminado con éxito", { id: loadingToast });
-                setItemToDelete(null); 
-                fetchMateriales();
-            } else {
-                toast.error("Error al eliminar el material", { id: loadingToast });
-            }
-        } catch (error) { 
-            toast.error("Error de conexión", { id: loadingToast }); 
-        }
-    };
 
     const handleDownload = async (url, topicName) => {
         const tid = toast.loading('Preparando descarga...');
@@ -105,8 +87,6 @@ export default function Repositorio() {
                     <h2 className="dashboard-title">{isAdmin ? "Gestión Global" : "Repositorio"}</h2>
                     <p className="header-subtitle-students">Explora y califica los mejores recursos.</p>
                 </div>
-                <Button onClick={() => setOpenModal(true)} variant="contained" startIcon={<AddIcon />} className="btn-primary">Subir Material</Button>
-                <ModalMaterial open={openModal} onClose={() => setOpenModal(false)} onSuccess={fetchMateriales} />
             </div>
 
             <div className="repo-filters-container">
@@ -171,50 +151,16 @@ export default function Repositorio() {
                                 Descargar
                             </Button>
                             
-                            {(isAdmin || item.TutorID === user?.ID) && (
-                                <IconButton onClick={() => setItemToDelete(item)} style={{ backgroundColor: '#fee2e2', color: '#ef4444', borderRadius: '8px' }}>
-                                    <DeleteOutlineIcon fontSize="small" />
-                                </IconButton>
-                            )}
                         </div>
                     </Paper>
                 ))}
+
+                {materialesFiltrados.length === 0 && (
+                    <Typography className="repo-empty-state">No se encontraron materiales.</Typography>
+                )}
             </div>
 
-            <Dialog 
-                open={!!itemToDelete} 
-                onClose={() => setItemToDelete(null)} 
-                maxWidth="xs" 
-                fullWidth 
-                PaperProps={{ style: { borderRadius: '16px', padding: '10px' } }}
-            >
-                <Box p={2} textAlign="center">
-                    <Typography variant="h6" style={{ fontWeight: 800, color: '#1e293b', marginBottom: '10px' }}>
-                        Confirmar Eliminación
-                    </Typography>
-                    <Typography variant="body2" style={{ color: '#64748b', marginBottom: '20px', lineHeight: 1.5 }}>
-                        ¿Estás seguro de que deseas eliminar permanentemente el material <strong>"{itemToDelete?.Topic}"</strong>? Esta acción no se puede deshacer.
-                    </Typography>
-                    
-                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
-                        <Button 
-                            variant="outlined" 
-                            onClick={() => setItemToDelete(null)} 
-                            style={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, color: '#64748b', borderColor: '#cbd5e1' }}
-                        >
-                            Cancelar
-                        </Button>
-                        <Button 
-                            variant="contained" 
-                            color="error" 
-                            onClick={handleDelete} 
-                            style={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, boxShadow: 'none' }}
-                        >
-                            Eliminar
-                        </Button>
-                    </div>
-                </Box>
-            </Dialog>
+        
         </div>
     );
 }
