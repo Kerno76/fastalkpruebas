@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaLock, FaEnvelope } from 'react-icons/fa';
+import { FaLock, FaEnvelope, FaEye, FaEyeSlash } from 'react-icons/fa';
 import logo from '../../assets/FasTalk.jpeg'; 
 import '../../styles/LoginPage.css';
 
@@ -11,6 +11,7 @@ export default function LoginPage() {
   const [isExiting, setIsExiting] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = (e) => {
@@ -75,7 +76,10 @@ export default function LoginPage() {
             <label>Contraseña</label>
             <div className="input-wrapper-icon">
               <FaLock className="field-icon" />
-              <input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <input type={showPassword ? 'text' : 'password'} placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <span className="password-toggle-icon" onClick={() => setShowPassword(!showPassword)} style={{position: 'absolute',right: '14px',cursor: 'pointer',color: '#94a3b8',display: 'flex',alignItems: 'center',fontSize: '1.1rem'}}> 
+                {showPassword ? <FaEye /> : <FaEyeSlash /> }
+              </span>
             </div>
           </div>
 
