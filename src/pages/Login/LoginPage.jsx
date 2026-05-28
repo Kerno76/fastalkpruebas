@@ -36,11 +36,23 @@ export default function LoginPage() {
 
         // Redirigimos dependiendo del Rol exacto que viene de tu BD
         setTimeout(() => {
-          if (data.user.Rol === 'Admin') navigate('/');
-          else if (data.user.Rol === 'Tutor') navigate('/tutor');
-          else if (data.user.Rol === 'Student') navigate('/estudianteDash');
-          else if (data.user.Rol === 'Reviewer') navigate('/dashboard-revisor');
-          else navigate('/'); // Por si acaso
+          const rol = data.user.Rol;
+          const rutaPreferida = localStorage.getItem(`defaultHome_${rol}`);
+          let rutaDestino = '';
+
+          if (rol === 'Admin') {
+            rutaDestino = rutaPreferida || '/';
+          } else if (rol === 'Tutor') {
+            rutaDestino = rutaPreferida || '/tutor';
+          } else if (rol === 'Student') {
+            rutaDestino = rutaPreferida || '/estudianteDash';
+          } else if (rol === 'Reviewer') {
+            rutaDestino = rutaPreferida || '/dashboard-revisor';
+          } else {
+            rutaDestino = '/'; // Por si acaso falla el rol
+          }
+
+          navigate(rutaDestino, { replace: true });
         }, 600);
 
       } else {

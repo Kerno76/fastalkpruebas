@@ -7,6 +7,12 @@ import "../styles/Calendar.css";
 export const CalendarWidget = ({ fechasAgendadas = [], onDateSelect }) => {
     const [date, setDate] = useState(new Date());
 
+    // Leemos la preferencia guardada (0 = Domingo, 1 = Lunes)
+    const firstDayPref = localStorage.getItem('firstDayOfWeek') || '0';
+
+    // Le asignamos el tipo de calendario que react-calendar entiende ya que este debe ser por una propiedad aparte
+    const calendarFormat = firstDayPref === '1' ? 'iso8601' : 'gregory';
+
     const handleDateChange = (newDate) => {
         setDate(newDate);
         if (onDateSelect) {
@@ -41,6 +47,9 @@ export const CalendarWidget = ({ fechasAgendadas = [], onDateSelect }) => {
                 onChange={handleDateChange}
                 value={date}
                 tileContent={renderPuntitos}
+
+                /* Aqui le pasamos ese cambio nuevo */
+                calendarType={calendarFormat}
             />
         </div>
     );

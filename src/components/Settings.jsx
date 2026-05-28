@@ -190,28 +190,116 @@ export function ProfileEditor() {
 }
 
 export function Preferences({ darkMode, toggleTheme }) {
+
+  // Obtenemos al usuario para saber su rol
+  const userString = localStorage.getItem('user');
+  const user = userString ? JSON.parse(userString) : {};
+  const rol = user.Rol;
+
+  // Leemos lo que haya en localStorage o asignamos valores por defecto
+  const [lang, setLang] = useState(localStorage.getItem('appLanguage') || 'es');
+  const [firstDay, setFirstDay] = useState(localStorage.getItem('firstDayOfWeek') || '0'); // 0 = Domingo, 1 = Lunes
+  
+  // Como fallback, si no hay nada guardado, lo dejamos vacío para que el Login decida
+  const [homePage, setHomePage] = useState(localStorage.getItem(`defaultHome_${rol}`) || '');
+
+  const handleLanguageChange = (e) => {
+    const newLang = e.target.value;
+    setLang(newLang);
+    localStorage.setItem('appLanguage', newLang);
+    
+    toast.success("Idioma actualizado", { icon: '🌐' });
+  };
+
+  const handleFirstDayChange = (e) => {
+    const newDay = e.target.value;
+    setFirstDay(newDay);
+    localStorage.setItem('firstDayOfWeek', newDay);
+    toast.success("Calendario actualizado", { icon: '📅' });
+  };
+
+  const handleHomeChange = (e) => {
+    const newHome = e.target.value;
+    setHomePage(newHome);
+    localStorage.setItem(`defaultHome_${rol}`, newHome);
+    toast.success("Página de inicio actualizada", { icon: '🏠' });
+  };
+
   return (
     <div className="settingsThings">
       <h3 className="settings-header">Preferencias</h3>
       <p className="settings-desc">Configuraciones del sistema y experiencia de usuario</p>
       
       <div className="formGrid settings-grid-margin">
+
         <div className="formField">
-          <label htmlFor="timezone">Zona Horaria</label>
-          <select id="timezone" defaultValue="America/Mexico_City" className="select-field">
-            <option value="America/Mexico_City">Hora Central (CST) - Puebla/CDMX</option>
-            <option value="America/Tijuana">Hora del Pacífico (PST)</option>
-            <option value="America/Cancun">Hora del Este (EST)</option>
+          <label htmlFor="firstDay">Inicio de la semana</label>
+          <select id="firstDay" value={firstDay} onChange={handleFirstDayChange} className="select-field">
+            <option value="0">Domingo</option>
+            <option value="1">Lunes</option>
           </select>
         </div>
 
         <div className="formField">
-          <label htmlFor="language">Idioma</label>
-          <select id="language" defaultValue="es" className="select-field">
+          <label htmlFor="language">Idioma del Sistema</label>
+          <select id="language" value={lang} onChange={handleLanguageChange} className="select-field">
             <option value="es">Español</option>
             <option value="en">English</option>
+            <option value="fr">Français</option>
           </select>
         </div>
+
+        <div className="formField" style={{ gridColumn: '1 / -1', maxWidth: '350px' }}>
+          <label htmlFor="homePage">Página al iniciar sesión</label>
+          <select id="homePage" value={homePage} onChange={handleHomeChange} className="select-field">
+
+            <option value="">Dashboard</option>
+
+            {/* Opciones solo para Admins */}
+            {rol === 'Admin' && (
+                <>
+                    <option value="/estudiantes">Control de Estudiantes</option>
+                    <option value="/tutores">Control de Tutores</option>
+                    <option value="/revisores">Control de Revisores</option>
+                    <option value="/cursos">Control de Cursos</option>
+                    <option value="/cierre-cursos">Cierre de Cursos</option>
+                    <option value="/asistente-sql">Asistente IA (SQL)</option>
+                </>
+            )}
+
+            {/* Opciones solo para Tutores */}
+            {rol === 'Tutor' && (
+                <>
+                    <option value="/mis-estudiantes">Mis Estudiantes</option>
+                    <option value="/agendar">Agendar Sesión</option>
+                    <option value="/registro">Registro de Sesiones</option>
+                    <option value="/historial">Historial de Sesiones</option>
+                    <option value="/tareas">Asignar Tareas</option>
+                    <option value="/calificar">Calificar Tareas</option>
+                    <option value="/repositorio">Repositorio</option>
+                    <option value="/evaluacion-cursos">Evaluacion Final de Cursos</option>
+                </>
+            )}
+
+            {/* Opciones solo para Estudiantes */}
+            {rol === 'Student' && (
+                <>
+                    <option value="/miTutor">Mi Tutor</option>
+                    <option value="/mis-sesiones">Mis Sesiones</option>
+                    <option value="/mis-tareas">Mis Tareas</option>
+                </>
+            )}
+
+            {/* Opciones solo para Revisores */}
+            {rol === 'Reviewer' && (
+                <>
+                    <option value="/visitas">Visitas a Clases</option>
+                </>
+            )}
+            
+          </select>
+        </div>
+
       </div>
 
       <div className="settings-row border-top">

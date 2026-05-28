@@ -46,7 +46,10 @@ export default function TutorDashboard() {
     const [openNotifModal, setOpenNotifModal] = useState(false);
     const [selectedNotif, setSelectedNotif] = useState(null);
 
-    const metaHoras = 120; 
+    const [openDetalleHoras, setOpenDetalleHoras] = useState(false);
+
+    const horasTotales = dashData.totalHours || 0;
+    const horasMax = 200; 
 
     useEffect(() => {
         if (!tutorId) return;
@@ -137,7 +140,7 @@ export default function TutorDashboard() {
         }
     };
 
-    const progressRatio = Math.min(dashData.totalHours / metaHoras, 1);
+    const progressRatio = Math.min(dashData.totalHours / horasMax, 1);
     const strokeDashoffset = 251.2 - (progressRatio * 251.2);
 
     return (
@@ -147,18 +150,20 @@ export default function TutorDashboard() {
 
             <div className="dashboard-cards-grid">
                 <div className="dash-card">
-                    <div className="dash-card-header">
-                        <h1>Horas Acreditadas</h1>
-                        <span className="icon-wrapper blue-icon"><AccessTimeIcon /></span>
-                    </div>
-                    <div className="progress-container">
-                        <svg className="progress-circle" width="100" height="100">
-                            <circle cx="50" cy="50" r="40" className="circle-bg" />
-                            <circle cx="50" cy="50" r="40" className="circle-progress" style={{ strokeDasharray: 251.2, strokeDashoffset: strokeDashoffset }} />
-                        </svg>
-                        <div className="progress-text">
-                            <span className="progress-current">{dashData.totalHours}</span>
-                            <span className="progress-total">/ {metaHoras} hrs</span>
+                    <div className="dash-card" style={{ cursor: 'pointer', transition: '0.2s' }} onClick={() => setOpenDetalleHoras(true)}>
+                        <div className="dash-card-header">
+                            <h1>Horas Acreditadas</h1>
+                            <span className="icon-wrapper blue-icon"><AccessTimeIcon /></span>
+                        </div>
+                        <div className="progress-container">
+                            <svg className="progress-circle" width="100" height="100">
+                                <circle cx="50" cy="50" r="40" className="circle-bg" />
+                                <circle cx="50" cy="50" r="40" className="circle-progress" style={{ strokeDasharray: 251.2, strokeDashoffset: strokeDashoffset }} />
+                            </svg>
+                            <div className="progress-text">
+                                <span className="progress-current">{dashData.totalHours}</span>
+                                <span className="progress-total">/ {horasMax} hrs</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -314,6 +319,42 @@ export default function TutorDashboard() {
                         </Typography>
                     </div>
                 )}
+            </Dialog>
+
+            <Dialog open={openDetalleHoras} onClose={() => setOpenDetalleHoras(false)} maxWidth="sm" fullWidth PaperProps={{ style: { borderRadius: '20px', padding: '15px' } }}>
+                <div style={{ padding: '20px', position: 'relative' }}>
+                    <IconButton onClick={() => setOpenDetalleHoras(false)} style={{ position: 'absolute', right: 0, top: 0, color: '#94a3b8' }}>
+                        <CloseIcon />
+                    </IconButton>
+
+                    <Typography variant="h5" style={{ fontWeight: 800, color: '#1e293b', marginBottom: '20px' }}>
+                        Desglose de Horas
+                    </Typography>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '25px' }}>
+                        {/* Horas de tutoría dadas */}
+                        <Paper elevation={0} style={{ padding: '15px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Typography variant="body1" style={{ fontWeight: 700, color: '#475569' }}>Horas de tutoría dadas (Reales):</Typography>
+                            <Typography variant="h6" style={{ fontWeight: 800, color: '#0369a1' }}>
+                                {/* Reemplaza el 58 por la variable dinámica si la tienes */}
+                                {dashData.horasTrabajadas || 0} / 58 hrs mínimas
+                            </Typography>
+                        </Paper>
+
+                        {/* Horas Acreditadas progresivas */}
+                        <Paper elevation={0} style={{ padding: '15px', backgroundColor: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Typography variant="body1" style={{ fontWeight: 800, color: '#065f46' }}>Horas Acreditadas (Progresivas):</Typography>
+                            <Typography variant="h6" style={{ fontWeight: 800, color: '#059669' }}>
+                                {horasTotales || 0} / {horasMax || 200} hrs
+                            </Typography>
+                        </Paper>
+                    </div>
+
+                    <Typography variant="caption" style={{ display: 'block', textAlign: 'center', backgroundColor: '#fee2e2', color: '#b91c1c', padding: '15px', borderRadius: '8px', fontWeight: 700, lineHeight: 1.5 }}>
+                        <strong style={{ display: 'block', marginBottom: '8px', fontSize: '0.85rem' }}>⚠️ ESTAS HORAS ESTÁN SUJETAS A PRUEBAS Y ES UN ESTIMADO DE LAS REALES.</strong>
+                        Este número de horas corresponde al 80% de las horas que puedes obtener bajo tu programa asignado. Por favor comunícate con el responsable del programa para saber tu acreditación final conforme a tus entregables extras.
+                    </Typography>
+                </div>
             </Dialog>
         </div>
     );

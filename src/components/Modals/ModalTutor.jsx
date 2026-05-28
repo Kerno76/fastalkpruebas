@@ -18,7 +18,8 @@ export default function ModalTutor({ open, onClose }) {
     telefono: '',
     hobbies: '',
     career: '',
-    notes: ''
+    notes: '',
+    program: ''
   });
 
   const handleChange = (e) => {
@@ -26,7 +27,7 @@ export default function ModalTutor({ open, onClose }) {
   };
 
   const handleRegistrar = async () => {
-    if (!formData.nombre || !formData.email || !formData.language || !formData.BirthDate || !formData.telefono || !formData.hobbies || !formData.career) {
+    if (!formData.nombre || !formData.email || !formData.language || !formData.BirthDate || !formData.telefono || !formData.hobbies || !formData.career || !formData.programa) {
       toast.error("Todos los campos (excepto Notas) son obligatorios.");
       return;
     }
@@ -46,6 +47,7 @@ export default function ModalTutor({ open, onClose }) {
           hobbies: formData.hobbies,
           career: formData.career,
           notes: formData.notes,
+          programa: formData.programa,
           rol: "Tutor" 
         })
       });
@@ -54,7 +56,7 @@ export default function ModalTutor({ open, onClose }) {
 
       if (data.success) {
         toast.success('¡Tutor registrado con éxito!', { id: loadingToast, duration: 3000, icon: '🎓' });
-        setFormData({ nombre: '', BirthDate: '', language: '', email: '', telefono: '', hobbies: '', career: '', notes: '' });
+        setFormData({ nombre: '', BirthDate: '', language: '', email: '', telefono: '', hobbies: '', career: '', notes: '', programa: '' });
         onClose();
       } else {
         toast.error(data.message || 'Error al registrar el tutor', { id: loadingToast });
@@ -105,6 +107,19 @@ export default function ModalTutor({ open, onClose }) {
             <div className="form-group">
                 <label>Carrera (Siglas)</label>
                 <TextField fullWidth placeholder="Ej. ITC, ISD" name="career" inputProps={{ maxLength: 6 }} value={formData.career} onChange={handleChange} />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group" style={{ width: '100%' }}>
+              <label>Programa de Servicio Social</label>
+              <Select fullWidth displayEmpty name="programa" value={formData.programa} onChange={handleChange}>
+                  <MenuItem value="" disabled style={{ display: 'none' }}>Selecciona el plan...</MenuItem>
+                  <MenuItem value={1}>Público General</MenuItem>
+                  <MenuItem value={2}>Secundarias - Ordinario</MenuItem>
+                  <MenuItem value={3}>Secundarias - Extraordinario normal</MenuItem>
+                  <MenuItem value={4}>Secundarias - Extraordinario con concesión</MenuItem>
+              </Select>
             </div>
           </div>
 
