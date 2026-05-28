@@ -10,6 +10,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import toast from 'react-hot-toast'; 
 import ModalEstudiante from '../../components/Modals/ModalEstudiante';
+import {Tooltip} from '@mui/material';
 
 import '../../styles/App.css';
 import '../../styles/Organizador/Estudiantes.css';
@@ -355,17 +356,20 @@ export default function ControlEstudiantes() {
                                                     <span className={`status ${estado === 'Inactive' ? 'status-inactive' : ''}`}>{estado}</span>
                                                     
                                                     {isAdmin && (
-                                                        <IconButton 
-                                                            size="small" 
-                                                            style={{ 
-                                                                color: estado === 'Active' ? '#ef4444' : '#10b981', 
-                                                                backgroundColor: estado === 'Active' ? 'transparent' : '#dcfce7',
-                                                                padding: '4px' 
-                                                            }} 
-                                                            onClick={() => handleAbrirConfirmacionToggle(item, estado, tutorAsignado, estaEnrolado)}
-                                                        >
-                                                            {estado === 'Active' ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
-                                                        </IconButton>
+                                                        <Tooltip title={estado === 'Active' ? 'Deshabilitar estudiante' : 'Habilitar estudiante'} arrow>
+                                                            <IconButton 
+                                                                size="small" 
+                                                                style={{ 
+                                                                    color: estado === 'Active' ? '#ef4444' : '#10b981', 
+                                                                    backgroundColor: estado === 'Active' ? 'transparent' : '#dcfce7',
+                                                                    padding: '4px' 
+                                                                }} 
+                                                                onClick={() => handleAbrirConfirmacionToggle(item, estado, tutorAsignado, estaEnrolado)}
+                                                            >
+                                                                {estado === 'Active' ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
+                                                            </IconButton>
+                                                        </Tooltip>
+
                                                     )}
                                                 </div>
                                             </div>
