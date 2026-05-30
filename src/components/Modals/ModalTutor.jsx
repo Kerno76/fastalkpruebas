@@ -19,7 +19,7 @@ export default function ModalTutor({ open, onClose }) {
     hobbies: '',
     career: '',
     notes: '',
-    program: ''
+    programa: ''
   });
 
   const handleChange = (e) => {

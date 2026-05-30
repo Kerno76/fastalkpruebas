@@ -49,7 +49,41 @@ export default function TutorDashboard() {
     const [openDetalleHoras, setOpenDetalleHoras] = useState(false);
 
     const horasTotales = dashData.totalHours || 0;
-    const horasMax = 200; 
+
+    const calcularMetricasHoras = () => {
+        const horasReales = dashData.horasTrabajadas || 0; 
+        const entregables = dashData.entregables || { cartas: false, video: false, extras: 0, bonus: 0 };
+
+        const config = dashData.detallesPrograma || {};
+
+        // Asignamos las variables dinámicas
+        const nombrePrograma = config.ProgramName || "Cargando programa...";
+        const horasMax = parseFloat(config.MaxHours) || 200;
+        const horasReq80 = parseFloat(config.Required80Hours) || 58;
+
+        // Calculos
+        const horas80Max = horasMax * 0.80;
+        let horasBitacoras = (horasReales >= horasReq80) ? horas80Max : (horasReales / horasReq80) * horas80Max;
+
+        const horasCartas = entregables.cartas ? (horasMax * 0.10) : 0;
+        const horasVideo = entregables.video ? (horasMax * 0.10) : 0;
+        const horasExtras = Math.min(entregables.extras, 3) * 5;
+        const bonus = entregables.bonus;
+
+        let totalAcreditado = horasBitacoras + horasCartas + horasVideo + horasExtras + bonus;
+        totalAcreditado = Math.min(totalAcreditado, horasMax);
+
+        return { 
+            nombrePrograma, 
+            horasMax, 
+            horasReq80, 
+            horasReales,
+            horasBitacoras: horasBitacoras.toFixed(1),
+            totalAcreditado: totalAcreditado.toFixed(1)
+        };
+    };
+
+    const metricas = calcularMetricasHoras();
 
     useEffect(() => {
         if (!tutorId) return;
@@ -140,7 +174,7 @@ export default function TutorDashboard() {
         }
     };
 
-    const progressRatio = Math.min(dashData.totalHours / horasMax, 1);
+    const progressRatio = Math.min(metricas.horasReales / metricas.horasMax, 1);
     const strokeDashoffset = 251.2 - (progressRatio * 251.2);
 
     return (
@@ -161,8 +195,8 @@ export default function TutorDashboard() {
                                 <circle cx="50" cy="50" r="40" className="circle-progress" style={{ strokeDasharray: 251.2, strokeDashoffset: strokeDashoffset }} />
                             </svg>
                             <div className="progress-text">
-                                <span className="progress-current">{dashData.totalHours}</span>
-                                <span className="progress-total">/ {horasMax} hrs</span>
+                                <span className="progress-current">{Math.round(metricas.horasBitacoras)}</span>
+                                <span className="progress-total">/ {metricas.horasMax} hrs</span>
                             </div>
                         </div>
                     </div>
@@ -327,32 +361,40 @@ export default function TutorDashboard() {
                         <CloseIcon />
                     </IconButton>
 
-                    <Typography variant="h5" style={{ fontWeight: 800, color: '#1e293b', marginBottom: '20px' }}>
+                    <Typography variant="h5" style={{ fontWeight: 800, color: '#1e293b', marginBottom: '5px' }}>
                         Desglose de Horas
+                    </Typography>
+                    <Typography variant="body2" style={{ color: '#64748b', marginBottom: '20px', fontWeight: 600 }}>
+                        Programa: {metricas.nombrePrograma}
                     </Typography>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '25px' }}>
-                        {/* Horas de tutoría dadas */}
+                        
                         <Paper elevation={0} style={{ padding: '15px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <Typography variant="body1" style={{ fontWeight: 700, color: '#475569' }}>Horas de tutoría dadas (Reales):</Typography>
+                            <Typography variant="body1" style={{ fontWeight: 700, color: '#475569' }}>Horas Reales Dadas:</Typography>
                             <Typography variant="h6" style={{ fontWeight: 800, color: '#0369a1' }}>
-                                {/* Reemplaza el 58 por la variable dinámica si la tienes */}
-                                {dashData.horasTrabajadas || 0} / 58 hrs mínimas
+                                {metricas.horasReales} / {metricas.horasReq80} hrs
                             </Typography>
                         </Paper>
 
-                        {/* Horas Acreditadas progresivas */}
+                        <Paper elevation={0} style={{ padding: '15px', backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Typography variant="body1" style={{ fontWeight: 700, color: '#1d4ed8' }}>Valor en Bitácoras (80%):</Typography>
+                            <Typography variant="h6" style={{ fontWeight: 800, color: '#1e40af' }}>
+                                {metricas.horasBitacoras} hrs
+                            </Typography>
+                        </Paper>
+
                         <Paper elevation={0} style={{ padding: '15px', backgroundColor: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <Typography variant="body1" style={{ fontWeight: 800, color: '#065f46' }}>Horas Acreditadas (Progresivas):</Typography>
+                            <Typography variant="body1" style={{ fontWeight: 800, color: '#065f46' }}>Total Acreditado Oficial:</Typography>
                             <Typography variant="h6" style={{ fontWeight: 800, color: '#059669' }}>
-                                {horasTotales || 0} / {horasMax || 200} hrs
+                                {metricas.totalAcreditado} / {metricas.horasMax} hrs
                             </Typography>
                         </Paper>
                     </div>
 
                     <Typography variant="caption" style={{ display: 'block', textAlign: 'center', backgroundColor: '#fee2e2', color: '#b91c1c', padding: '15px', borderRadius: '8px', fontWeight: 700, lineHeight: 1.5 }}>
-                        <strong style={{ display: 'block', marginBottom: '8px', fontSize: '0.85rem' }}>⚠️ ESTAS HORAS ESTÁN SUJETAS A PRUEBAS Y ES UN ESTIMADO DE LAS REALES.</strong>
-                        Este número de horas corresponde al 80% de las horas que puedes obtener bajo tu programa asignado. Por favor comunícate con el responsable del programa para saber tu acreditación final conforme a tus entregables extras.
+                        <strong style={{ display: 'block', marginBottom: '8px', fontSize: '0.85rem' }}>⚠️ AVISO IMPORTANTE</strong>
+                        Este desglose contempla tus bitácoras actuales. Comunícate con el administrador para confirmar el puntaje de tus cartas, videos y extras.
                     </Typography>
                 </div>
             </Dialog>

@@ -8,7 +8,7 @@ router.get('/dashboard/:tutorId', async (req, res) => {
         const { data: profile, error: profErr } = await supabaseAdmin.from('UsersProfiles').select('Name').eq('ID', tutorId).single();
         if (profErr) throw profErr;
 
-        const { data: tutorInfo } = await supabaseAdmin.from('Tutors').select('TotalHours').eq('ID', tutorId).single();
+        const { data: tutorInfo } = await supabaseAdmin.from('Tutors').select('TotalHours, ProgramType, ProgramSettings ( ProgramName, MaxHours, Required80Hours )').eq('ID', tutorId).single();
         const totalHours = tutorInfo?.TotalHours || 0;
 
         const { data: courses, error: courErr } = await supabaseAdmin
@@ -61,7 +61,7 @@ router.get('/dashboard/:tutorId', async (req, res) => {
 
         res.status(200).json({
             success: true,
-            data: { name: profile.Name, totalHours, totalStudents: totalEstudiantes, nivelesAsignados: Array.from(niveles).join(' y ') || 'Ninguno', proximaSesion }
+            data: { name: profile.Name, totalHours, totalStudents: totalEstudiantes, nivelesAsignados: Array.from(niveles).join(' y ') || 'Ninguno', proximaSesion, ProgramType: tutorInfo?.ProgramType, horasTrabajadas: totalHours, detallesPrograma: tutorInfo?.ProgramSettings || null,}
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

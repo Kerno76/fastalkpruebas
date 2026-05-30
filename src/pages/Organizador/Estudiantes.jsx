@@ -225,7 +225,8 @@ export default function ControlEstudiantes() {
     const totalEstudiantes = estudiantes.length;
     const activosCount = estudiantes.filter(e => (e.State || 'Active') === 'Active').length;
     const inactivosCount = totalEstudiantes - activosCount;
-
+    
+    // esto se tiene que cambiar
     return (
         <div className='mainContent'>
             <div className="header-container" style={{ margin: '0 0 20px 0', alignItems: 'center', width: '100%', display: 'flex', justifyContent: 'space-between', flexWrap: 'nowrap' }}>

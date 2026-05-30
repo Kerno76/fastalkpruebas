@@ -38,7 +38,7 @@ const getTemplateCorreo = (rol, nombre, email, passwordTemporal, language) => {
 };
 
 router.post('/registrar', async (req, res) => {
-    const { nombre, email, rol, hobbies, language, Phone, career, BirthDate, CurrentLevel, assignedTutors, notes } = req.body; 
+    const { nombre, email, rol, hobbies, language, Phone, career, BirthDate, CurrentLevel, assignedTutors, notes, programa } = req.body; 
     
     const passwordTemporal = '12345678';
 
@@ -101,7 +101,8 @@ router.post('/registrar', async (req, res) => {
                     Hobbies: hobbies,
                     Career: career,
                     Notes: notes,
-                    DateJoined: localISOTime
+                    DateJoined: localISOTime,
+                    ProgramType: programa
                 }]);
             if (tutorError) throw tutorError;
         } else if (rol === 'Student') {
@@ -163,29 +164,37 @@ router.post('/registrar', async (req, res) => {
 });
 
 router.put('/editar-tutor', async (req, res) => {
-    const { userId, Name, BirthDate, Phone, Language, Career, Hobbies, Notes } = req.body;
+    const { userId, Name, BirthDate, Phone, Language, Career, Hobbies, Notes, Programa } = req.body;
     try {
         const { data: tutorActual, error: checkErr } = await supabaseAdmin
             .from('Tutors')
-            .select('Language')
+            .select('Language', 'ProgramType')
             .eq('ID', userId)
             .single();
 
         if (checkErr) throw checkErr;
 
-        if (tutorActual && tutorActual.Language !== Language) {
-            const { data: cursosAsignados, error: cursosErr } = await supabaseAdmin
-                .from('Courses')
-                .select('CourseID')
-                .eq('TutorID', userId);
+        if (tutorActual) {
+            const intentoCambiarIdioma = tutorActual.Language !== Language;
+            const intentoCambiarPrograma = tutorActual.ProgramType != Programa; 
 
-            if (cursosErr) throw cursosErr;
+            if (intentoCambiarIdioma || intentoCambiarPrograma) {
+                // Buscamos si tiene cursos asignados
+                const { data: cursosAsignados, error: cursosErr } = await supabaseAdmin
+                    .from('Courses')
+                    .select('CourseID')
+                    .eq('TutorID', userId);
 
-            if (cursosAsignados && cursosAsignados.length > 0) {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: `No se puede cambiar el idioma a ${Language} porque el tutor tiene cursos asignados. Debes retirarlo de sus cursos primero.` 
-                });
+                if (cursosErr) throw cursosErr;
+
+                // Si tiene cursos, bloqueamos la acción y le decimos exactamente qué falló
+                if (cursosAsignados && cursosAsignados.length > 0) {
+                    const motivo = intentoCambiarIdioma ? 'el idioma' : 'el programa de servicio social';
+                    return res.status(400).json({ 
+                        success: false, 
+                        message: `No se puede cambiar ${motivo} porque el tutor ya tiene cursos o alumnos asignados. Debes retirarlo de sus cursos primero.` 
+                    });
+                }
             }
         }
 
@@ -197,7 +206,7 @@ router.put('/editar-tutor', async (req, res) => {
 
         const { error: tutErr } = await supabaseAdmin
             .from('Tutors')
-            .update({ Phone, Language, Career, Hobbies, Notes })
+            .update({ Phone, Language, Career, Hobbies, Notes, ProgramType: Programa })
             .eq('ID', userId);
         if (tutErr) throw tutErr;
 
@@ -332,7 +341,7 @@ router.get('/tutores', async (req, res) => {
             .from('UsersProfiles')
             .select(`
                 ID, Name, Email, Rol, State, BirthDate,
-                Tutors ( Phone, Language, Hobbies, Career, TotalHours, DateJoined, Notes ) 
+                Tutors ( Phone, Language, Hobbies, Career, TotalHours, DateJoined, Notes, ProgramType ) 
             `) 
             .eq('Rol', 'Tutor');
 

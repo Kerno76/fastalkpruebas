@@ -42,7 +42,8 @@ export default function ControlTutores() {
         Language: '',
         Career: '',
         Hobbies: '',
-        Notes: ''
+        Notes: '',
+        Programa: ''
     });
 
     const fetchTutores = async () => {
@@ -87,7 +88,8 @@ export default function ControlTutores() {
             Language: rawTutorData.Language || '',
             Career: rawTutorData.Career || '',
             Hobbies: rawTutorData.Hobbies || '',
-            Notes: rawTutorData.Notes || ''
+            Notes: rawTutorData.Notes || '',
+            Programa: rawTutorData.ProgramType || ''
         });
         setIsEditing(false);
         setOpenDetalles(true);
@@ -184,6 +186,13 @@ export default function ControlTutores() {
     };
 
     const courseColors = { 'Inglés': 'bg-ingles', 'Francés': 'bg-frances' };
+
+    const nombresProgramas = {
+        1: 'Público General',
+        2: 'Secundarias - Ordinario',
+        3: 'Secundarias - Extraordinario normal',
+        4: 'Secundarias - Extraordinario con concesión'
+    };
 
     const tutoresFiltrados = tutores.filter((item) => {
         const busqueda = searchTerm.toLowerCase();
@@ -320,6 +329,8 @@ export default function ControlTutores() {
                         const horas = tutorData.TotalHours || '0';
                         const estudiantes = tutorData.StudentsN || '0'; 
                         const estado = item.State || 'Active';
+                        const programaId = tutorData.ProgramType;
+                        const textoPrograma = nombresProgramas[programaId] || 'Plan no asignado'
 
                         const tieneRevisor = item.Enrollments_Reviewers && item.Enrollments_Reviewers.length > 0;
                         const textoBotonRevisor = tieneRevisor ? "Ver Revisor" : "Asignar Revisor";
@@ -389,6 +400,16 @@ export default function ControlTutores() {
                                                             <span className="cont-career">{carrera}</span>
                                                         </div>
                                                     </div>
+
+                                                    <div className="info-row">
+                                                        <div className="info-item" style={{ flex: 1 }}>
+                                                            <span className="label">Programa</span>
+                                                            <span className="cont-career" style={{ backgroundColor: '#f1f5f9', color: '#475569', fontSize: '0.8rem' }}>
+                                                                {textoPrograma}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
                                                     <div className="info-row">
                                                         <div className="info-item">
                                                             <span className="label">Horas Acreditadas</span>
@@ -564,6 +585,28 @@ export default function ControlTutores() {
                                     fullWidth 
                                 />
                             </div>
+
+                            <TextField 
+                                select 
+                                label="Programa de Servicio Social" 
+                                name="Programa" 
+                                value={editFormData.Programa || ''} 
+                                onChange={(e) => {
+                                    if (isEditing && tutorSeleccionado?.tieneCursos) {
+                                        toast.error('No se puede cambiar el programa porque el tutor ya tiene cursos o alumnos asignados.', { icon: '⚠️' });
+                                        return;
+                                    }
+                                    setEditFormData({...editFormData, Programa: e.target.value});
+                                }}
+                                disabled={!isEditing} 
+                                size="small" 
+                                fullWidth
+                            >
+                                <MenuItem value={1}>Público General</MenuItem>
+                                <MenuItem value={2}>Secundarias - Ordinario</MenuItem>
+                                <MenuItem value={3}>Secundarias - Extraordinario normal</MenuItem>
+                                <MenuItem value={4}>Secundarias - Extraordinario con concesión</MenuItem>
+                            </TextField>
 
                             <TextField 
                                 label="Hobbies y Tags" 
