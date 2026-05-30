@@ -69,7 +69,7 @@ export default function ModalTutor({ open, onClose }) {
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth PaperProps={{ className: 'modal-container' }}>
+    <Dialog open={open} onClose={onClose} maxWidth={false} fullWidth PaperProps={{ className: 'modal-container', style: { maxWidth: '750px' } }}>
       <IconButton onClick={onClose} className="close-button">
         <CloseIcon />
       </IconButton>

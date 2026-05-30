@@ -1,19 +1,120 @@
 /* Estilo para el grupo de los botones*/
+
 .header-container {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: -15px;
-    margin-top: 30px;
     width: 100%;
-    padding-right: 20px;
+    margin-top: 10px !important;
+    margin-bottom: 0px !important;
+    position: relative;
+    gap: 20px;
     box-sizing: border-box;
+    flex-wrap: wrap; 
 }
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap; 
+}
+
+.dashboard-title {
+    margin: 0 !important;
+    white-space: nowrap;
+}
+
+/* Indicadores visuales en el encabezado */
+.stats-divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 20px 0 0 0px!important; 
+    padding: 0 !important;
+    height: auto !important;
+}
+
+.stat-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.stat-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.stat-number {
+    font-weight: 800 !important;
+    font-size: 0.95rem !important;
+}
+
+.stat-label {
+    font-weight: 800 !important;
+    font-size: 0.85rem !important;
+    letter-spacing: 0.5px;
+}
+
+/* Colores de los indicadores */
+/* 1. Total */
+.stat-total {
+    background-color: var(--card-bg, #ffffff);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.stat-text-total { color: var(--text-main, #1e293b) !important; }
+.stat-label-total { color: var(--student-label, #64748b) !important; }
+
+/* 2. Activos */
+.stat-active { background-color: #dcfce7; }
+.stat-text-active { color: #15803d !important; }
+.stat-label-active { color: #166534 !important; }
+
+/* 3. Inactivos */
+.stat-inactive { background-color: #fee2e2; }
+.stat-text-inactive { color: #b91c1c !important; }
+.stat-label-inactive { color: #991b1b !important; }
 
 .header-actions {
     display: flex;
     align-items: center;
     gap: 12px;
+    flex-shrink: 0; 
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap !important; 
+    width: 100%;
+    box-sizing: border-box;
+    justify-content: flex-start;
+    margin-bottom: 25px;
+    gap: 15px;
+}
+
+.actions .MuiTextField-root,
+.actions .MuiFormControl-root {
+    max-width: 100% !important; 
+}
+
+.btn-header-primary {
+    background-color: #68899D !important;
+    color: white !important;
+    text-transform: none !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    padding: 8px 16px !important;
+    box-shadow: none !important;
+    white-space: nowrap;
+}
+
+.btn-header-primary:hover {
+    background-color: #567283 !important;
 }
 
 .header-container-card {
@@ -40,10 +141,11 @@
 
 .cards-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
     gap: 20px;
-    padding: 20px;
+    padding: 10px 0;
     max-width: 100%;
+    box-sizing: border-box;
 }
 
 .revisor-card {
@@ -55,6 +157,7 @@
     flex-direction: column;
     gap: 20px;
     max-width: 100%;
+    box-sizing: border-box;
 }
 
 /* Parte de arriba: Avatar e Info */
@@ -195,15 +298,38 @@
 /* Responsividad */
 
 @media (max-width: 900px) {
-  .header-container {
-    flex-direction: column;      
-    align-items: flex-start;    
-    gap: 15px;                   
-  }
+    .header-container {
+        flex-direction: column;
+        justify-content: center;
+        gap: 20px;
+    }
 
-  .header-actions {
-    width: 100%;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
+    /* Agregamos comportamiento responsivo para el nuevo contenedor */
+    .header-controls {
+        flex-direction: column; 
+        width: 100%;
+        gap: 20px;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .dashboard-title {
+        text-align: center;
+        white-space: normal; /* Si la pantalla es enana, deja que el título baje de renglón */
+    }
+
+    .stats-divider {
+        margin: 0 !important;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .header-actions {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .btn-header-primary {
+        width: auto !important; /* Boton normal y centrada */
+    }
 }

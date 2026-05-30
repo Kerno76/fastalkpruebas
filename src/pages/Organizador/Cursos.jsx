@@ -337,9 +337,9 @@ export default function ControlCursos() {
                     <h2 className="dashboard-title" style={{ margin: 0 }}>Gestión de Cursos</h2>
                 </div>
 
-                <div className="header-actions" style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                <div className="header-actions">
                     
-                    <div style={{ display: 'flex', backgroundColor: '#e2e8f0', borderRadius: '10px', padding: '4px' }}>
+                    <div className='toggle-group'>
                         <Button 
                             startIcon={<ClassIcon />}
                             onClick={() => setViewMode('Actuales')}
@@ -373,9 +373,9 @@ export default function ControlCursos() {
                 </div>
             </div>
 
-            <hr className="divisor" style={{ marginBottom: '25px', borderTop: '1px solid #e0e4e8' }}/>
+            <hr className="divisor"/>
 
-            <div className="filters-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', alignItems: 'center' }}>
+            <div className="filters-container">
                 
                 <TextField 
                     placeholder="Buscar por curso o tutor..."

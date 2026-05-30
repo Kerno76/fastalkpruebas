@@ -18,6 +18,13 @@
   animation: fadeIn 0.8s ease-out;
 }
 
+.divisor {
+  box-sizing: border-box !important;
+  border-top: 1px solid var(--divisor) !important;
+  margin-bottom: 10px !important;
+  margin: 1em 0;
+}
+
 #Title {
   margin-top: -20px;
   color: var(--text-main) !important;

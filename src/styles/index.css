@@ -96,6 +96,8 @@
 
   --task-meta: #64748b;
   --task-title: #1e293b;
+
+  --divisor: #a6a3a3;
 }
 
 /* Tema oscuro */
@@ -179,6 +181,8 @@
 
   --task-meta: #ffffff;
   --task-title: #ffffff;
+
+  --divisor: #e2e8f0;
 }
 
 body{

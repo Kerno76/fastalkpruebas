@@ -225,37 +225,38 @@ export default function ControlEstudiantes() {
     const totalEstudiantes = estudiantes.length;
     const activosCount = estudiantes.filter(e => (e.State || 'Active') === 'Active').length;
     const inactivosCount = totalEstudiantes - activosCount;
-    
-    // esto se tiene que cambiar
+
     return (
         <div className='mainContent'>
-            <div className="header-container" style={{ margin: '0 0 20px 0', alignItems: 'center', width: '100%', display: 'flex', justifyContent: 'space-between', flexWrap: 'nowrap' }}>
+            <div className="header-container">
                 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'nowrap' }}>
-                    <h2 className="dashboard-title" style={{ fontSize: '1.8rem', fontWeight: 800, color: '#1e293b', whiteSpace: 'nowrap', lineHeight: 1, margin: 0 }}>
-                        Gestión de Estudiantes
-                    </h2>
+                <h2 className="dashboard-title">
+                    Gestión de Estudiantes
+                </h2>
+
+                <div className='header-controls'>
                     
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', borderLeft: '2px solid #e2e8f0', paddingLeft: '20px', height: '35px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#ffffff', display: 'flex', justifyContent: 'center', alignItems: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-                                <Typography style={{ fontWeight: 800, fontSize: '0.95rem', color: '#1e293b' }}>{totalEstudiantes}</Typography>
+                    <div className='stats-divider'>
+                        
+                        <div className="stat-group">
+                            <div className="stat-circle stat-total">
+                                <Typography className="stat-number stat-text-total">{totalEstudiantes}</Typography>
                             </div>
-                            <Typography style={{ fontWeight: 800, color: '#64748b', fontSize: '0.85rem', letterSpacing: '0.5px' }}>TOTAL</Typography>
+                            <Typography className="stat-label stat-label-total">TOTAL</Typography>
                         </div>
                         
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#dcfce7', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                                <Typography style={{ fontWeight: 800, fontSize: '0.95rem', color: '#15803d' }}>{activosCount}</Typography>
+                        <div className='stat-group'>
+                            <div className="stat-circle stat-active">
+                                <Typography className="stat-number stat-text-active">{activosCount}</Typography>
                             </div>
-                            <Typography style={{ fontWeight: 800, color: '#166534', fontSize: '0.85rem', letterSpacing: '0.5px' }}>ACTIVOS</Typography>
+                            <Typography className="stat-label stat-label-active">ACTIVOS</Typography>
                         </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#fee2e2', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                                <Typography style={{ fontWeight: 800, fontSize: '0.95rem', color: '#b91c1c' }}>{inactivosCount}</Typography>
+                        <div className='stat-group'>
+                            <div className="stat-circle stat-inactive">
+                                <Typography className="stat-number stat-text-inactive">{inactivosCount}</Typography>
                             </div>
-                            <Typography style={{ fontWeight: 800, color: '#991b1b', fontSize: '0.85rem', letterSpacing: '0.5px' }}>INACTIVOS</Typography>
+                            <Typography className="stat-label stat-label-inactive">INACTIVOS</Typography>
                         </div>
                     </div>
                 </div>
@@ -266,7 +267,7 @@ export default function ControlEstudiantes() {
                             onClick={() => setOpenModal(true)} 
                             variant="contained" 
                             startIcon={<AddIcon />} 
-                            style={{ backgroundColor: '#68899D', textTransform: 'none', borderRadius: '8px', fontWeight: 600, padding: '8px 16px', boxShadow: 'none', whiteSpace: 'nowrap' }}
+                            className="btn-header-primary"
                         > 
                             Registrar nuevo estudiante 
                         </Button>
@@ -275,9 +276,9 @@ export default function ControlEstudiantes() {
                 </div>
             </div>
 
-            <hr className="divisor" style={{ marginBottom: '20px', border: 'none', borderTop: '1px solid #e2e8f0' }}/>
+            <hr className="divisor"/>
             
-            <div className='actions' style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: '25px', gap: '15px' }}>
+            <div className='actions'>
                 <TextField 
                     placeholder="Buscar estudiante por nombre o correo..."
                     variant="outlined"
