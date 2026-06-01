@@ -46,7 +46,7 @@ export default function VisitasRevisor() {
             padding: '20px', 
             borderRadius: '16px', 
             border: esHoy ? '2px solid #bae6fd' : '1px solid #e2e8f0', 
-            backgroundColor: esHoy ? '#f0f9ff' : '#ffffff',
+            backgroundColor: esHoy ? 'var(--bg-section, #f0f9ff)' : 'var(--student-card, #ffffff)',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
@@ -60,16 +60,16 @@ export default function VisitasRevisor() {
                         size="small" 
                         style={{ backgroundColor: esHoy ? '#e0f2fe' : '#f1f5f9', color: esHoy ? '#0369a1' : '#475569', fontWeight: 700 }} 
                     />
-                    <Typography variant="body2" style={{ fontWeight: 800, color: esHoy ? '#ea580c' : '#64748b' }}>
+                    <Typography variant="body2" style={{ fontWeight: 800, color: esHoy ? '#ea580c' : 'var(--student-label, #64748b)' }}>
                         {sesion.date} • {sesion.startTime.substring(0,5)}
                     </Typography>
                 </div>
                 
-                <Typography variant="h6" style={{ fontWeight: 800, color: '#1e293b', marginBottom: '8px', lineHeight: 1.2 }}>
+                <Typography variant="h6" style={{ fontWeight: 800, color: 'var(--text-main, #1e293b)', marginBottom: '8px', lineHeight: 1.2 }}>
                     {sesion.topic}
                 </Typography>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#475569' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px',color: 'var(--student-label, #475569)' }}>
                     <AccountCircleIcon fontSize="small" />
                     <Typography variant="body2" style={{ fontWeight: 600 }}>Tutor: {sesion.tutorName}</Typography>
                 </div>
@@ -82,7 +82,7 @@ export default function VisitasRevisor() {
                 onClick={() => sesion.url ? window.open(sesion.url, '_blank') : toast.error("El tutor no adjuntó un enlace")}
                 style={{ 
                     backgroundColor: esHoy ? '#0ea5e9' : 'transparent',
-                    color: esHoy ? 'white' : '#68899D',
+                    color: esHoy ? 'white' : 'var(--text-main, #68899D)',
                     borderColor: esHoy ? 'transparent' : '#68899D',
                     textTransform: 'none', 
                     fontWeight: 700, 
@@ -126,7 +126,7 @@ export default function VisitasRevisor() {
             </div>
 
             <div>
-                <Typography variant="h6" style={{ fontWeight: 800, color: '#475569', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                <Typography variant="h6" style={{ fontWeight: 800, color: 'var(--text-main, #475569)', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
                     <EventIcon /> Próximamente (Agenda General)
                 </Typography>
 

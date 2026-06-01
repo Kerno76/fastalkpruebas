@@ -92,3 +92,15 @@
     border-radius: 10px !important;
     padding: 8px 25px !important;
 }
+
+.textSecondary{
+    color: var(--text-main) !important;
+    margin-bottom: 10px !important;
+}
+
+.seleccionRevisor{
+    font-size: '0.9rem'; 
+    font-weight: 700; 
+    margin-bottom: '8px';
+    color: var(--text-main); 
+}

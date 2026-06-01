@@ -635,7 +635,7 @@ export default function ControlCursos() {
                                             }
                                         >
                                             <ListItemAvatar><Avatar sx={{ width: 32, height: 32 }}><AccountCircleIcon /></Avatar></ListItemAvatar>
-                                            <MuiListItemText primary={al.Name || 'Desconocido'} primaryTypographyProps={{ style: { fontWeight: 600, fontSize: '0.9rem' } }} />
+                                            <MuiListItemText primary={al.Name || 'Desconocido'} primaryTypographyProps={{ style: { fontWeight: 600, fontSize: '0.9rem', color: 'var(--student-label)' } }} />
                                         </ListItem>
                                     ))}
                                     {alumnosInscritos.length === 0 && <Typography variant="body2" align="center" style={{ padding: '10px', color: '#94a3b8' }}>No hay alumnos inscritos.</Typography>}
@@ -646,7 +646,7 @@ export default function ControlCursos() {
                                 <>
                                     <Divider />
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                        <Typography variant="body2" style={{ fontWeight: 800, color: '#1e293b' }}>Integrar nuevos alumnos</Typography>
+                                        <Typography variant="body2" style={{ fontWeight: 800, color: 'var(--text-main, #1e293b)'}}>Integrar nuevos alumnos</Typography>
                                         <Select multiple fullWidth displayEmpty value={alumnosNuevos} onChange={(e) => setAlumnosNuevos(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)} input={<OutlinedInput sx={{ borderRadius: '12px' }} />} renderValue={(selected) => selected.length === 0 ? <em>Selecciona alumnos disponibles</em> : <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>{selected.map(v => <Chip key={v} label={estudiantesFiltrados.find(s => s.ID === v)?.Name || 'Alumno'} size="small" color="primary" />)}</Box>} MenuProps={MenuProps}>
                                             {estudiantesFiltrados.map((s) => <MenuItem key={s.ID} value={s.ID}><Checkbox checked={alumnosNuevos.indexOf(s.ID) > -1} /><ListItemText primary={`${s.Name} (Nivel Real: ${s.CurrentLevel})`} /></MenuItem>)}
                                             {estudiantesFiltrados.length === 0 && <MenuItem disabled>No hay alumnos de este idioma disponibles</MenuItem>}

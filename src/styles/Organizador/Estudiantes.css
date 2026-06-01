@@ -179,11 +179,17 @@
 .student-name-title {
     font-weight: 700 !important;
     font-size: 1.1rem !important;
-    color: var(--text-main);
+    margin-left: 10px !important;
+    color: var(--text-main) !important;
     margin-bottom: 0 !important;
     line-height: 1.2;
     word-break: break-word;
     padding-right: 10px;
+}
+
+.student-name-title.inactive-text {
+    text-decoration: line-through !important;
+    color: #94a3b8 !important; /* El gris que querías, con su propio !important para ganar */
 }
 
 .status {
@@ -221,7 +227,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    color: var(--student-label);
+    color: var(--student-label) !important;
 }
 
 .label {
@@ -334,4 +340,38 @@
         width: 100%;
         justify-content: center;
     }
+}
+
+/* Estilos para el modal de ver detalles adaptado*/
+
+/* Fondo y texto de los inputs */
+.modal-content .MuiOutlinedInput-root {
+    background-color: var(--bg-section, #ffffff) !important;
+    color: var(--text-main, #1e293b) !important;
+}
+
+/* Color del borde del input */
+.modal-content .MuiOutlinedInput-notchedOutline {
+    border-color: var(--border-color, #cbd5e1) !important;
+}
+
+/* Color de las etiquetas (labels) flotantes */
+.modal-content .MuiInputLabel-root {
+    color: var(--student-label, #64748b) !important;
+}
+
+/* Estilo especial cuando el input está desactivado (disabled) */
+.modal-content .Mui-disabled {
+    background-color: transparent !important;
+    opacity: 0.7;
+}
+
+/* Obligar al texto deshabilitado a tomar tu color en modo oscuro */
+.modal-content .Mui-disabled .MuiOutlinedInput-input {
+    -webkit-text-fill-color: var(--text-main, #94a3b8) !important;
+}
+
+/* Para los iconos de los select (Dropdowns) */
+.modal-content .MuiSelect-icon {
+    color: var(--student-label, #64748b) !important;
 }

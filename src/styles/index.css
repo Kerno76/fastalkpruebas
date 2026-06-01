@@ -98,6 +98,12 @@
   --task-title: #1e293b;
 
   --divisor: #a6a3a3;
+
+  /* Estilos para las cards de cursos */
+  --stat-value: #2d3748;
+  --stat-label: #718096;
+  --curso-name: #1a202c;
+  --curso-period: #718096;
 }
 
 /* Tema oscuro */
@@ -183,6 +189,11 @@
   --task-title: #ffffff;
 
   --divisor: #e2e8f0;
+
+  --stat-value: #ffffff;
+  --stat-label: #aec2e1;
+  --curso-name: #ffffff;
+  --curso-period: #dcdedf;
 }
 
 body{

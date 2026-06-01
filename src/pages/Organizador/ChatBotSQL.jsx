@@ -113,7 +113,7 @@ export default function ChatBotSQL() {
                 </div>
             </div>
 
-            <Paper elevation={0} style={{ padding: '25px', borderRadius: '16px', border: '1px solid #e2e8f0', backgroundColor: '#fff', marginBottom: '20px' }}>
+            <Paper elevation={0} style={{ padding: '25px', borderRadius: '16px', border: '1px solid #e2e8f0', backgroundColor: 'var(--student-card, #ffffff)', marginBottom: '20px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '30px' }}>
                     <TextField 
                         fullWidth 
@@ -123,7 +123,7 @@ export default function ChatBotSQL() {
                         onChange={e => setQuery(e.target.value)} 
                         onKeyPress={e => e.key === 'Enter' && handleSend(false, query)}
                         InputProps={{
-                            style: { borderRadius: '12px', backgroundColor: '#f8fafc', paddingRight: '5px' },
+                            style: { borderRadius: '12px', backgroundColor: 'var(--student-card, #f8fafc)', paddingRight: '5px', color: 'var(--text-main)', border: '1px solid #e2e8f0'},
                             endAdornment: (
                                 <InputAdornment position="end">
                                     <Button 
@@ -142,7 +142,7 @@ export default function ChatBotSQL() {
                     
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                         <LightbulbCircleIcon style={{ color: '#eab308' }} />
-                        <Typography variant="body2" style={{ color: '#64748b', fontWeight: 600 }}>Sugerencias:</Typography>
+                        <Typography variant="body2" style={{ color: 'var(--text-main, #64748b)', fontWeight: 600 }}>Sugerencias:</Typography>
                         {sugerencias.map((sug, index) => (
                             <Chip 
                                 key={index} 

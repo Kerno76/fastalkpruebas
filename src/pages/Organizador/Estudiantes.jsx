@@ -347,10 +347,7 @@ export default function ControlEstudiantes() {
                                         <div className="student-data" style={{ width: '100%' }}>
                                             <div className='header-container-card'>
                                                 
-                                                <Typography className="student-name-title" style={{ 
-                                                    textDecoration: estado === 'Inactive' ? 'line-through' : 'none', 
-                                                    color: estado === 'Inactive' ? '#94a3b8' : '#1e293b' 
-                                                }}>
+                                                <Typography className="student-name-title" className={`student-name-title ${estado === 'Inactive' ? 'inactive-text' : ''}`}>
                                                     {item.Name}
                                                 </Typography>
 
@@ -391,7 +388,7 @@ export default function ControlEstudiantes() {
                                                 </div>
 
                                                 <div className="tutor-row" style={{ marginTop: '0' }}>
-                                                    <Typography variant="body2" style={{ color: '#4f566b' }}>
+                                                    <Typography variant="body2" >
                                                         Tutor Asignado: <strong>{tutorAsignado}</strong>
                                                     </Typography>
                                                 </div>
@@ -485,16 +482,16 @@ export default function ControlEstudiantes() {
                     
                     {estudianteSeleccionado && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', backgroundColor: '#f8fafc', padding: '20px', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', backgroundColor: 'var(--student-card, #f8fafc)', padding: '20px', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
                                 <Avatar sx={{ width: 64, height: 64, bgcolor: '#048A81' }}><AccountCircleIcon sx={{ fontSize: 40 }} /></Avatar>
                                 <div>
-                                    <Typography variant="h5" style={{ fontWeight: 800, color: '#1e293b' }}>{estudianteSeleccionado.Name}</Typography>
-                                    <Typography variant="body2" style={{ color: '#64748b', fontWeight: 600, marginBottom: '8px' }}>{estudianteSeleccionado.Email}</Typography>
+                                    <Typography variant="h5" style={{ fontWeight: 800, color: 'var(--text-main, #1e293b)' }}>{estudianteSeleccionado.Name}</Typography>
+                                    <Typography variant="body2" style={{ color: 'var(--student-label, #64748b)', fontWeight: 600, marginBottom: '8px' }}>{estudianteSeleccionado.Email}</Typography>
                                     <Chip label={estudianteSeleccionado.State || 'Active'} size="small" style={{ backgroundColor: estudianteSeleccionado.State === 'Inactive' ? '#fee2e2' : '#dcfce7', color: estudianteSeleccionado.State === 'Inactive' ? '#991b1b' : '#166534', fontWeight: 700 }} />
                                 </div>
                             </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', }}>
                                 <TextField 
                                     label="Nombre Completo" 
                                     name="Name" 
@@ -581,8 +578,8 @@ export default function ControlEstudiantes() {
                                 rows={3} 
                             />
 
-                            <Paper elevation={0} style={{ padding: '15px', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
-                                <Typography variant="caption" style={{ fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Estatus de Enrolamiento</Typography>
+                            <Paper elevation={0} style={{ padding: '15px', border: '1px solid #e2e8f0', borderRadius: '12px', backgroundColor: 'var(--student-card, #ffffff)' }}>
+                                <Typography variant="caption" style={{ fontWeight: 700, color: 'var(--student-label, #94a3b8)', textTransform: 'uppercase' }}>Estatus de Enrolamiento</Typography>
                                 <Typography variant="body1" style={{ fontWeight: 700, color: estudianteSeleccionado.cursoData && estudianteSeleccionado.cursoData.Status !== 'Past' ? '#15803d' : '#b45309', marginTop: '5px' }}>
                                     {estudianteSeleccionado.cursoData && estudianteSeleccionado.cursoData.Status !== 'Past' 
                                         ? `Asignado al curso: ${estudianteSeleccionado.cursoData.Name}` 

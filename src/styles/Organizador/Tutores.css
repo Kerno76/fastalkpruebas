@@ -182,10 +182,16 @@
 .tutor-name-title {
     font-weight: 700 !important;
     font-size: 1.1rem !important;
+    margin-left: 10px !important;
     color: var(--text-main);
     line-height: 1.2;
     word-break: break-word;
     margin-bottom: 0 !important;
+}
+
+.tutor-name-title.inactive-text {
+    text-decoration: line-through !important;
+    color: #94a3b8 !important;
 }
 
 .info-grid {

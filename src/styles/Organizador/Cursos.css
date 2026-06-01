@@ -85,7 +85,7 @@
     margin: 0;
     font-size: 1.6rem;
     font-weight: 800;
-    color: #1a202c;
+    color: var(--text-main);
     letter-spacing: -0.5px;
 }
 
@@ -94,23 +94,6 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 15px;
-}
-
-.curso-card {
-    background: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
-    border-radius: 16px !important;
-    padding: 15px 18px !important;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.02) !important;
-}
-
-/* Tarjetas pasadas (grises y medio transparentes) */
-.card-past {
-    opacity: 0.7;
-    background: #f8fafc !important;
 }
 
 .curso-header {
@@ -122,12 +105,12 @@
 .curso-name {
     font-weight: 700;
     font-size: 1.1rem;
-    color: #1a202c;
+    color: var(--curso-name) ;
 }
 
 .curso-period {
     font-size: 0.85rem;
-    color: #718096;
+    color: var(--curso-period) ;
 }
 
 /* Estados (Active, Upcoming, Past) */
@@ -158,12 +141,12 @@
 .stat-value {
     font-weight: 700;
     font-size: 1rem;
-    color: #2d3748;
+    color: var(--stat-value) !important;
 }
 
 .stat-label {
     font-size: 0.7rem;
-    color: #718096;
+    color: var(--stat-label) !important;;
 }
 
 .curso-badges {
@@ -251,24 +234,6 @@
     border: none;
 }
 
-.curso-card {
-    background: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
-    border-radius: 16px !important;
-    padding: 18px !important;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.02) !important;
-    transition: all 0.3s ease !important;
-}
-
-.curso-card:hover {
-    box-shadow: 0 10px 15px rgba(0,0,0,0.05) !important;
-    transform: translateY(-2px);
-    border-color: #cbd5e1 !important;
-}
-
 .btn-curso-outline {
     flex: 1;
     background-color: transparent;
@@ -328,4 +293,33 @@
     font-size: 0.9rem !important;
     font-weight: 600 !important;
     color: #1a202c !important;
+}
+
+
+/* Estilos para las cards de cursos, aplicando los colores para el tema oscuro y sus demas configuraciones */
+
+.curso-card {
+    background-color: var(--student-card, #ffffff) !important;
+    background-image: none !important;
+    border-radius: 16px !important;
+    padding: 18px !important;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02) !important;
+    transition: all 0.3s ease !important;
+}
+
+.curso-card:hover {
+    box-shadow: 0 10px 15px rgba(0,0,0,0.05) !important;
+    transform: translateY(-2px);
+    border-color: #cbd5e1 !important;
+}
+
+/* Tarjetas pasadas (grises y medio transparentes) */
+.curso-card.card-past {
+    background-color: transparent !important;
+    opacity: 0.6;
+    filter: grayscale(100%);
+    border-color: #0068fa !important;
 }

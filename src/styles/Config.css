@@ -408,3 +408,31 @@ input:checked:focus + .switch-left + .switch-right {
 .button-danger:hover {
   background: linear-gradient(135deg, #f87171, #ef4444) !important;
 }
+
+/* Estilos para la integración del traductor de Google */ 
+
+/* Ocultar la barra superior gigante de Google */
+.skiptranslate > iframe.skiptranslate {
+    display: none !important; 
+    visibility: hidden !important;
+}
+
+/* Evitar que Google empuje la página hacia abajo */
+body {
+    top: 0px !important; 
+}
+
+/* Quitar el recuadro flotante que sale cuando pasas el mouse por el texto original */
+.VIpgJd-Zvi9od-aZ2wEe-wOHMyf {
+    display: none !important;
+}
+
+/* Eliminar la bolita flotante de carga */
+.goog-te-spinner-pos,
+.goog-te-spinner-animation,
+.VIpgJd-Zvi9od-ORHb-OEVmcd {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    z-index: -9999 !important;
+}

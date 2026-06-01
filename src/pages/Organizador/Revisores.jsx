@@ -338,10 +338,7 @@ export default function ControlRevisores() {
 
                                     <div className="revisor-data" style={{ width: '100%' }}>
                                         <div className='header-container-card'>
-                                            <Typography className="revisor-name-title" style={{ 
-                                                textDecoration: estado === 'Inactive' ? 'line-through' : 'none', 
-                                                color: estado === 'Inactive' ? '#94a3b8' : '#1e293b' 
-                                            }}>
+                                            <Typography className={`revisor-name-title ${estado === 'Inactive' ? 'inactive-text' : ''}`}>
                                                 {item.Name}
                                             </Typography>
                                             
@@ -468,11 +465,11 @@ export default function ControlRevisores() {
                     
                     {revisorSeleccionado && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', backgroundColor: '#f8fafc', padding: '20px', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', backgroundColor: 'var(--student-card, #f8fafc)', padding: '20px', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
                                 <Avatar sx={{ width: 64, height: 64, bgcolor: '#8a045d' }}><AccountCircleIcon sx={{ fontSize: 40 }} /></Avatar>
                                 <div>
-                                    <Typography variant="h5" style={{ fontWeight: 800, color: '#1e293b' }}>{revisorSeleccionado.Name}</Typography>
-                                    <Typography variant="body2" style={{ color: '#64748b', fontWeight: 600, marginBottom: '8px' }}>{revisorSeleccionado.Email}</Typography>
+                                    <Typography variant="h5" style={{ fontWeight: 800, color: 'var(--text-main, #1e293b)' }}>{revisorSeleccionado.Name}</Typography>
+                                    <Typography variant="body2" style={{ color: 'var(--student-label, #64748b)', fontWeight: 600, marginBottom: '8px' }}>{revisorSeleccionado.Email}</Typography>
                                     <Chip label={revisorSeleccionado.State} size="small" style={{ backgroundColor: revisorSeleccionado.State === 'Active' ? '#dcfce7' : '#fee2e2', color: revisorSeleccionado.State === 'Active' ? '#166534' : '#991b1b', fontWeight: 700 }} />
                                 </div>
                             </div>
@@ -586,17 +583,17 @@ export default function ControlRevisores() {
                                     {tutoresAsignados.map((tut) => (
                                         <ListItem key={tut.ID}>
                                             <ListItemAvatar><Avatar sx={{ width: 32, height: 32, bgcolor: '#048A81' }}><AccountCircleIcon /></Avatar></ListItemAvatar>
-                                            <MuiListItemText primary={tut.Name} primaryTypographyProps={{ style: { fontWeight: 600, fontSize: '0.9rem' } }} />
+                                            <MuiListItemText primary={tut.Name} primaryTypographyProps={{ style: { fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-main, #1e293b)' } }} />
                                         </ListItem>
                                     ))}
-                                    {tutoresAsignados.length === 0 && <Typography variant="body2" align="center" style={{ padding: '10px', color: '#94a3b8' }}>No hay tutores asignados aún.</Typography>}
+                                    {tutoresAsignados.length === 0 && <Typography variant="body2" align="center" style={{ padding: '10px', color: 'var(--student-label, #94a3b8)' }}>No hay tutores asignados aún.</Typography>}
                                 </List>
                             </div>
 
                             <Divider />
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                <Typography variant="body2" style={{ fontWeight: 800, color: '#1e293b' }}>Asignar nuevos tutores</Typography>
+                                <Typography variant="body2" style={{ fontWeight: 800, color: 'var(--text-main, #1e293b)'}}>Asignar nuevos tutores</Typography>
                                 <Select 
                                     multiple 
                                     fullWidth 

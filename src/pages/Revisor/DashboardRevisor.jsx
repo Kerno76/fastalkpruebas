@@ -283,22 +283,22 @@ export default function DashboardRevisor() {
 
             <TableContainer component={Paper} elevation={0} style={{ borderRadius: '12px', border: '1px solid #e0e4e8', backgroundColor: 'var(--bg-card)', marginBottom: '40px' }}>
                 <Table sx={{ minWidth: 650 }}>
-                    <TableHead style={{ backgroundColor: '#f8fafc' }}>
+                    <TableHead style={{ backgroundColor: 'var(--student-card, #f8fafc)' }}>
                         <TableRow>
-                            <TableCell style={{ fontWeight: 'bold', color: '#4f566b' }}>Tutor y Curso</TableCell>
-                            <TableCell style={{ fontWeight: 'bold', color: '#4f566b' }}>Fecha</TableCell>
-                            <TableCell style={{ fontWeight: 'bold', color: '#4f566b' }}>Tema y Resumen</TableCell>
-                            <TableCell style={{ fontWeight: 'bold', color: '#4f566b', textAlign: 'center' }}>Estatus</TableCell>
+                            <TableCell style={{ fontWeight: 'bold', color: 'var( --text-main, #4f566b)' }}>Tutor y Curso</TableCell>
+                            <TableCell style={{ fontWeight: 'bold', color: 'var( --text-main, #4f566b)' }}>Fecha</TableCell>
+                            <TableCell style={{ fontWeight: 'bold', color: 'var( --text-main, #4f566b)' }}>Tema y Resumen</TableCell>
+                            <TableCell style={{ fontWeight: 'bold', color: 'var( --text-main, #4f566b)', textAlign: 'center' }}>Estatus</TableCell>
                             
                             {viewMode === 'Pendientes' && (
-                                <TableCell style={{ fontWeight: 'bold', color: '#4f566b', width: '25%' }}>Comentarios</TableCell>
+                                <TableCell style={{ fontWeight: 'bold', color: 'var( --text-main, #4f566b)', width: '25%' }}>Comentarios</TableCell>
                             )}
 
                             {viewMode === 'Historial' && (
-                                <TableCell style={{ fontWeight: 'bold', color: '#4f566b', textAlign: 'center' }}>Evaluador</TableCell>
+                                <TableCell style={{ fontWeight: 'bold', color: 'var( --text-main, #4f566b)', textAlign: 'center' }}>Evaluador</TableCell>
                             )}
                             
-                            <TableCell style={{ fontWeight: 'bold', color: '#4f566b', textAlign: 'center' }}>Acciones</TableCell>
+                            <TableCell style={{ fontWeight: 'bold', color: 'var( --text-main, #4f566b)', textAlign: 'center' }}>Acciones</TableCell>
                         </TableRow>
                     </TableHead>
 
@@ -320,8 +320,8 @@ export default function DashboardRevisor() {
                                 </TableCell>
                                 
                                 <TableCell style={{ maxWidth: '250px' }}>
-                                    <Typography style={{ fontWeight: 'bold', fontSize: '0.9rem', color: '#1e293b' }}>{row.topic}</Typography>
-                                    <Typography style={{ fontSize: '0.8rem', color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    <Typography style={{ fontWeight: 'bold', fontSize: '0.9rem', color: 'var(--text-main, #1e293b)' }}>{row.topic}</Typography>
+                                    <Typography style={{ fontSize: '0.8rem', color: 'var(--text-main, #64748b)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                         {row.description}
                                     </Typography>
                                 </TableCell>
@@ -418,10 +418,10 @@ export default function DashboardRevisor() {
                 )}
             </TableContainer>
 
-            <div style={{ display: 'flex', gap: '20px', marginTop: '30px' }}>
+            <div className="bottomSection" style={{ marginTop: '30px' }}>
                 
-                <div className="recentActivity" style={{ flex: 1.2 }}>
-                    <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#1e293b', marginBottom: '15px' }}>
+                <div className="recentActivity">
+                    <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--text-main, #1e293b)', marginBottom: '15px' }}>
                         Actividad Reciente
                     </h2>
 
@@ -465,9 +465,9 @@ export default function DashboardRevisor() {
                     </div>
                 </div>
 
-                <div className="calendar" style={{ flex: 1 }}>
+                <div className="calendar">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                        <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 'bold', color: '#1e293b' }}>
+                        <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--text-main, #1e293b)' }}>
                             {isAdmin ? 'Agenda Global de Clases' : 'Agenda de Tutores'}
                         </h2>
                     </div>

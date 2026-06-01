@@ -197,19 +197,22 @@ export function Preferences({ darkMode, toggleTheme }) {
   const rol = user.Rol;
 
   // Leemos lo que haya en localStorage o asignamos valores por defecto
-  const [lang, setLang] = useState(localStorage.getItem('appLanguage') || 'es');
   const [firstDay, setFirstDay] = useState(localStorage.getItem('firstDayOfWeek') || '0'); // 0 = Domingo, 1 = Lunes
   
   // Como fallback, si no hay nada guardado, lo dejamos vacío para que el Login decida
   const [homePage, setHomePage] = useState(localStorage.getItem(`defaultHome_${rol}`) || '');
 
-  const handleLanguageChange = (e) => {
-    const newLang = e.target.value;
-    setLang(newLang);
-    localStorage.setItem('appLanguage', newLang);
-    
-    toast.success("Idioma actualizado", { icon: '🌐' });
-  };
+  // Estado para el select del idioma
+  const [currentLang, setCurrentLang] = useState('es');
+
+  // Recogemos de la memoria para saber si ya se tradujo la pagina antes
+  useEffect(() => {
+    const match = document.cookie.match(/(?:^|;\s*)googtrans=([^;]*)/);
+    if (match) {
+        const lang = match[1].split('/')[2];
+        if (lang) setCurrentLang(lang);
+    }
+  }, []);
 
   const handleFirstDayChange = (e) => {
     const newDay = e.target.value;
@@ -223,6 +226,19 @@ export function Preferences({ darkMode, toggleTheme }) {
     setHomePage(newHome);
     localStorage.setItem(`defaultHome_${rol}`, newHome);
     toast.success("Página de inicio actualizada", { icon: '🏠' });
+  };
+
+  const handleLanguageChange = (e) => {
+    const newLang = e.target.value;
+    setCurrentLang(newLang);
+
+    // Buscamos el select oculto de Google
+    const googleSelect = document.querySelector('.goog-te-combo');
+    if (googleSelect) {
+        googleSelect.value = newLang;
+        // Simulamos un click humano para que Google detecte el cambio y traduzca
+        googleSelect.dispatchEvent(new Event('change', { bubbles: true }));
+    }
   };
 
   return (
@@ -242,7 +258,7 @@ export function Preferences({ darkMode, toggleTheme }) {
 
         <div className="formField">
           <label htmlFor="language">Idioma del Sistema</label>
-          <select id="language" value={lang} onChange={handleLanguageChange} className="select-field">
+          <select id="language" value={currentLang} onChange={handleLanguageChange} className="select-field">
             <option value="es">Español</option>
             <option value="en">English</option>
             <option value="fr">Français</option>

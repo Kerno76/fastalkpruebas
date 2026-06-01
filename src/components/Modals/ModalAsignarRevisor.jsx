@@ -78,7 +78,7 @@
             </Typography>
 
             <div style={{ marginBottom: '20px' }}>
-            <Typography variant="body2" color="textSecondary" style={{ marginBottom: '10px' }}>
+            <Typography variant="body2" className='textSecondary'>
                 Tutor seleccionado: <strong>{tutorData?.Name}</strong>
             </Typography>
 
@@ -93,13 +93,13 @@
                 </div>
             ) : (
                 <FormControl fullWidth>
-                <label style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '8px' }}>Selecciona un Revisor</label>
+                <label className='seleccionRevisor'>Selecciona un Revisor</label>
                 <Select
                     displayEmpty
                     value={selectedRevisor}
                     onChange={(e) => setSelectedRevisor(e.target.value)}
                 >
-                    <MenuItem value="" disabled style={{ display: 'none' }}>Elige un revisor...</MenuItem>
+                    <MenuItem value="" disabled className="selectRevisor" style={{ display: 'none' }}>Elige un revisor...</MenuItem>
                     {revisoresDisponibles.map((rev) => (
                     <MenuItem key={rev.ID} value={rev.ID}>
                         {rev.Name}

@@ -191,6 +191,11 @@
     padding-right: 10px;
 }
 
+.revisor-name-title.inactive-text {
+    text-decoration: line-through !important;
+    color: #94a3b8 !important;
+}
+
 /* --- NUEVAS CLASES ESTRUCTURALES --- */
 .info-grid {
     display: flex;

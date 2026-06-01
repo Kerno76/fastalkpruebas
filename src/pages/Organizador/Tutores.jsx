@@ -361,10 +361,7 @@ export default function ControlTutores() {
 
                                         <div className="tutor-data" style={{ width: '100%' }}>
                                             <div className='header-container-card'>
-                                                <Typography className="tutor-name-title" style={{ 
-                                                    textDecoration: estado === 'Inactive' ? 'line-through' : 'none', 
-                                                    color: estado === 'Inactive' ? '#94a3b8' : '#1e293b' 
-                                                }}>
+                                                <Typography className={`tutor-name-title ${estado === 'Inactive' ? 'inactive-text' : ''}`}>
                                                     {item.Name}
                                                 </Typography>
                                                 
@@ -421,7 +418,7 @@ export default function ControlTutores() {
                                                 </div>
 
                                                 <div className="tutor-row">
-                                                    <Typography variant="body1" style={{ color: '#4f566b', fontSize: '1rem' }}>
+                                                    <Typography>
                                                         <strong>{estudiantes}</strong> Estudiantes asignados 
                                                     </Typography>
                                                 </div>
@@ -512,11 +509,11 @@ export default function ControlTutores() {
                     
                     {tutorSeleccionado && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', backgroundColor: '#f8fafc', padding: '20px', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', backgroundColor: 'var(--student-card, #f8fafc)', padding: '20px', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
                                 <Avatar sx={{ width: 64, height: 64, bgcolor: '#68899D' }}><AccountCircleIcon sx={{ fontSize: 40 }} /></Avatar>
                                 <div>
-                                    <Typography variant="h5" style={{ fontWeight: 800, color: '#1e293b' }}>{tutorSeleccionado.Name}</Typography>
-                                    <Typography variant="body2" style={{ color: '#64748b', fontWeight: 600, marginBottom: '8px' }}>{tutorSeleccionado.Email}</Typography>
+                                    <Typography variant="h5" style={{ fontWeight: 800, color: 'var(--text-main, #1e293b)'}}>{tutorSeleccionado.Name}</Typography>
+                                    <Typography variant="body2" style={{ color: 'var(--student-label, #64748b)', fontWeight: 600, marginBottom: '8px' }}>{tutorSeleccionado.Email}</Typography>
                                     <Chip label={tutorSeleccionado.State} size="small" style={{ backgroundColor: tutorSeleccionado.State === 'Active' ? '#dcfce7' : '#fee2e2', color: tutorSeleccionado.State === 'Active' ? '#166534' : '#991b1b', fontWeight: 700 }} />
                                 </div>
                             </div>

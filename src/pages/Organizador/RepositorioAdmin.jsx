@@ -110,13 +110,13 @@ export default function RepositorioAdmin() {
 
             <div className='cards-grid'>
                 {materialesFiltrados.map((item) => (
-                    <Paper key={item.MaterialID} elevation={0} style={{ borderRadius: '16px', border: '1px solid #e2e8f0', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', backgroundColor: '#fff', transition: 'all 0.3s ease' }}>
+                    <Paper key={item.MaterialID} elevation={0} style={{ borderRadius: '16px', border: '1px solid #e2e8f0', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', backgroundColor: 'var(--student-card, #fff)', transition: 'all 0.3s ease' }}>
                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '15px', marginBottom: '15px' }}>
                             <div style={{ backgroundColor: '#f0f9ff', padding: '12px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 <DescriptionIcon style={{ color: '#0ea5e9', fontSize: '32px' }} />
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                                <Typography style={{ fontWeight: 800, color: '#1e293b', fontSize: '1.1rem', lineHeight: 1.2, marginBottom: '6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={item.Topic}>
+                                <Typography style={{ fontWeight: 800, color: 'var(--text-main, #1e293b)', fontSize: '1.1rem', lineHeight: 1.2, marginBottom: '6px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={item.Topic}>
                                     {item.Topic}
                                 </Typography>
                                 <Typography style={{ color: '#0ea5e9', fontWeight: 700, fontSize: '0.85rem', marginBottom: '10px' }}>
@@ -129,8 +129,8 @@ export default function RepositorioAdmin() {
                             </div>
                         </div>
 
-                        <Typography variant="body2" style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '15px' }}>
-                            Subido por: <strong style={{ color: '#334155' }}>{item.tutorName}</strong>
+                        <Typography variant="body2" style={{ color: 'var(--text-main, #64748b)', fontSize: '0.85rem', marginBottom: '15px' }}>
+                            Subido por: <strong style={{ color: 'var(--text-main, #334155)' }}>{item.tutorName}</strong>
                         </Typography>
 
                         <div style={{ backgroundColor: '#f8fafc', padding: '12px', borderRadius: '10px', marginBottom: '15px', border: '1px solid #e2e8f0' }}>
@@ -142,7 +142,7 @@ export default function RepositorioAdmin() {
                         </div>
 
                         <div style={{ display: 'flex', gap: '8px' }}>
-                            <Button variant="outlined" fullWidth onClick={() => window.open(item.FileUrl, '_blank', 'noopener,noreferrer')} style={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, color: '#475569', borderColor: '#cbd5e1' }}>
+                            <Button variant="outlined" fullWidth onClick={() => window.open(item.FileUrl, '_blank', 'noopener,noreferrer')} style={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, color: 'var(--text-main, #475569)', borderColor: '#cbd5e1' }}>
                                 Ver
                             </Button>
                             <Button variant="contained" fullWidth onClick={() => handleDownload(item.FileUrl, item.Topic)} style={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, backgroundColor: '#0ea5e9', boxShadow: 'none' }}>

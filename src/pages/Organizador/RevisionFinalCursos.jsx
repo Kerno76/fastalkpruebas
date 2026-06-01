@@ -117,10 +117,10 @@ export default function RevisionFinalCursos() {
             </div>
 
             {cursos.length === 0 ? (
-                <div style={{ padding: '40px', textAlign: 'center', backgroundColor: '#f8fafc', borderRadius: '12px', color: '#64748b' }}>
+                <div style={{ padding: '40px', textAlign: 'center', backgroundColor: 'var(--student-card, #f8fafc)', borderRadius: '12px', color: '#64748b' }}>
                     <CheckCircleIcon style={{ fontSize: 40, color: '#10b981', marginBottom: '10px' }} />
-                    <Typography variant="h6">Sin cursos en esta sección</Typography>
-                    <Typography>
+                    <Typography variant="h6" style= {{color: 'var(--text-main, #1e293b)'}}>Sin cursos en esta sección</Typography>
+                    <Typography style= {{color: 'var(--text-main, #1e293b)'}}>
                         {viewMode === 'Pendientes' 
                             ? 'Ningún tutor ha enviado reportes finales recientemente.' 
                             : 'No hay cursos históricos registrados.'}
