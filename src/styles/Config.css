@@ -428,11 +428,45 @@ body {
 }
 
 /* Eliminar la bolita flotante de carga */
+#goog-gt-tt, 
+.goog-te-balloon-frame, 
+.goog-tooltip, 
 .goog-te-spinner-pos,
 .goog-te-spinner-animation,
+.VIpgJd-Zvi9od-aZ2wEe-wOHMyf,
+.VIpgJd-Zvi9od-aZ2wEe-OiiCO,
 .VIpgJd-Zvi9od-ORHb-OEVmcd {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    z-index: -9999 !important;
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  z-index: -9999 !important;
+}
+
+.goog-text-highlight, 
+.goog-text-highlight:hover, 
+.goog-text-highlight:focus, 
+.goog-text-highlight:active {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  outline: none !important;
+  cursor: text !important;
+  transition: none !important;
+  animation: none !important;
+}
+
+font,
+font:hover,
+font:active {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+  border: none !important;
+  transition: none !important;
+}
+
+#goog-gt-tt * {
+    pointer-events: none !important;
 }
