@@ -83,7 +83,7 @@ router.get('/mis-estudiantes/:tutorId', async (req, res) => {
         const { data: enrollments } = await supabaseAdmin.from('Enrollments').select('*').in('CourseID', courseIds);
         if (!enrollments || enrollments.length === 0) return res.status(200).json({ success: true, estudiantes: [] });
 
-        const { data: profiles } = await supabaseAdmin.from('UsersProfiles').select('ID, Name, Email').in('ID', enrollments.map(e => e.StudentID));
+        const { data: profiles } = await supabaseAdmin.from('UsersProfiles').select('ID, Name, Email, AvatarUrl').in('ID', enrollments.map(e => e.StudentID));
 
         const estudiantes = profiles.map(profile => {
             const rel = enrollments.find(e => e.StudentID === profile.ID);
@@ -92,6 +92,7 @@ router.get('/mis-estudiantes/:tutorId', async (req, res) => {
                 id: profile.ID,
                 name: profile.Name,
                 email: profile.Email,
+                AvatarUrl: profile.AvatarUrl,
                 courseId: course?.CourseID,
                 courseName: course?.Name || 'N/A',
                 language: course?.Language || 'N/A',

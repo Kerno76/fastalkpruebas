@@ -340,19 +340,39 @@ router.get('/tutores', async (req, res) => {
         const { data: tutores, error } = await supabaseAdmin
             .from('UsersProfiles')
             .select(`
-                ID, Name, Email, Rol, State, BirthDate,
+                ID, Name, Email, Rol, State, BirthDate, AvatarUrl,
                 Tutors ( Phone, Language, Hobbies, Career, TotalHours, DateJoined, Notes, ProgramType ) 
             `) 
             .eq('Rol', 'Tutor');
 
         if (error) throw error;
 
-        const { data: asignaciones, error: enrollError } = await supabaseAdmin
+        const { data: asignaciones } = await supabaseAdmin
             .from('Enrollments_Reviewers')
             .select('TutorID, ReviewerID');
 
+        const { data: activeCourses } = await supabaseAdmin
+            .from('Courses')
+            .select('CourseID, TutorID')
+            .in('Status', ['Active', 'Upcoming']);
+
+        const { data: allEnrollments } = await supabaseAdmin
+            .from('Enrollments')
+            .select('CourseID, StudentID');
+
         const tutoresCompletos = tutores.map(tutor => {
             const revisorAsignado = asignaciones?.filter(a => a.TutorID === tutor.ID) || [];
+            
+            const misCursosActivos = activeCourses?.filter(c => c.TutorID === tutor.ID).map(c => c.CourseID) || [];
+            const misAlumnos = allEnrollments?.filter(e => misCursosActivos.includes(e.CourseID)).map(e => e.StudentID) || [];
+            const estudiantesUnicos = new Set(misAlumnos).size;
+
+            if (Array.isArray(tutor.Tutors) && tutor.Tutors.length > 0) {
+                tutor.Tutors[0].StudentsN = estudiantesUnicos;
+            } else if (tutor.Tutors && !Array.isArray(tutor.Tutors)) {
+                tutor.Tutors.StudentsN = estudiantesUnicos;
+            }
+
             return {
                 ...tutor,
                 Enrollments_Reviewers: revisorAsignado 
@@ -387,9 +407,9 @@ router.get('/revisores', async (req, res) => {
         const { data, error } = await supabaseAdmin
             .from('UsersProfiles')
             .select(`
-                ID, Name, Email, Rol, State, BirthDate,
+                ID, Name, Email, Rol, State, BirthDate, AvatarUrl,
                 Reviewer ( Phone, Career, AsignedTutors, ValidationsCompleted, Notes, DateJoined ) 
-            `) 
+            `)
             .eq('Rol', 'Reviewer');
 
         if (error) throw error;
@@ -608,14 +628,15 @@ router.get('/curso-alumnos/:courseId', async (req, res) => {
 
         const { data: profiles, error: profError } = await supabaseAdmin
             .from('UsersProfiles')
-            .select('ID, Name');
+            .select('ID, Name, AvatarUrl');
         if (profError) throw profError;
 
         const alumnos = enrollments.map(item => {
             const profile = profiles.find(p => p.ID === item.StudentID);
             return {
                 ID: item.StudentID,
-                Name: profile ? profile.Name : 'Desconocido'
+                Name: profile ? profile.Name : 'Desconocido',
+                AvatarUrl: profile ? profile.AvatarUrl : null
             };
         });
 
@@ -651,7 +672,7 @@ router.get('/revisor-tutores/:reviewerId', async (req, res) => {
 
         const { data: profiles, error: profError } = await supabaseAdmin
             .from('UsersProfiles')
-            .select('ID, Name')
+            .select('ID, Name, AvatarUrl')
             .eq('Rol', 'Tutor');
         if (profError) throw profError;
 
@@ -659,7 +680,8 @@ router.get('/revisor-tutores/:reviewerId', async (req, res) => {
             const profile = profiles.find(p => p.ID === e.TutorID);
             return {
                 ID: e.TutorID,
-                Name: profile ? profile.Name : 'Desconocido'
+                Name: profile ? profile.Name : 'Desconocido',
+                AvatarUrl: profile ? profile.AvatarUrl : null
             };
         });
 
@@ -725,12 +747,11 @@ router.post('/asignar-tutores-revisor', async (req, res) => {
     }
 });
 
-// --- RUTA MODIFICADA ---
 router.get('/estudiantes-list', async (req, res) => {
     try {
         const { data: students, error: studErr } = await supabaseAdmin
             .from('UsersProfiles')
-            .select('ID, Name, Email, State, BirthDate, Students (Phone, Language, CurrentLevel, Notes, DateJoined)')
+            .select('ID, Name, Email, State, BirthDate, AvatarUrl, Students (Phone, Language, CurrentLevel, Notes, DateJoined)')
             .eq('Rol', 'Student');
         if (studErr) throw studErr;
 

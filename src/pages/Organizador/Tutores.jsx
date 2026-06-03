@@ -355,8 +355,17 @@ export default function ControlTutores() {
                                 <div className="card-top" style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
                                     
                                     <div style={{ display: 'flex', width: '100%', alignItems: 'flex-start' }}>
-                                        <Avatar className="tutor-avatar" style={{ opacity: estado === 'Inactive' ? 0.4 : 1, filter: estado === 'Inactive' ? 'grayscale(100%)' : 'none' }}>
-                                            <AccountCircleIcon style={{ fontSize: '60px', color: '#697386' }} />
+                                        <Avatar 
+                                            className="tutor-avatar" 
+                                            src={item.AvatarUrl || undefined}
+                                            style={{ 
+                                                opacity: estado === 'Inactive' ? 0.4 : 1, 
+                                                filter: estado === 'Inactive' ? 'grayscale(100%)' : 'none',
+                                                width: 60,
+                                                height: 60
+                                            }}
+                                        >
+                                            {!item.AvatarUrl && <AccountCircleIcon style={{ fontSize: '60px', color: '#697386' }} />}
                                         </Avatar>
 
                                         <div className="tutor-data" style={{ width: '100%' }}>
@@ -510,7 +519,12 @@ export default function ControlTutores() {
                     {tutorSeleccionado && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '20px', backgroundColor: 'var(--student-card, #f8fafc)', padding: '20px', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-                                <Avatar sx={{ width: 64, height: 64, bgcolor: '#68899D' }}><AccountCircleIcon sx={{ fontSize: 40 }} /></Avatar>
+                                <Avatar 
+                                    src={tutorSeleccionado.AvatarUrl || undefined}
+                                    sx={{ width: 64, height: 64, bgcolor: '#68899D' }}
+                                >
+                                    {!tutorSeleccionado.AvatarUrl && <AccountCircleIcon sx={{ fontSize: 40 }} />}
+                                </Avatar>
                                 <div>
                                     <Typography variant="h5" style={{ fontWeight: 800, color: 'var(--text-main, #1e293b)'}}>{tutorSeleccionado.Name}</Typography>
                                     <Typography variant="body2" style={{ color: 'var(--student-label, #64748b)', fontWeight: 600, marginBottom: '8px' }}>{tutorSeleccionado.Email}</Typography>

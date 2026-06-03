@@ -39,6 +39,7 @@ export default function MisEstudiantes() {
                             id: e.ID,
                             name: e.Name,
                             email: e.Email,
+                            AvatarUrl: e.AvatarUrl,
                             tutorAsignado: e.tutorAsignado,
                             courseId: e.cursoData.CourseID,
                             courseName: e.cursoData.Name,
@@ -89,8 +90,12 @@ export default function MisEstudiantes() {
                     return (
                         <Paper key={item.id} className="student-card student-card-tutor" elevation={0}>
                             <div className="card-top">
-                                <Avatar className="student-avatar">
-                                    <AccountCircleIcon style={{ fontSize: '60px', color: '#697386' }} />
+                                <Avatar 
+                                    className="student-avatar"
+                                    src={item.AvatarUrl || undefined}
+                                    sx={{ width: 60, height: 60 }}
+                                >
+                                    {!item.AvatarUrl && <AccountCircleIcon style={{ fontSize: '60px', color: '#697386' }} />}
                                 </Avatar>
 
                                 <div className="student-data">
@@ -194,7 +199,6 @@ export default function MisEstudiantes() {
                 </>
             )}
 
-            {/* MODAL DE EXPEDIENTE */}
             <Dialog open={openExpediente} onClose={() => setOpenExpediente(false)} maxWidth="sm" fullWidth PaperProps={{ className: 'modal-container' }}>
                 <IconButton onClick={() => setOpenExpediente(false)} className="close-button"><CloseIcon /></IconButton>
                 <div className="modal-content">
@@ -202,8 +206,12 @@ export default function MisEstudiantes() {
                     {estudianteSeleccionado && (
                         <div className="modal-body-container">
                             <div className="modal-header-card">
-                                <Avatar className="modal-avatar-large">
-                                    <AccountCircleIcon sx={{ fontSize: 40 }} />
+                                <Avatar 
+                                    className="modal-avatar-large"
+                                    src={estudianteSeleccionado.AvatarUrl || undefined}
+                                    sx={{ width: 64, height: 64 }}
+                                >
+                                    {!estudianteSeleccionado.AvatarUrl && <AccountCircleIcon sx={{ fontSize: 40 }} />}
                                 </Avatar>
                                 <div>
                                     <Typography variant="h5" className="modal-student-name">{estudianteSeleccionado.name}</Typography>

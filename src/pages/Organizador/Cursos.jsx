@@ -634,7 +634,14 @@ export default function ControlCursos() {
                                                 ) : null
                                             }
                                         >
-                                            <ListItemAvatar><Avatar sx={{ width: 32, height: 32 }}><AccountCircleIcon /></Avatar></ListItemAvatar>
+                                            <ListItemAvatar>
+                                                <Avatar 
+                                                    src={al.AvatarUrl || undefined} 
+                                                    sx={{ width: 32, height: 32 }}
+                                                >
+                                                    {!al.AvatarUrl && <AccountCircleIcon />}
+                                                </Avatar>
+                                            </ListItemAvatar>
                                             <MuiListItemText primary={al.Name || 'Desconocido'} primaryTypographyProps={{ style: { fontWeight: 600, fontSize: '0.9rem', color: 'var(--student-label)' } }} />
                                         </ListItem>
                                     ))}

@@ -332,8 +332,17 @@ export default function ControlRevisores() {
                                 }}
                             >
                                 <div className="card-top" style={{ alignItems: 'flex-start', flexGrow: 1 }}>
-                                    <Avatar className="revisor-avatar" style={{ opacity: estado === 'Inactive' ? 0.4 : 1, filter: estado === 'Inactive' ? 'grayscale(100%)' : 'none' }}>
-                                        <AccountCircleIcon style={{ fontSize: '60px', color: '#697386' }} />
+                                    <Avatar 
+                                        className="revisor-avatar" 
+                                        src={item.AvatarUrl || undefined}
+                                        style={{ 
+                                            opacity: estado === 'Inactive' ? 0.4 : 1, 
+                                            filter: estado === 'Inactive' ? 'grayscale(100%)' : 'none',
+                                            width: 60,
+                                            height: 60
+                                        }}
+                                    >
+                                        {!item.AvatarUrl && <AccountCircleIcon style={{ fontSize: '60px', color: '#697386' }} />}
                                     </Avatar>
 
                                     <div className="revisor-data" style={{ width: '100%' }}>
@@ -466,7 +475,12 @@ export default function ControlRevisores() {
                     {revisorSeleccionado && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '20px', backgroundColor: 'var(--student-card, #f8fafc)', padding: '20px', borderRadius: '16px', border: '1px solid #e2e8f0' }}>
-                                <Avatar sx={{ width: 64, height: 64, bgcolor: '#8a045d' }}><AccountCircleIcon sx={{ fontSize: 40 }} /></Avatar>
+                                <Avatar 
+                                    src={revisorSeleccionado.AvatarUrl || undefined}
+                                    sx={{ width: 64, height: 64, bgcolor: '#8a045d' }}
+                                >
+                                    {!revisorSeleccionado.AvatarUrl && <AccountCircleIcon sx={{ fontSize: 40 }} />}
+                                </Avatar>
                                 <div>
                                     <Typography variant="h5" style={{ fontWeight: 800, color: 'var(--text-main, #1e293b)' }}>{revisorSeleccionado.Name}</Typography>
                                     <Typography variant="body2" style={{ color: 'var(--student-label, #64748b)', fontWeight: 600, marginBottom: '8px' }}>{revisorSeleccionado.Email}</Typography>
@@ -582,7 +596,14 @@ export default function ControlRevisores() {
                                 <List dense>
                                     {tutoresAsignados.map((tut) => (
                                         <ListItem key={tut.ID}>
-                                            <ListItemAvatar><Avatar sx={{ width: 32, height: 32, bgcolor: '#048A81' }}><AccountCircleIcon /></Avatar></ListItemAvatar>
+                                            <ListItemAvatar>
+                                                <Avatar 
+                                                    src={tut.AvatarUrl || undefined}
+                                                    sx={{ width: 32, height: 32, bgcolor: '#048A81' }}
+                                                >
+                                                    {!tut.AvatarUrl && <AccountCircleIcon />}
+                                                </Avatar>
+                                            </ListItemAvatar>
                                             <MuiListItemText primary={tut.Name} primaryTypographyProps={{ style: { fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-main, #1e293b)' } }} />
                                         </ListItem>
                                     ))}

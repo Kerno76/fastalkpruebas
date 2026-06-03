@@ -1,13 +1,16 @@
-    import { useState, useEffect } from 'react';
-    import { Dialog, IconButton, Typography, Button, MenuItem, Select, FormControl } from '@mui/material';
-    import CloseIcon from '@mui/icons-material/Close';
-    import toast from 'react-hot-toast';
-    import '../../styles/Modals/Modales.css'; 
+import { useState, useEffect } from 'react';
+import { Dialog, IconButton, Typography, Button, MenuItem, Select, FormControl, Avatar } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import toast from 'react-hot-toast';
+import '../../styles/Modals/Modales.css'; 
 
-    export default function ModalAsignarRevisor({ open, onClose, tutorData, onSuccess }) {
+export default function ModalAsignarRevisor({ open, onClose, tutorData, onSuccess }) {
     const [revisoresDisponibles, setRevisoresDisponibles] = useState([]);
     const [selectedRevisor, setSelectedRevisor] = useState('');
+    
     const [revisorActualNombre, setRevisorActualNombre] = useState(null);
+    const [revisorActualAvatar, setRevisorActualAvatar] = useState(null);
 
     const tieneRevisor = tutorData?.Enrollments_Reviewers?.length > 0;
     const revisorIDActual = tieneRevisor ? tutorData.Enrollments_Reviewers[0].ReviewerID : null;
@@ -25,6 +28,8 @@
                 const revisorActual = data.find(rev => rev.ID === revisorIDActual);
                 if (revisorActual) {
                     setRevisorActualNombre(revisorActual.Name);
+                    // Extraemos el AvatarUrl que ya manda el backend
+                    setRevisorActualAvatar(revisorActual.AvatarUrl); 
                 }
                 }
             }
@@ -78,28 +83,49 @@
             </Typography>
 
             <div style={{ marginBottom: '20px' }}>
-            <Typography variant="body2" className='textSecondary'>
-                Tutor seleccionado: <strong>{tutorData?.Name}</strong>
+            <Typography variant="body2" style={{ color: '#64748b', marginBottom: '15px' }}>
+                Tutor seleccionado: <strong style={{ color: '#1e293b' }}>{tutorData?.Name}</strong>
             </Typography>
 
             {tieneRevisor ? (
-                <div style={{ padding: '15px', backgroundColor: '#f3f4f6', borderRadius: '8px', textAlign: 'center' }}>
-                <Typography variant="body1">
-                    El revisor de este tutor es:
+                <div style={{ 
+                padding: '20px', 
+                backgroundColor: '#fdf4ff', 
+                borderRadius: '16px', 
+                border: '1px solid #fbcfe8', 
+                textAlign: 'center', 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                gap: '12px' 
+                }}>
+                <Typography variant="caption" style={{ color: '#c026d3', fontWeight: 800, letterSpacing: '1px' }}>
+                    REVISOR TITULAR
                 </Typography>
-                <Typography variant="h6" style={{ color: '#1e40af', marginTop: '5px' }}>
+                
+                <Avatar 
+                    src={revisorActualAvatar || undefined}
+                    sx={{ width: 75, height: 75, bgcolor: '#8a045d', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                >
+                    {!revisorActualAvatar && <AccountCircleIcon sx={{ fontSize: 50 }} />}
+                </Avatar>
+
+                <Typography variant="h5" style={{ color: '#701a75', fontWeight: 800, lineHeight: 1.2 }}>
                     {revisorActualNombre || 'Cargando...'}
                 </Typography>
                 </div>
             ) : (
                 <FormControl fullWidth>
-                <label className='seleccionRevisor'>Selecciona un Revisor</label>
+                <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>
+                    Selecciona un Revisor
+                </label>
                 <Select
                     displayEmpty
                     value={selectedRevisor}
                     onChange={(e) => setSelectedRevisor(e.target.value)}
+                    style={{ borderRadius: '12px' }}
                 >
-                    <MenuItem value="" disabled className="selectRevisor" style={{ display: 'none' }}>Elige un revisor...</MenuItem>
+                    <MenuItem value="" disabled style={{ display: 'none' }}>Elige un revisor...</MenuItem>
                     {revisoresDisponibles.map((rev) => (
                     <MenuItem key={rev.ID} value={rev.ID}>
                         {rev.Name}
