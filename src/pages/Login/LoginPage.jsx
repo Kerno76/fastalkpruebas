@@ -96,7 +96,7 @@ export default function LoginPage() {
           </div>
 
           <div className="forgot-link-box">
-            <span className="forgot-password-trigger" onClick={() => setOpenForgot(true)} style={{ cursor: 'pointer', color: '#c89f70', fontSize: '14px' }}>
+            <span className="forgot-password-trigger" onClick={() => setOpenForgot(true)} style={{ cursor: 'pointer', color: '#c89f70', fontSize: '14px' }} data-cy="btn-olvide">
               ¿Olvidaste tu contraseña?
             </span>
           </div>

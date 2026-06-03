@@ -179,7 +179,7 @@ export default function CalificarTareas() {
                 
                 <div className="header-container" style={{ marginBottom: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        <h2 className="dashboard-title" style={{ margin: 0 }}>Centro de Tareas</h2>
+                        <h2 className="dashboard-title">Centro de Tareas</h2>
                         
                         {viewMode === 'Calificar' && (
                             <TextField 
@@ -214,8 +214,8 @@ export default function CalificarTareas() {
                                     <Paper className="student-header-pill" elevation={0} style={{ padding: '15px', display: 'flex', flexDirection: 'column' }}>
                                         <Typography className="shp-name" style={{ marginBottom: '8px' }}>{est.name}</Typography>
                                         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                                            <Chip label={`Curso: ${courseName}`} size="small" style={{ backgroundColor: '#e2e8f0', color: '#475569', fontWeight: 600 }} />
-                                            {level && <Chip label={`Nivel: ${level}`} size="small" style={{ backgroundColor: '#e0f2fe', color: '#0369a1', fontWeight: 700 }} />}
+                                            <Chip label={`Curso: ${courseName}`} size="small" style={{ backgroundColor: 'var(--student-card, #e2e8f0)', color: '#475569', fontWeight: 600 }} />
+                                            {level && <Chip label={`Nivel: ${level}`} size="small" style={{ backgroundColor: 'var(--student-card, #e0f2fe)', color: '#0369a1', fontWeight: 700 }} />}
                                         </div>
                                     </Paper>
                                     <div className="tasks-container">
@@ -242,9 +242,9 @@ export default function CalificarTareas() {
                                 </div>
                             );
                         }) : (
-                            <div style={{ gridColumn: '1 / -1', padding: '40px', textAlign: 'center', backgroundColor: '#f8fafc', borderRadius: '12px' }}>
+                            <div style={{ gridColumn: '1 / -1', padding: '40px', textAlign: 'center', backgroundColor: 'var(--student-card, #f8fafc)', borderRadius: '12px' }}>
                                 <FactCheckIcon style={{ fontSize: 40, color: '#94a3b8', marginBottom: '10px' }} />
-                                <Typography style={{ color: '#475569', fontWeight: 600 }}>Sin entregas pendientes</Typography>
+                                <Typography style={{ color: 'var(--text-main, #475569)', fontWeight: 600 }}>Sin entregas pendientes</Typography>
                                 <Typography style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Las tareas de tus cursos activos aparecerán aquí cuando los alumnos envíen evidencia.</Typography>
                             </div>
                         )}
@@ -254,13 +254,13 @@ export default function CalificarTareas() {
                 {viewMode === 'Gestion' && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                         {tareasActivasPublicadas.length > 0 ? tareasActivasPublicadas.map((tp, idx) => (
-                            <Paper key={idx} elevation={0} style={{ padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+                            <Paper key={idx} elevation={0} style={{ padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', backgroundColor: 'var(--student-card, #f8fafc)' }}>
                                 <div>
-                                    <Typography variant="h6" style={{ fontWeight: 700, color: '#1e293b' }}>{tp.Title}</Typography>
-                                    <Typography variant="body2" style={{ color: '#64748b', marginBottom: '8px' }}>Curso: {tp.CourseName} | Asignada a {tp.StudentIDs.length} alumno(s)</Typography>
+                                    <Typography variant="h6" style={{ fontWeight: 700, color: 'var(--text-main, #1e293b)'}}>{tp.Title}</Typography>
+                                    <Typography variant="body2" style={{ color: 'var(--text-main, #64748b)', marginBottom: '8px' }}>Curso: {tp.CourseName} | Asignada a {tp.StudentIDs.length} alumno(s)</Typography>
                                     <Typography variant="caption" style={{ backgroundColor: '#f1f5f9', padding: '4px 8px', borderRadius: '4px', fontWeight: 600 }}>Fecha Límite: {new Date(tp.Deadline).toLocaleString()}</Typography>
                                 </div>
-                                <div style={{ display: 'flex', gap: '10px' }}>
+                                <div style={{ display: 'flex', gap: '10px',}}>
                                     <Button variant="outlined" size="small" startIcon={<EditIcon />} onClick={() => handleAbrirEdicion(tp)} style={{ color: '#68899D', borderColor: '#68899D', textTransform: 'none', fontWeight: 600 }}>Editar Tarea</Button>
                                     <Button variant="outlined" size="small" color="error" startIcon={<DeleteIcon />} onClick={() => handleCancelarTarea(tp)} style={{ textTransform: 'none', fontWeight: 600 }}>Cancelar</Button>
                                 </div>
@@ -311,10 +311,10 @@ export default function CalificarTareas() {
                                 </div>
                             </div>
                         )) : (
-                            <div style={{ padding: '40px', textAlign: 'center', backgroundColor: '#f8fafc', borderRadius: '12px' }}>
+                            <div style={{ padding: '40px', textAlign: 'center', backgroundColor: 'var(--student-card, #f8fafc)', borderRadius: '12px' }}>
                                 <FolderCopyIcon style={{ fontSize: 40, color: '#94a3b8', marginBottom: '10px' }} />
-                                <Typography style={{ color: '#475569', fontWeight: 600 }}>Tu historial está vacío.</Typography>
-                                <Typography style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Aquí aparecerán las tareas de los cursos que ya hayan concluido.</Typography>
+                                <Typography style={{ color: 'var(--text-main, #475569)', fontWeight: 600 }}>Tu historial está vacío.</Typography>
+                                <Typography style={{ color: 'var(--text-main, #94a3b8)', fontSize: '0.9rem' }}>Aquí aparecerán las tareas de los cursos que ya hayan concluido.</Typography>
                             </div>
                         )}
                     </div>

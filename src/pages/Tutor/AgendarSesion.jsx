@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
 import toast from 'react-hot-toast';
 import '../../styles/App.css';
 import '../../styles/Config.css'; 
@@ -206,7 +210,10 @@ export default function AgendarSesion() {
                         <div className="agendar-grid-2">
                             <div className="agendar-group">
                                 <label>Fecha *</label>
-                                <input type="date" className="agendar-input" name="fecha" value={sesion.fecha} onChange={handleChange} required />
+                                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                    <DatePicker value={sesion.fecha ? dayjs(sesion.fecha) : null} onChange={(nuevaFecha) => {handleChange({target: {name: 'fecha',value: nuevaFecha ? nuevaFecha.format('YYYY-MM-DD') : '' }});}} 
+                                        format="DD/MM/YYYY" slotProps={{ textField: { size: 'small', fullWidth: true, required: true } }}/>
+                                </LocalizationProvider>
                             </div>
                             <div className="agendar-group">
                                 <label>Hora de Inicio *</label>

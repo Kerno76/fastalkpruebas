@@ -583,6 +583,7 @@ export default function DashboardRevisor() {
                             color={evalModal.status === 'Aprobado' ? 'success' : 'error'} 
                             onClick={handleEvaluarSubmit} 
                             style={{ borderRadius: '8px', textTransform: 'none', fontWeight: 600, boxShadow: 'none' }}
+                            data-cy="btn-aprobar-rechazar"
                         >
                             {evalModal.status === 'Aprobado' ? 'Aprobar Bitácora' : 'Rechazar Bitácora'}
                         </Button>

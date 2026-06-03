@@ -264,10 +264,11 @@
   padding-left: 20px;
   padding-right: 5px;
   margin-bottom: 25px;
-  margin-right: 20px;
   color: var(--text-main);
 
   min-height: 250px;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 /* Estilos para Actividad Reciente (Notificaciones) */

@@ -6,6 +6,13 @@
     --neutral-bg: #f1f5f9;
 }
 
+#dashboard-subtitle {
+  color: var(--subtitle-main);
+  margin-top: 0;
+  margin-bottom: 30px;
+  font-size: 15px;
+}
+
 .sesiones-manager-container {
     width: 100%;
     max-width: 100%; 
@@ -15,19 +22,6 @@
 
 .sesiones-manager-header {
     margin-bottom: 25px;
-}
-
-.sesiones-manager-header h2 {
-    font-size: 1.8rem;
-    font-weight: 800;
-    color: var(--text-main);
-    margin-bottom: 8px;
-}
-
-.sesiones-manager-header p {
-    color: var(--text-muted);
-    font-size: 1rem;
-    margin-top: 0;
 }
 
 .sesiones-grid {

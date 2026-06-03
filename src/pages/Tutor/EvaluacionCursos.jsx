@@ -116,10 +116,10 @@ export default function EvaluacionCursos() {
             </div>
 
             {cursos.length === 0 ? (
-                <div style={{ padding: '40px', textAlign: 'center', backgroundColor: '#f8fafc', borderRadius: '12px', color: '#64748b' }}>
+                <div style={{ padding: '40px', textAlign: 'center', backgroundColor: 'var(--student-card, #f8fafc)', borderRadius: '12px', color: '#64748b' }}>
                     <CheckCircleIcon style={{ fontSize: 40, color: '#10b981', marginBottom: '10px' }} />
-                    <Typography variant="h6">Todo al día</Typography>
-                    <Typography>No tienes cursos en esta sección por el momento.</Typography>
+                    <Typography variant="h6" style= {{color: 'var(--text-main, #1e293b)'}}>Todo al día</Typography>
+                    <Typography style= {{color: 'var(--text-main, #1e293b)'}}>No tienes cursos en esta sección por el momento.</Typography>
                 </div>
             ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>

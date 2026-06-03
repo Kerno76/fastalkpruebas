@@ -129,12 +129,12 @@ const getNotifStyle = (type) => {
         <h2 className="dashboard-title">¡Hola, {user?.Name?.split(' ')[0] || 'Estudiante'}! ¿Listo para aprender hoy?</h2>
         <p className="dashboard-subtitle">Bienvenido de vuelta. Aquí está un resumen de tu inscripción y actividades.</p>
 
-        <div className="dashboard-cards-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px' }}>
+        <div className="dashboard-cards-grid">
             
-            <div className="dash-card" style={{ backgroundColor: ultimaCalificacion ? (ultimaCalificacion.grade >= 70 ? '#f0fdf4' : '#fef2f2') : '#fff', border: ultimaCalificacion ? (ultimaCalificacion.grade >= 70 ? '1px solid #bbf7d0' : '1px solid #fecaca') : '1px solid #e2e8f0' }}>
+            <div className="dash-card" style={{ backgroundColor: ultimaCalificacion ? (ultimaCalificacion.grade >= 70 ? 'var(--bg-success, #f0fdf4)' : 'var(--bg-error, #fef2f2)') : 'var(--bg-card, #ffffff)', border: ultimaCalificacion ? (ultimaCalificacion.grade >= 70 ? '1px solid #bbf7d0' : '1px solid #fecaca') : '1px solid #e2e8f0' }}>
             <div className="dash-card-header">
                 <h1>Última Calificación</h1>
-                <span className="iconCard" style={{ backgroundColor: ultimaCalificacion ? (ultimaCalificacion.grade >= 70 ? '#dcfce3' : '#fee2e2') : '#f1f5f9', color: ultimaCalificacion ? (ultimaCalificacion.grade >= 70 ? '#16a34a' : '#ef4444') : '#475569' }}><StarIcon /></span>
+                <span className="iconCard" style={{ backgroundColor: ultimaCalificacion ? (ultimaCalificacion.grade >= 70 ? 'var(--icon-bg-success, #dcfce3)' : 'var(--icon-bg-error, #fee2e2)') : 'var(--bg-card, #f1f5f9)', color: ultimaCalificacion ? (ultimaCalificacion.grade >= 70 ? '#16a34a' : '#ef4444') : '#475569' }}><StarIcon /></span>
             </div>
             <div className="dash-card-body" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px 0' }}>
                 {ultimaCalificacion ? (
@@ -311,47 +311,48 @@ const getNotifStyle = (type) => {
         </div>
 
         <div style={{ display: 'flex', gap: '20px', marginTop: '30px' }}>
-            
-            <div className="recentActivity-student" style={{ flex: 1.2 }}>
-                <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#1e293b', marginBottom: '15px' }}>
-                    Actividad Reciente
-                </h2>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '420px', overflowY: 'auto', paddingRight: '6px' }}>
-                    {notificaciones.length > 0 ? notificaciones.map((item) => {
-                        const style = getNotifStyle(item.Type);
-                        const localDate = new Date(item.CreatedAt.replace(' ', 'T') + 'Z');
-                        const timeString = localDate.toLocaleString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+            <div className="bottomSection" style={{ marginTop: '30px' }}>
+                <div className="recentActivity-student">
+                    <h2 style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var( --text-main, #1e293b)', marginBottom: '15px' }}>
+                        Actividad Reciente
+                    </h2>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '420px', overflowY: 'auto', paddingRight: '6px' }}>
+                        {notificaciones.length > 0 ? notificaciones.map((item) => {
+                            const style = getNotifStyle(item.Type);
+                            const localDate = new Date(item.CreatedAt.replace(' ', 'T') + 'Z');
+                            const timeString = localDate.toLocaleString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 
-                        return (
-                            <Paper 
-                                key={item.NotificationID} className={`activity-card ${!item.IsRead ? 'unread' : ''}`}
-                                elevation={0} onClick={() => handleOpenNotification(item)} style={{ cursor: 'pointer' }}
-                            >
-                                <Avatar style={{ backgroundColor: style.bg, color: style.color, width: 40, height: 40 }}>{style.icon}</Avatar>
-                                <Box className="activity-info">
-                                    <Typography className="activity-title">{item.Title}</Typography>
-                                    <Typography className="activity-desc" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.Message}</Typography>
-                                </Box>
-                                <Typography className="activity-time">{timeString}</Typography>
-                                {!item.IsRead && <div className="unread-dot" style={{ backgroundColor: '#ef4444', width: '8px', height: '8px', borderRadius: '50%', marginLeft: '10px' }} />}
-                            </Paper>
-                        );
-                    }) : (
-                        <p style={{ textAlign: 'center', color: '#94a3b8', padding: '20px', backgroundColor: '#f8fafc', borderRadius: '12px' }}>Aún no tienes notificaciones.</p>
-                    )}
+                            return (
+                                <Paper 
+                                    key={item.NotificationID} className={`activity-card ${!item.IsRead ? 'unread' : ''}`}
+                                    elevation={0} onClick={() => handleOpenNotification(item)} style={{ cursor: 'pointer' }}
+                                >
+                                    <Avatar style={{ backgroundColor: style.bg, color: style.color, width: 40, height: 40 }}>{style.icon}</Avatar>
+                                    <Box className="activity-info">
+                                        <Typography className="activity-title">{item.Title}</Typography>
+                                        <Typography className="activity-desc" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.Message}</Typography>
+                                    </Box>
+                                    <Typography className="activity-time">{timeString}</Typography>
+                                    {!item.IsRead && <div className="unread-dot" style={{ backgroundColor: '#ef4444', width: '8px', height: '8px', borderRadius: '50%', marginLeft: '10px' }} />}
+                                </Paper>
+                            );
+                        }) : (
+                            <p style={{ textAlign: 'center', color: '#94a3b8', padding: '20px', backgroundColor: '#f8fafc', borderRadius: '12px' }}>Aún no tienes notificaciones.</p>
+                        )}
+                    </div>
                 </div>
-            </div>
 
-            <div className="calendar" style={{ flex: 1 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                    <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 'bold', color: '#1e293b' }}>Mi Agenda Escolar</h2>
+                <div className="calendar">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                        <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 'bold', color: 'var( --text-main, #1e293b)' }}>Mi Agenda Escolar</h2>
+                    </div>
+                    <Paper elevation={0} style={{ border: '1px solid #e2e8f0', borderRadius: '16px', padding: '10px', marginRight: '10px' }}>
+                        <Typography variant="caption" style={{ display: 'block', textAlign: 'center', color: '#94a3b8', marginBottom: '5px' }}>
+                            Revisa tus clases programadas y límites de entrega
+                        </Typography>
+                        <CalendarWidget fechasAgendadas={fechasConEventos} onDateSelect={handleDateSelect} />
+                    </Paper>
                 </div>
-                <Paper elevation={0} style={{ border: '1px solid #e2e8f0', borderRadius: '16px', padding: '10px' }}>
-                    <Typography variant="caption" style={{ display: 'block', textAlign: 'center', color: '#94a3b8', marginBottom: '5px' }}>
-                        Revisa tus clases programadas y límites de entrega
-                    </Typography>
-                    <CalendarWidget fechasAgendadas={fechasConEventos} onDateSelect={handleDateSelect} />
-                </Paper>
             </div>
         </div>
 

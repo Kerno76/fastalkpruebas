@@ -174,7 +174,7 @@ export default function MisEstudiantes() {
 
             {activos.length > 0 && (
                 <>
-                    <h3 style={{ marginTop: '30px', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px', color: '#1e293b' }}>
+                    <h3 style={{ marginTop: '30px', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-main, #1e293b)' }}>
                         <FiberManualRecordIcon style={{ color: '#10b981', fontSize: '1rem' }} /> 
                         Alumnos en Cursos Activos
                     </h3>

@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
 import '../../styles/Tutor/RegistroSesiones.css';
 
 const canResubmit = (comments) => {
@@ -263,10 +267,10 @@ export default function RegistroSesiones() {
     };
 
     return (
-        <div className="sesiones-manager-container">
-            <div className="sesiones-manager-header">
-                <h2>Gestión de Clases en Curso</h2>
-                <p>Pasa lista, reporta comportamientos inusuales, reagenda y sube tu evidencia al terminar la sesión.</p>
+        <div className="mainContent">
+            <div className="sessiones-container-gestion"  style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <h2 className="dashboard-title">Gestión de Clases en Curso</h2>
+                <p id="dashboard-subtitle">Pasa lista, reporta comportamientos inusuales, reagenda y sube tu evidencia al terminar la sesión.</p>
             </div>
 
             <div className="sesiones-grid">
@@ -281,14 +285,14 @@ export default function RegistroSesiones() {
                             <button className="close-button" onClick={closeModal}>&times;</button>
                         </div>
 
-                        <div className="precargado-box" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                        <div className="precargado-box" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', backgroundColor: 'var(--student-card, #f8fafc)'}}>
                             <div>
-                                <strong style={{ fontSize: '0.8rem', color: '#64748b', textTransform: 'uppercase' }}>Curso</strong>
-                                <p style={{ margin: '2px 0 0 0', fontWeight: 600 }}>{selectedSession.courseName}</p>
+                                <strong style={{ fontSize: '0.8rem', color: 'var(--text-main, #64748b)', textTransform: 'uppercase' }}>Curso</strong>
+                                <p style={{ color: 'var(--text-main, #64748b)', margin: '2px 0 0 0', fontWeight: 600 }}>{selectedSession.courseName}</p>
                             </div>
                             <div>
-                                <strong style={{ fontSize: '0.8rem', color: '#64748b', textTransform: 'uppercase' }}>Tema Central</strong>
-                                <p style={{ margin: '2px 0 0 0', fontWeight: 600 }}>{selectedSession.Topic}</p>
+                                <strong style={{ fontSize: '0.8rem', color: 'var(--text-main, #64748b)', textTransform: 'uppercase' }}>Tema Central</strong>
+                                <p style={{color: 'var(--text-main, #64748b)', margin: '2px 0 0 0', fontWeight: 600 }}>{selectedSession.Topic}</p>
                             </div>
                         </div>
                         
@@ -297,7 +301,7 @@ export default function RegistroSesiones() {
                                 {asistenciaAlumnos.length > 0 ? asistenciaAlumnos.map((est) => (
                                     <div key={est.StudentID} style={{ display: 'grid', gridTemplateColumns: '2fr 1.5fr', gap: '10px', marginBottom: '10px', paddingBottom: '10px', borderBottom: '1px dashed #cbd5e1' }}>
                                         <div>
-                                            <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#1e293b', display: 'block', marginBottom: '5px' }}>{est.Name}</span>
+                                            <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-main, #1e293b)', display: 'block', marginBottom: '5px' }}>{est.Name}</span>
                                             <select className="select-field" value={est.Attendance || 'Presente'} onChange={(e) => handleStudentUpdate(est.StudentID, 'Attendance', e.target.value)}>
                                                 <option value="Presente">Presente</option>
                                                 <option value="Ausente">Ausente</option>
@@ -305,7 +309,7 @@ export default function RegistroSesiones() {
                                             </select>
                                         </div>
                                         <div>
-                                            <span style={{ fontWeight: 600, fontSize: '0.8rem', color: '#64748b', display: 'block', marginBottom: '5px' }}>Detalle / Incidente</span>
+                                            <span style={{ fontWeight: 600, fontSize: '0.8rem', color: 'var(--text-main, #64748b)', display: 'block', marginBottom: '5px' }}>Detalle / Incidente</span>
                                             <input className="select-field" type="text" placeholder="Ej. Problemas de internet..." value={est.IncidentReport || ''} onChange={(e) => handleStudentUpdate(est.StudentID, 'IncidentReport', e.target.value)} />
                                         </div>
                                     </div>
@@ -391,7 +395,14 @@ export default function RegistroSesiones() {
                         <form onSubmit={handlePosponer}>
                             <div className="form-group">
                                 <label>Nueva Fecha</label>
-                                <input type="date" className="select-field" value={reagendarData.fecha} onChange={(e) => setReagendarData({...reagendarData, fecha: e.target.value})} required />
+                                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                    <DatePicker 
+                                        value={reagendarData.fecha ? dayjs(reagendarData.fecha) : null} 
+                                        onChange={(nuevaFecha) => {setReagendarData({...reagendarData, fecha: nuevaFecha ? nuevaFecha.format('YYYY-MM-DD') : ''});}} 
+                                        format="DD/MM/YYYY" 
+                                        slotProps={{ textField: { size: 'small', fullWidth: true, required: true } }} 
+                                    />
+                                </LocalizationProvider>
                             </div>
                             <div className="form-group">
                                 <label>Nueva Hora</label>

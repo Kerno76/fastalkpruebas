@@ -347,7 +347,7 @@ export default function ControlEstudiantes() {
                                         <div className="student-data" style={{ width: '100%' }}>
                                             <div className='header-container-card'>
                                                 
-                                                <Typography className="student-name-title" className={`student-name-title ${estado === 'Inactive' ? 'inactive-text' : ''}`}>
+                                                <Typography className={`student-name-title ${estado === 'Inactive' ? 'inactive-text' : ''}`}>
                                                     {item.Name}
                                                 </Typography>
 

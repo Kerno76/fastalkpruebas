@@ -203,8 +203,8 @@ export default function Dashboard() {
                         </span>
                         </div>
                         <div className="stat-container">
-                        <span className="stat-number">{stat.amount}</span>
-                        <span className="stat-label">Total en sistema</span>
+                        <span className="stat-number-dash">{stat.amount}</span>
+                        <span className="stat-label-dash">Total en sistema</span>
                         </div>
                         <p className="card-footer-text" style={{ color: '#64748b' }}>Cálculo en tiempo real</p>
                     </div>

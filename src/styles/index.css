@@ -104,6 +104,10 @@
   --stat-label: #718096;
   --curso-name: #1a202c;
   --curso-period: #718096;
+
+  --modal-course-title: #1e40af;
+  --detail-label: #3b82f6;
+  --detail-value: #1e3a8a;
 }
 
 /* Tema oscuro */
@@ -194,6 +198,10 @@
   --stat-label: #aec2e1;
   --curso-name: #ffffff;
   --curso-period: #dcdedf;
+
+  --modal-course-title: #ffffff;
+  --detail-label: #ffffff;
+  --detail-value: #ffffff;
 }
 
 body{

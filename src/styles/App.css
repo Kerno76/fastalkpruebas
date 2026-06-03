@@ -88,14 +88,14 @@
   margin: 0;
 }
 
-.stat-number {
+.stat-number-dash {
   font-size: 42px !important;
   font-weight: 800;
   color: var(--text-main);
   display: block;
 }
 
-.stat-label {
+.stat-label-dash {
   font-size: 19px !important;
   color: var(--subtitle-main);
 }

@@ -156,7 +156,7 @@ export default function ModalOlvidoPassword({ open, onClose }) {
                     )}
 
                     <div className="modal-actions" style={{ marginTop: '20px' }}>
-                        <Button variant="contained" onClick={handleAction} className="btn-save" fullWidth>
+                        <Button variant="contained" onClick={handleAction} className="btn-save" fullWidth data-cy="btn-enviar">
                             {step === 1 ? "Enviar Código" : step === 2 ? "Verificar Código" : "Guardar Contraseña"}
                         </Button>
                     </div>
