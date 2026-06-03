@@ -24,6 +24,8 @@ import Cursos from "./pages/Organizador/Cursos"
 import CalificarTareas from "./pages/Tutor/CalificarTareas"
 import VisitasRevisor from "./pages/Revisor/VisitasRevisor"
 import RepositorioAdmin from "./pages/Organizador/RepositorioAdmin" // NUEVO REPOSITORIO SOLO PARA ADMIN, NO CONFUNDIR CON EL DE TUTOR
+import Help from "./pages/Ayuda"
+import MisTutores from "./pages/Revisor/MisTutores"
 
 // NUEVAS PANTALLAS DE CIERRE DE CURSOS
 import EvaluacionCursos from "./pages/Tutor/EvaluacionCursos"
@@ -99,9 +101,11 @@ function App() {
         {/* --- RUTAS DE REVISOR --- */}
         <Route path="/dashboard-revisor" element={<ProtectedRoute allowedRoles={['Reviewer', 'Admin']}><DashboardRevisor /></ProtectedRoute>} />
         <Route path="/visitas" element={<ProtectedRoute allowedRoles={['Reviewer', 'Admin']}><VisitasRevisor /></ProtectedRoute>} />
+        <Route path="/misTut" element={<ProtectedRoute allowedRoles={['Reviewer']}><MisTutores /></ProtectedRoute>} />
 
         {/* --- RUTAS COMPARTIDAS --- */}
         <Route path="/settings" element={<ProtectedRoute allowedRoles={['Admin', 'Tutor', 'Student', 'Reviewer']}><Settings/></ProtectedRoute>} />
+        <Route path="/help" element={<ProtectedRoute allowedRoles={['Admin', 'Tutor', 'Student', 'Reviewer']}><Help/></ProtectedRoute>} />
 
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>

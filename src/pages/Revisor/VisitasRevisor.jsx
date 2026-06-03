@@ -108,6 +108,8 @@ export default function VisitasRevisor() {
                     </p>
                 </div>
             </div>
+            
+            <hr className="divisor"/>
 
             <div style={{ marginBottom: '40px' }}>
                 <Typography variant="h6" style={{ fontWeight: 800, color: '#0369a1', display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>

@@ -310,6 +310,7 @@ export function Preferences({ darkMode, toggleTheme }) {
             {rol === 'Reviewer' && (
                 <>
                     <option value="/visitas">Visitas a Clases</option>
+                    <option value="/misTut">Mis Tutores</option>
                 </>
             )}
             

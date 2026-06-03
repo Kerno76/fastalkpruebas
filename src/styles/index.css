@@ -110,6 +110,7 @@
   --detail-value: #1e3a8a;
 
   --stat-number-icon: #000000;
+  --whatsapp-button: #25D366;
 }
 
 /* Tema oscuro */
@@ -205,6 +206,8 @@
   --detail-label: #ffffff;
   --detail-value: #ffffff;
   --stat-number-icon: #000000;
+
+  --whatsapp-button: #25d365b8;
 }
 
 body{

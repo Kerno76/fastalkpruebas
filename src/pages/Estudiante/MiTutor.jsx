@@ -76,7 +76,7 @@ export default function MiTutor() {
                 <h2 className="dashboard-title">Mi Tutor ({tutorInfo.name})</h2>
             </div>
 
-            <hr className="divisor" style={{ marginBottom: '25px', borderTop: '1px solid #e0e4e8' }} />
+            <hr className="divisor"/>
 
             <div className="tutor-grid">
                 

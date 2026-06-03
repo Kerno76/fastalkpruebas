@@ -345,4 +345,100 @@ router.get('/sesiones-monitoreo/:reviewerId', async (req, res) => {
     }
 });
 
+router.get('/mis-tutores/:reviewerId', async (req, res) => {
+    const { reviewerId } = req.params;
+
+    try {
+
+        const { data: asignaciones, error: asigErr } = await supabaseAdmin
+            .from('Enrollments_Reviewers')
+            .select('TutorID')
+            .eq('ReviewerID', reviewerId);
+
+        if (asigErr) throw asigErr;
+
+        if (!asignaciones || asignaciones.length === 0) {
+            return res.status(200).json({
+                success: true,
+                tutores: []
+            });
+        }
+
+        const tutorIds = asignaciones.map(a => a.TutorID);
+
+        const { data: tutores, error: tutorErr } = await supabaseAdmin
+            .from('Tutors')
+            .select(`
+                ID,
+                Phone,
+                Career,
+                Language,
+                TotalHours,
+                ProgramSettings (
+                    ProgramName,
+                    Required80Hours
+                )
+            `)
+            .in('ID', tutorIds);
+
+        if (tutorErr) throw tutorErr;
+
+        const { data: perfiles, error: profErr } = await supabaseAdmin
+            .from('UsersProfiles')
+            .select('ID, Name, Email')
+            .in('ID', tutorIds);
+
+        if (profErr) throw profErr;
+
+        const { data: sesionesPendientes, error: sesErr } =
+            await supabaseAdmin
+                .from('Session')
+                .select('TutorID')
+                .in('TutorID', tutorIds)
+                .eq('Status', 'Completed')
+                .eq('ReviewerStatus', 'Pendiente');
+
+        if (sesErr) throw sesErr;
+
+        const resultado = tutores.map(tutor => {
+
+            const perfil = perfiles.find(
+                p => p.ID === tutor.ID
+            );
+
+            const pendientes =
+                sesionesPendientes?.filter(
+                    s => s.TutorID === tutor.ID
+                ).length || 0;
+
+            return {
+                ID: tutor.ID,
+                Name: perfil?.Name || 'Sin nombre',
+                Email: perfil?.Email || '',
+                Phone: tutor.Phone,
+                Career: tutor.Career,
+                Language: tutor.Language,
+                TotalHours: tutor.TotalHours || 0,
+                RequiredHours:
+                    tutor.ProgramSettings?.Required80Hours || 80,
+                PendingLogs: pendientes
+            };
+        });
+
+        res.status(200).json({
+            success: true,
+            tutores: resultado
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
 module.exports = router;

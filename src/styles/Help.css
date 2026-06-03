@@ -1,0 +1,78 @@
+/* Contenedor principal del Video */
+.main-video-container {
+    background-color: var(--student-card) !important;
+    border-radius: 20px !important;
+    padding: 30px !important;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02) !important;
+}
+
+.subtitle-main{
+    color: var(--student-label) !important;
+}
+
+.iconoAyuda{
+    color: #0ea5e9 !important; 
+    font-size: 32px !important;
+}
+
+.header-video-container{
+    display: flex;
+    align-items: center; 
+    gap: 12px; 
+    margin-bottom: 10px;
+}
+
+.descriptionVideo{
+    color: var(--student-label) !important;
+    margin-bottom: 25px !important;
+}
+
+.title-faq{
+    font-weight: 700 !important;
+    color: var(--text-main) !important;
+    margin-bottom: 25px !important;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.questionP{
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+}
+
+.answerQP{
+    color: var(--student-label) !important;
+    font-size: 0.9rem !important;
+    line-height: 1.6 !important;  
+}
+
+/* Contenedor para el video tutorial, así el video nunca se estira feo ni se corta en celulares.*/
+.video-responsive-wrapper {
+    position: relative;
+    padding-bottom: 56.25%; /* Ratio 16:9 exacto */
+    height: 0;
+    overflow: hidden;
+    border-radius: 12px;
+    background-color: #000; /* Fondo negro mientras carga el video */
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.video-iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 12px;
+}
+
+/* Contenedor de Preguntas Frecuentes */
+.faq-container {
+    background-color: var(--student-card) !important;
+    border-radius: 20px !important;
+    padding: 30px !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02) !important;
+}

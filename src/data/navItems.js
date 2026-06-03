@@ -1,4 +1,5 @@
 import config from '../assets/config.png'
+import informacion from '../assets/informacion.png'
 import dashboard from '../assets/dashboard.png'
 import register_session from '../assets/session.png'
 import session_history from '../assets/history.png'
@@ -46,9 +47,11 @@ export const navItems = [
   // --- SECCIÓN REVISOR (También para Admin) ---
   { icon: revisar_icon, label: "Aprobaciones Pendientes", path: "/dashboard-revisor", roles: ['Reviewer', 'Admin'], section: "Revisión" },
   { icon: agenda, label: "Visitas a Clases", path: "/visitas", roles: ['Reviewer', 'Admin'], section: "Revisión" },
+  { icon: students, label: "Mis Tutores", path: "/misTut", roles: ['Reviewer'], section: "Revisión" },
 
   // --- GENERAL ---
   { icon: repositorio_icon, label: "Repositorio", path: "/repositorio-admin", roles: ['Admin'], section: "Administración" }, // NUEVO REPOSITORIO SOLO PARA ADMIN
+  { icon: informacion, label: "Información", path: "/help", roles: ['Admin', 'Tutor', 'Student', 'Reviewer'], section: "General" },
   { icon: config, label: "Configuración", path: "/settings", roles: ['Admin', 'Tutor', 'Student', 'Reviewer'], section: "General" }
 ];
 
