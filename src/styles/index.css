@@ -108,6 +108,8 @@
   --modal-course-title: #1e40af;
   --detail-label: #3b82f6;
   --detail-value: #1e3a8a;
+
+  --stat-number-icon: #000000;
 }
 
 /* Tema oscuro */
@@ -202,6 +204,7 @@
   --modal-course-title: #ffffff;
   --detail-label: #ffffff;
   --detail-value: #ffffff;
+  --stat-number-icon: #000000;
 }
 
 body{

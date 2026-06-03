@@ -85,9 +85,9 @@ export default function MiTutor() {
                     <h1 className="card-subtitle-tutor">Perfil Completo</h1>
                     <div className="profile-section-content">
                         <Avatar src={tutorInfo.avatar} className="tutor-page-avatar" style={{ width: 120, height: 120, margin: '0 auto 15px', backgroundColor: '#e2e8f0' }} />
-                        <Typography className="tutor-page-name" style={{ fontWeight: 'bold', fontSize: '1.4rem', color: '#1e293b' }}>{tutorInfo.name}</Typography>
+                        <Typography className="tutor-page-name" style={{ fontWeight: 'bold', fontSize: '1.4rem', color: 'var(--text-main, #1e293b)' }}>{tutorInfo.name}</Typography>
                         <Typography className="tutor-page-specialty" style={{ color: '#3b82f6', fontWeight: '600', marginBottom: '15px' }}>{tutorInfo.specialty}</Typography>
-                        <Typography className="tutor-page-bio" style={{ color: '#475569', lineHeight: 1.6, textAlign: 'center' }}>{tutorInfo.bio}</Typography>
+                        <Typography className="tutor-page-bio" style={{ color: 'var(--text-main, #475569)', lineHeight: 1.6, textAlign: 'center' }}>{tutorInfo.bio}</Typography>
                     </div>
                 </div>
 
