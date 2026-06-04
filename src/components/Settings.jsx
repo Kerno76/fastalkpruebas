@@ -339,81 +339,81 @@ export function Preferences({ darkMode, toggleTheme }) {
 }
 
 export function Notifications() {
+  // Identificamos al usuario y su rol
+  const userString = localStorage.getItem('user');
+  const user = userString ? JSON.parse(userString) : {};
+  const userRole = user.Rol || 'Student';
+
+  // Se cargan las preferencias
   const [prefs, setPrefs] = useState(() => {
-    const saved = localStorage.getItem('notifPrefs');
+    const saved = localStorage.getItem(`notifPrefs_${user.ID}`);
+    // Si es la primera vez que entra, encendemos todo por defecto
     return saved ? JSON.parse(saved) : {
-      sesiones: true,
-      tareas: true,
-      alertas: true
+      sesiones: true, tareas: true, alertas: true, 
+      revisiones: true, entregas: true, bitacoras: true, cursos: true
     };
   });
 
   const handleToggle = (key) => {
     const newPrefs = { ...prefs, [key]: !prefs[key] };
     setPrefs(newPrefs);
-    localStorage.setItem('notifPrefs', JSON.stringify(newPrefs));
+    localStorage.setItem(`notifPrefs_${user.ID}`, JSON.stringify(newPrefs));
     toast.success("Preferencias actualizadas correctamente");
   };
 
+  // Menú dinámico dependiendo del Rol
+  const opcionesPorRol = {
+    'Student': [
+      { key: 'sesiones', title: 'Clases y Agendas', desc: 'Avisos cuando tu tutor programe, reagende o cancele una clase.' },
+      { key: 'tareas', title: 'Centro de Tareas', desc: 'Notificaciones de nuevas tareas, actualizaciones y calificaciones.' },
+      { key: 'alertas', title: 'Avisos del Curso', desc: 'Avisos de fin de curso, aprobaciones y alertas del sistema.' }
+    ],
+    'Tutor': [
+      { key: 'revisiones', title: 'Evaluación de Bitácoras', desc: 'Avisos cuando el Revisor apruebe o rechace tus bitácoras.' },
+      { key: 'entregas', title: 'Entregas de Alumnos', desc: 'Notificaciones cuando tus alumnos envíen sus tareas.' },
+      { key: 'alertas', title: 'Alertas de Administración', desc: 'Avisos de cierre de cursos y alertas del sistema.' }
+    ],
+    'Reviewer': [
+      { key: 'bitacoras', title: 'Nuevas Bitácoras', desc: 'Avisos cuando un tutor envíe una bitácora lista para revisión.' }
+    ],
+    'Admin': [
+      { key: 'cursos', title: 'Cierre de Cursos', desc: 'Avisos cuando un tutor envíe las calificaciones finales para revisión.' },
+      { key: 'bitacoras', title: 'Sesiones Completadas', desc: 'Notificaciones cuando los tutores finalicen clases y entreguen reportes.' }
+    ]
+  };
+
+  const opcionesActuales = opcionesPorRol[userRole] || opcionesPorRol['Student'];
+
   return (
     <div className="settingsThings">
-      <h3 className="settings-header">Notificaciones</h3>
-      <p className="settings-desc">Controla qué tipo de avisos deseas recibir en tu panel de actividad.</p>
+      <h3 className="settings-header">Preferencias de Notificaciones</h3>
+      <p className="settings-desc">Personaliza qué tipo de actividad quieres ver en tu panel principal.</p>
 
       <div className="settings-toggles-container">
-        
-        <div className="settings-row border-bottom">
-          <div className="settings-label-group">
-            <label htmlFor="session-toggle" className="settings-label-title">Agendado de Sesiones</label>
-            <span className="settings-label-desc">Avisos cuando se programe una clase nueva o se actualicen los enlaces de reunión.</span>
-          </div>
-          <label className="rocker rocker-small">
-              <input 
-                id="session-toggle" 
-                type="checkbox" 
-                checked={prefs.sesiones}
-                onChange={() => handleToggle('sesiones')} 
-              />
-              <span className="switch-left">ON</span>
-              <span className="switch-right">OFF</span>
-          </label>
-        </div>
+        {opcionesActuales.map((opcion, index) => (
+          <div key={opcion.key} className={`settings-row ${index !== opcionesActuales.length - 1 ? 'border-bottom' : ''}`}>
+            
+            <div className="settings-label-group">
+              <label htmlFor={`toggle-${opcion.key}`} className="settings-label-title">
+                {opcion.title}
+              </label>
+              <span className="settings-label-desc">{opcion.desc}</span>
+            </div>
+            
+            <label className="rocker rocker-small">
+                <input 
+                  id={`toggle-${opcion.key}`} 
+                  type="checkbox" 
+                  checked={prefs[opcion.key]}
+                  onChange={() => handleToggle(opcion.key)} 
+                />
+                <span className="switch-left">ON</span>
+                <span className="switch-right">OFF</span>
+            </label>
 
-        <div className="settings-row border-bottom">
-          <div className="settings-label-group">
-            <label htmlFor="task-toggle" className="settings-label-title">Centro de Tareas</label>
-            <span className="settings-label-desc">Notificaciones sobre nuevas asignaciones, entregas realizadas y calificaciones del tutor.</span>
           </div>
-          <label className="rocker rocker-small">
-              <input 
-                id="task-toggle" 
-                type="checkbox" 
-                checked={prefs.tareas}
-                onChange={() => handleToggle('tareas')} 
-              />
-              <span className="switch-left">ON</span>
-              <span className="switch-right">OFF</span>
-          </label>
-        </div>
-
-        <div className="settings-row">
-          <div className="settings-label-group">
-            <label htmlFor="feedback-toggle" className="settings-label-title">Reportes e Incidencias</label>
-            <span className="settings-label-desc">Avisos importantes sobre reportes de sesión, ausencias o revisiones administrativas.</span>
-          </div>
-          <label className="rocker rocker-small">
-              <input 
-                id="feedback-toggle" 
-                type="checkbox" 
-                checked={prefs.alertas}
-                onChange={() => handleToggle('alertas')} 
-              />
-              <span className="switch-left">ON</span>
-              <span className="switch-right">OFF</span>
-          </label>
-        </div>
-
+        ))}
       </div>
     </div>
-  )
+  );
 }

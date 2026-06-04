@@ -201,6 +201,34 @@ export default function DashboardRevisor() {
         );
     }
 
+    
+    const savedPrefs = JSON.parse(localStorage.getItem(`notifPrefs_${user?.ID}`)) || {
+        sesiones: true, tareas: true, alertas: true, 
+        revisiones: true, entregas: true, bitacoras: true, cursos: true
+    };
+    const currentUserRole = user?.Rol || 'Admin';
+
+    const notificacionesFiltradas = notificaciones.filter((item) => {
+        if (currentUserRole === 'Student') {
+            if (['SessionAgendada', 'ReporteIncidencia'].includes(item.Type) && !savedPrefs.sesiones) return false;
+            if (item.Type === 'AsignacionCurso' && !savedPrefs.tareas) return false;
+            if (item.Type === 'AlertaAdmin' && !savedPrefs.alertas) return false;
+        }
+        else if (currentUserRole === 'Tutor') {
+            if (item.Type === 'SessionRevisada' && !savedPrefs.revisiones) return false;
+            if (item.Type === 'MaterialSubido' && !savedPrefs.entregas) return false;
+            if (item.Type === 'AlertaAdmin' && !savedPrefs.alertas) return false;
+        }
+        else if (currentUserRole === 'Reviewer') {
+            if (item.Type === 'MaterialSubido' && !savedPrefs.bitacoras) return false;
+        }
+        else if (currentUserRole === 'Admin') {
+            if (item.Type === 'AlertaAdmin' && !savedPrefs.cursos) return false;
+            if (item.Type === 'MaterialSubido' && !savedPrefs.bitacoras) return false;
+        }
+        return true; 
+    });
+
     return (
         <div className='mainContent' style={{ paddingBottom: '50px' }}>
             
@@ -426,7 +454,7 @@ export default function DashboardRevisor() {
                     </h2>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '420px', overflowY: 'auto', paddingRight: '6px' }}>
-                        {notificaciones.length > 0 ? notificaciones.map((item) => {
+                        {notificacionesFiltradas.length > 0 ? notificacionesFiltradas.map((item) => {
                             const style = getNotifStyle(item.Type);
                             const localDate = new Date(item.CreatedAt.replace(' ', 'T') + 'Z');
                             const timeString = localDate.toLocaleString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
@@ -471,7 +499,7 @@ export default function DashboardRevisor() {
                             {isAdmin ? 'Agenda Global de Clases' : 'Agenda de Tutores'}
                         </h2>
                     </div>
-                    <Paper elevation={0} style={{ border: '1px solid #e2e8f0', borderRadius: '16px', padding: '10px' }}>
+                    <Paper elevation={0} style={{ border: '1px solid #e2e8f0', borderRadius: '16px', padding: '10px', marginRight: '10px' }}>
                         <Typography variant="caption" style={{ display: 'block', textAlign: 'center', color: '#94a3b8', marginBottom: '5px' }}>
                             {isAdmin ? 'Revisa las clases de toda la plataforma' : 'Revisa las clases programadas de tus tutores a cargo'}
                         </Typography>

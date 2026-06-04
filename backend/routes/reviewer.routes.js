@@ -185,7 +185,7 @@ router.put('/evaluar-bitacora', async (req, res) => {
         notificaciones.push({
             ReceiverID: TutorID,
             SenderID: ReviewerID,
-            Type: 'SessionRevisada',
+            Type: 'SesionRevisada',
             Title: titNotif,
             Message: msgNotifTutor,
             RelatedEntityID: SessionID
@@ -195,7 +195,7 @@ router.put('/evaluar-bitacora', async (req, res) => {
             notificaciones.push({
                 ReceiverID: sessionPrev.ReviewerID,
                 SenderID: ReviewerID, 
-                Type: 'SessionRevisada',
+                Type: 'SesionRevisada',
                 Title: 'Bitácora evaluada por Administrador',
                 Message: `El ${firma} ha ${NewStatus === 'Aprobado' ? 'aprobado' : 'rechazado'} la bitácora de la sesión "${Topic}" de uno de tus tutores.`,
                 RelatedEntityID: SessionID

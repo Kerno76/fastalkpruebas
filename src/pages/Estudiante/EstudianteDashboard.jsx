@@ -124,6 +124,34 @@ const getNotifStyle = (type) => {
         }
     };
 
+    
+    const savedPrefs = JSON.parse(localStorage.getItem(`notifPrefs_${user?.ID}`)) || {
+        sesiones: true, tareas: true, alertas: true, 
+        revisiones: true, entregas: true, bitacoras: true, cursos: true
+    };
+    const currentUserRole = user?.Rol || 'Admin';
+
+    const notificacionesFiltradas = notificaciones.filter((item) => {
+        if (currentUserRole === 'Student') {
+            if (['SessionAgendada', 'ReporteIncidencia'].includes(item.Type) && !savedPrefs.sesiones) return false;
+            if (item.Type === 'AsignacionCurso' && !savedPrefs.tareas) return false;
+            if (item.Type === 'AlertaAdmin' && !savedPrefs.alertas) return false;
+        }
+        else if (currentUserRole === 'Tutor') {
+            if (item.Type === 'SessionRevisada' && !savedPrefs.revisiones) return false;
+            if (item.Type === 'MaterialSubido' && !savedPrefs.entregas) return false;
+            if (item.Type === 'AlertaAdmin' && !savedPrefs.alertas) return false;
+        }
+        else if (currentUserRole === 'Reviewer') {
+            if (item.Type === 'MaterialSubido' && !savedPrefs.bitacoras) return false;
+        }
+        else if (currentUserRole === 'Admin') {
+            if (item.Type === 'AlertaAdmin' && !savedPrefs.cursos) return false;
+            if (item.Type === 'MaterialSubido' && !savedPrefs.bitacoras) return false;
+        }
+        return true; 
+    });
+
     return (
         <div className="mainContent">
         <h2 className="dashboard-title">¡Hola, {user?.Name?.split(' ')[0] || 'Estudiante'}! ¿Listo para aprender hoy?</h2>
@@ -317,7 +345,7 @@ const getNotifStyle = (type) => {
                         Actividad Reciente
                     </h2>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '420px', overflowY: 'auto', paddingRight: '6px' }}>
-                        {notificaciones.length > 0 ? notificaciones.map((item) => {
+                        {notificacionesFiltradas.length > 0 ? notificacionesFiltradas.map((item) => {
                             const style = getNotifStyle(item.Type);
                             const localDate = new Date(item.CreatedAt.replace(' ', 'T') + 'Z');
                             const timeString = localDate.toLocaleString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
