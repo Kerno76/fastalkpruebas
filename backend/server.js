@@ -18,6 +18,9 @@ app.use('/api/revisor', require('./routes/reviewer.routes'));
 app.use('/api/student', require('./routes/student.routes'));
 app.use('/api/ai', require('./routes/ai.routes')); 
 
+// Nueva ruta para SSE, que maneja conexiones persistentes para eventos en tiempo real
+app.use('/api/sse', require('./routes/sse.routes'));
+
 startAccountCleaner();
 startCourseMonitor();
 

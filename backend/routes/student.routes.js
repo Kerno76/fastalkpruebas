@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { supabaseAdmin } = require('../config/supabase');
 const cron = require('node-cron');
+const { sendSSEEvent } = require('./sse.routes'); // función para enviar eventos SSE a usuarios conectados
 
 router.get('/notificaciones/:userId', async (req, res) => {
     const { userId } = req.params;
@@ -183,6 +184,9 @@ router.put('/entregar-tarea', async (req, res) => {
             Message: `El alumno ${studentProfile?.Name || ''} ha entregado su evidencia para la tarea "${Title}".`,
             RelatedEntityID: AssignmentID
         }]);
+
+        // Avisar al tutor en tiempo real con SSE
+        sendSSEEvent(TutorID, 'tareaEntregada', {});
 
         res.status(200).json({ success: true });
     } catch (error) {

@@ -1,6 +1,7 @@
 const cron = require('node-cron');
 const { supabaseAdmin } = require('./config/supabase');
 const nodemailer = require('nodemailer');
+const { sendSSEEvent } = require('./routes/sse.routes'); // función para enviar eventos SSE a usuarios conectados
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -24,7 +25,7 @@ const startAccountCleaner = () => {
 
             for (const usuario of usuarios) {
                 const fechaCreacion = new Date(usuario.CreatedAt);
-                
+
                 const fechaExpiracion = new Date(fechaCreacion);
                 fechaExpiracion.setFullYear(fechaExpiracion.getFullYear() + 5);
 
@@ -32,7 +33,13 @@ const startAccountCleaner = () => {
                 const minutosRestantes = Math.floor(diferenciaMs / 60000);
 
                 if (minutosRestantes <= 0) {
+                    // Avisar al usuario via SSE antes de eliminar (si está conectado)
+                    sendSSEEvent(usuario.ID, 'logout', { reason: 'account_expired' });
+                    // Pequeña pausa para que el evento llegue antes de que la conexión muera
+                    await new Promise(resolve => setTimeout(resolve, 300));
+
                     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(usuario.ID);
+
 
                     if (!deleteError) {
                         await transporter.sendMail({
@@ -43,7 +50,7 @@ const startAccountCleaner = () => {
                         });
                         console.log(`[CRON] Cuenta eliminada definitivamente: ${usuario.Email}`);
                     }
-                    continue; 
+                    continue;
                 }
 
                 let enviarNotificacion = false;
@@ -71,8 +78,8 @@ const startAccountCleaner = () => {
 
                 if (enviarNotificacion) {
                     const { error: notifError } = await supabaseAdmin.from('Notifications').insert([{
-                        ReceiverID: usuario.ID, 
-                        Type: 'AlertaAdmin', 
+                        ReceiverID: usuario.ID,
+                        Type: 'AlertaAdmin',
                         Title: 'Aviso de expiración de cuenta',
                         Message: `Tu cuenta cumplirá 5 años de antigüedad y se eliminará en ${mensajeTiempo}.`,
                         IsRead: false

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { supabaseAdmin } = require('../config/supabase');
+const { sendSSEEvent } = require('./sse.routes'); // Para enviar eventos SSE a los revisores conectados en tiempo real
 
 router.get('/notificaciones/:userId', async (req, res) => {
     const { userId } = req.params;
@@ -9,7 +10,7 @@ router.get('/notificaciones/:userId', async (req, res) => {
             .from('UsersProfiles')
             .select('ID')
             .eq('ID', userId)
-            .single(); 
+            .single();
 
         if (perfilError || !perfil) {
             return res.status(404).json({ success: false, message: "Usuario no encontrado" });
@@ -23,11 +24,13 @@ router.get('/notificaciones/:userId', async (req, res) => {
             .limit(10);
 
         if (error) throw error;
-        res.status(200).json({ success: true, notificaciones: data });
+        res.status(200).json({ success: true, notificaciones: data }); // ← solo esta línea
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 });
+
+
 
 router.put('/notificaciones/leer/:notifId', async (req, res) => {
     const { notifId } = req.params;
@@ -85,14 +88,14 @@ router.get('/bitacoras/:reviewerId', async (req, res) => {
                 tutorId: s.TutorID,
                 course: s.Courses?.Name || 'N/A',
                 date: s.Date,
-                startTime: s.StartTime, 
+                startTime: s.StartTime,
                 topic: s.Topic,
                 duration: s.Duration,
                 status: s.ReviewerStatus || 'Pendiente',
                 evidenceLink: s.EvidencePhoto,
                 description: s.Description,
                 nextSession: s.NextSession,
-                reviewerComments: s.ReviewerComments || '', 
+                reviewerComments: s.ReviewerComments || '',
                 estudiantes: s.SessionStudents ? s.SessionStudents.map(st => ({
                     Name: st.UsersProfiles?.Name || 'Alumno',
                     Attendance: st.Attendance,
@@ -102,8 +105,8 @@ router.get('/bitacoras/:reviewerId', async (req, res) => {
         });
 
         res.status(200).json({ success: true, bitacoras: formateadas });
-    } catch (error) { 
-        res.status(500).json({ success: false, message: error.message }); 
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
     }
 });
 
@@ -121,13 +124,13 @@ router.put('/evaluar-bitacora', async (req, res) => {
             .select('Name, Rol')
             .eq('ID', ReviewerID)
             .single();
-            
+
         const evaluatorName = evaluator?.Name || 'Usuario';
         const evaluatorRol = evaluator?.Rol || 'Reviewer';
 
         const firma = evaluatorRol === 'Admin' ? `Administrador (${evaluatorName})` : `Revisor (${evaluatorName})`;
         const finalComments = ReviewerComments && ReviewerComments.trim() !== '' ? ReviewerComments : 'Sin comentarios adicionales.';
-        
+
         let comentarioBD = `Evaluado por: ${firma}\n`;
         if (NewStatus === 'Rechazado') {
             comentarioBD += `Permite Reenvío: ${allowResubmit ? 'Sí' : 'No'}\n`;
@@ -135,7 +138,7 @@ router.put('/evaluar-bitacora', async (req, res) => {
         comentarioBD += `Comentarios: ${finalComments}`;
 
         const { error: updateErr } = await supabaseAdmin.from('Session')
-            .update({ 
+            .update({
                 ReviewerStatus: NewStatus,
                 ReviewerComments: comentarioBD
             })
@@ -149,7 +152,7 @@ router.put('/evaluar-bitacora', async (req, res) => {
                 .select('ValidationsCompleted')
                 .eq('ID', sessionPrev.ReviewerID)
                 .single();
-            
+
             if (revData) {
                 const currentValidations = revData.ValidationsCompleted || 0;
                 await supabaseAdmin
@@ -173,8 +176,8 @@ router.put('/evaluar-bitacora', async (req, res) => {
 
         let notificaciones = [];
         const titNotif = NewStatus === 'Rechazado' ? 'Bitácora rechazada' : 'Bitácora aprobada';
-        
-        let msgNotifTutor = NewStatus === 'Rechazado' 
+
+        let msgNotifTutor = NewStatus === 'Rechazado'
             ? `Tu bitácora de la sesión "${Topic}" ha sido rechazada por el ${firma}.`
             : `Tu bitácora de la sesión "${Topic}" ha sido aprobada con éxito por el ${firma}.${mensajeExtra}`;
 
@@ -194,7 +197,7 @@ router.put('/evaluar-bitacora', async (req, res) => {
         if (evaluatorRol === 'Admin' && sessionPrev && sessionPrev.ReviewerID && sessionPrev.ReviewerID !== ReviewerID) {
             notificaciones.push({
                 ReceiverID: sessionPrev.ReviewerID,
-                SenderID: ReviewerID, 
+                SenderID: ReviewerID,
                 Type: 'SesionRevisada',
                 Title: 'Bitácora evaluada por Administrador',
                 Message: `El ${firma} ha ${NewStatus === 'Aprobado' ? 'aprobado' : 'rechazado'} la bitácora de la sesión "${Topic}" de uno de tus tutores.`,
@@ -206,9 +209,15 @@ router.put('/evaluar-bitacora', async (req, res) => {
             await supabaseAdmin.from('Notifications').insert(notificaciones);
         }
 
+        // esto manda un evento SSE al tutor para que actualice su dashboard en tiempo real 
+        sendSSEEvent(TutorID, 'bitacoraRevisada', { sessionId: SessionID, status: NewStatus });
+        if (sessionPrev?.ReviewerID && sessionPrev.ReviewerID !== ReviewerID) {
+            sendSSEEvent(sessionPrev.ReviewerID, 'bitacorasList', {});
+        }
+
         res.status(200).json({ success: true });
-    } catch (error) { 
-        res.status(500).json({ success: false, message: error.message }); 
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
     }
 });
 
@@ -222,10 +231,10 @@ router.get('/stats/:reviewerId', async (req, res) => {
             .single();
 
         if (error) throw error;
-        
-        res.status(200).json({ 
-            success: true, 
-            validationsCompleted: data?.ValidationsCompleted || 0 
+
+        res.status(200).json({
+            success: true,
+            validationsCompleted: data?.ValidationsCompleted || 0
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -242,7 +251,7 @@ router.get('/eventos-calendario/:reviewerId', async (req, res) => {
 
         if (!isAdmin) {
             const { data: asignaciones } = await supabaseAdmin.from('Enrollments_Reviewers').select('TutorID').eq('ReviewerID', reviewerId);
-            
+
             let tutorIds = [];
             if (asignaciones && asignaciones.length > 0) {
                 tutorIds = asignaciones.map(a => a.TutorID);
@@ -308,7 +317,7 @@ router.get('/sesiones-monitoreo/:reviewerId', async (req, res) => {
                 .from('Enrollments_Reviewers')
                 .select('TutorID')
                 .eq('ReviewerID', reviewerId);
-            
+
             if (!asignaciones || asignaciones.length === 0) {
                 return res.status(200).json({ success: true, sesiones: [] });
             }

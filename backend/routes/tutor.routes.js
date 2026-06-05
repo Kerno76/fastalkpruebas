@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { supabaseAdmin } = require('../config/supabase');
+const { sendSSEEvent } = require('./sse.routes'); // para enviar eventos SSE a usuarios conectados
 
 router.get('/dashboard/:tutorId', async (req, res) => {
     const { tutorId } = req.params;
@@ -16,11 +17,11 @@ router.get('/dashboard/:tutorId', async (req, res) => {
             .select('CourseID, Level')
             .eq('TutorID', tutorId)
             .in('Status', ['Active', 'Upcoming']);
-            
+
         if (courErr) throw courErr;
 
         let totalEstudiantes = 0;
-        let niveles = new Set(); 
+        let niveles = new Set();
         let courseIds = [];
 
         if (courses && courses.length > 0) {
@@ -40,7 +41,7 @@ router.get('/dashboard/:tutorId', async (req, res) => {
             const { data: proximaData } = await supabaseAdmin
                 .from('Session')
                 .select(`Date, StartTime, Topic, Url, SessionStudents ( UsersProfiles (Name) )`)
-                .in('CourseID', courseIds) 
+                .in('CourseID', courseIds)
                 .eq('Status', 'Scheduled')
                 .gte('Date', hoyLocal)
                 .order('Date', { ascending: true })
@@ -61,7 +62,7 @@ router.get('/dashboard/:tutorId', async (req, res) => {
 
         res.status(200).json({
             success: true,
-            data: { name: profile.Name, totalHours, totalStudents: totalEstudiantes, nivelesAsignados: Array.from(niveles).join(' y ') || 'Ninguno', proximaSesion, ProgramType: tutorInfo?.ProgramType, horasTrabajadas: totalHours, detallesPrograma: tutorInfo?.ProgramSettings || null,}
+            data: { name: profile.Name, totalHours, totalStudents: totalEstudiantes, nivelesAsignados: Array.from(niveles).join(' y ') || 'Ninguno', proximaSesion, ProgramType: tutorInfo?.ProgramType, horasTrabajadas: totalHours, detallesPrograma: tutorInfo?.ProgramSettings || null, }
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -97,7 +98,7 @@ router.get('/mis-estudiantes/:tutorId', async (req, res) => {
                 courseName: course?.Name || 'N/A',
                 language: course?.Language || 'N/A',
                 level: course?.Level || 'N/A',
-                courseStatus: course?.Status || 'Active', 
+                courseStatus: course?.Status || 'Active',
                 horasTotales: '0 hrs',
                 ultimaSesion: 'Sin registro'
             };
@@ -115,7 +116,7 @@ router.get('/estudiantes-curso/:courseId', async (req, res) => {
             .from('Enrollments')
             .select('StudentID')
             .eq('CourseID', courseId);
-            
+
         if (enrErr) throw enrErr;
         if (!enrollments || enrollments.length === 0) return res.status(200).json({ success: true, estudiantes: [] });
 
@@ -124,7 +125,7 @@ router.get('/estudiantes-curso/:courseId', async (req, res) => {
             .from('UsersProfiles')
             .select('ID, Name')
             .in('ID', studentIds);
-            
+
         if (profErr) throw profErr;
         res.status(200).json({ success: true, estudiantes: students });
     } catch (error) {
@@ -157,10 +158,10 @@ router.post('/materiales', async (req, res) => {
     try {
         const base64Data = fileBase64.includes(',') ? fileBase64.split(',')[1] : fileBase64;
         const buffer = Buffer.from(base64Data, 'base64');
-        
+
         const cleanFileName = fileName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9.\-_]/g, "");
         const uniqueName = `${Date.now()}_${cleanFileName}`;
-        
+
         await supabaseAdmin.storage.from('materiales').upload(`public/${uniqueName}`, buffer, { contentType: fileType });
 
         const { data: publicUrlData } = supabaseAdmin.storage.from('materiales').getPublicUrl(`public/${uniqueName}`);
@@ -260,7 +261,7 @@ router.get('/revisores-asignados/:tutorId', async (req, res) => {
 
 router.post('/agendar-sesion', async (req, res) => {
     const { TutorID, CourseID, ReviewerID, Estudiantes, Date, StartTime, Duration, Topic, Url, TypeAssistence, Description } = req.body;
-    
+
     try {
         const { data: sessionData, error: sessionError } = await supabaseAdmin
             .from('Session')
@@ -280,7 +281,7 @@ router.post('/agendar-sesion', async (req, res) => {
             .single();
 
         if (sessionError) throw sessionError;
-        
+
         const newSessionId = sessionData.SessionID;
 
         const sessionStudentsPayload = Estudiantes.map(studentId => ({
@@ -309,6 +310,11 @@ router.post('/agendar-sesion', async (req, res) => {
 
         if (notificationsError) throw notificationsError;
 
+        // Avisar a cada estudiante en tiempo real con SSE
+        Estudiantes.forEach(studentId => {
+            sendSSEEvent(studentId, 'proximaSesion', {});
+        });
+
         res.status(200).json({ success: true, sessionId: newSessionId });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -323,15 +329,15 @@ router.get('/sesiones-pendientes/:tutorId', async (req, res) => {
             .select('CourseID')
             .eq('TutorID', tutorId)
             .in('Status', ['Active', 'Upcoming']);
-            
+
         const activeCourseIds = activeCourses ? activeCourses.map(c => c.CourseID) : [];
         if (activeCourseIds.length === 0) return res.status(200).json({ success: true, sesiones: [] });
 
         const { data: sesiones, error } = await supabaseAdmin
             .from('Session')
             .select(`*, Courses ( Name ), SessionStudents ( StudentID, Attendance, IncidentReport, UsersProfiles ( Name ) )`)
-            .in('CourseID', activeCourseIds) 
-            .in('Status', ['Scheduled', 'Completed']) 
+            .in('CourseID', activeCourseIds)
+            .in('Status', ['Scheduled', 'Completed'])
             .or('ReviewerStatus.eq.Rechazado,Status.eq.Scheduled')
             .order('Date', { ascending: false })
             .order('StartTime', { ascending: false });
@@ -353,7 +359,7 @@ router.get('/tareas-calificar/:tutorId', async (req, res) => {
     try {
         const { data: allAssignments, error } = await supabaseAdmin
             .from('Assignments')
-            .select(`*, Courses ( Name, Level, Status )`) 
+            .select(`*, Courses ( Name, Level, Status )`)
             .eq('TutorID', tutorId)
             .order('Deadline', { ascending: false });
 
@@ -361,7 +367,7 @@ router.get('/tareas-calificar/:tutorId', async (req, res) => {
         const assignments = allAssignments.filter(a => a.Status?.toLowerCase() !== 'canceled');
         const studentIds = [...new Set(assignments.map(a => a.StudentID).filter(Boolean))];
         let profiles = [];
-        
+
         if (studentIds.length > 0) {
             const { data: profData, error: profErr } = await supabaseAdmin.from('UsersProfiles').select('ID, Name, Email').in('ID', studentIds);
             if (!profErr) profiles = profData;
@@ -369,7 +375,7 @@ router.get('/tareas-calificar/:tutorId', async (req, res) => {
 
         const porEstudiante = assignments.reduce((acc, task) => {
             const statusNormal = task.Status?.toLowerCase();
-            if (statusNormal === 'pending') return acc; 
+            if (statusNormal === 'pending') return acc;
             const studentProfile = profiles.find(p => p.ID === task.StudentID);
             if (!acc[task.StudentID]) {
                 acc[task.StudentID] = { id: task.StudentID, name: studentProfile?.Name || 'Alumno', course: `${task.Courses?.Name || ''} ${task.Courses?.Level || ''}`.trim(), tasks: [] };
@@ -383,7 +389,7 @@ router.get('/tareas-calificar/:tutorId', async (req, res) => {
             const key = `${task.CourseID}_${task.Title}`;
             if (!acc[key]) {
                 acc[key] = {
-                    CourseID: task.CourseID, CourseName: task.Courses?.Name || 'Curso', CourseStatus: task.Courses?.Status, Title: task.Title, Description: task.Description, Deadline: task.Deadline, HelpMaterialFile: task.HelpMaterialFile, HelpMaterialLink: task.HelpMaterialLink, AssignmentIDs: [], StudentIDs: [], Entregas: [] 
+                    CourseID: task.CourseID, CourseName: task.Courses?.Name || 'Curso', CourseStatus: task.Courses?.Status, Title: task.Title, Description: task.Description, Deadline: task.Deadline, HelpMaterialFile: task.HelpMaterialFile, HelpMaterialLink: task.HelpMaterialLink, AssignmentIDs: [], StudentIDs: [], Entregas: []
                 };
             }
             acc[key].AssignmentIDs.push(task.AssignmentID);
@@ -403,18 +409,18 @@ router.put('/completar-sesion', async (req, res) => {
     try {
         const buffer = Buffer.from(fileBase64.split(',')[1], 'base64');
         const uniqueName = `evidencia_${SessionID}_${Date.now()}.jpg`;
-        
+
         await supabaseAdmin.storage.from('evidencias-sesiones').upload(`public/${uniqueName}`, buffer, { contentType: fileType });
         const { data: urlData } = supabaseAdmin.storage.from('evidencias-sesiones').getPublicUrl(`public/${uniqueName}`);
 
         const { error: sessionError } = await supabaseAdmin
             .from('Session')
-            .update({ 
-                Status, 
-                Description, 
-                NextSession, 
+            .update({
+                Status,
+                Description,
+                NextSession,
                 EvidencePhoto: urlData.publicUrl,
-                ReviewerStatus: 'Pendiente' 
+                ReviewerStatus: 'Pendiente'
             })
             .eq('SessionID', SessionID);
 
@@ -432,7 +438,7 @@ router.put('/completar-sesion', async (req, res) => {
 
         const { data: sesionData } = await supabaseAdmin.from('Session').select('ReviewerID, Topic, TutorID').eq('SessionID', SessionID).single();
         const { data: tutorProfile } = await supabaseAdmin.from('UsersProfiles').select('Name').eq('ID', sesionData.TutorID).single();
-        
+
         const { data: admins } = await supabaseAdmin.from('UsersProfiles').select('ID').eq('Rol', 'Admin');
 
         let notificaciones = [];
@@ -441,7 +447,7 @@ router.put('/completar-sesion', async (req, res) => {
             notificaciones.push({
                 ReceiverID: sesionData.ReviewerID,
                 SenderID: sesionData.TutorID,
-                Type: 'MaterialSubido', 
+                Type: 'MaterialSubido',
                 Title: 'Bitácora enviada para revisión',
                 Message: `El tutor ${tutorProfile?.Name || 'asignado'} ha enviado la bitácora de la clase "${sesionData.Topic}".`,
                 RelatedEntityID: SessionID
@@ -453,7 +459,7 @@ router.put('/completar-sesion', async (req, res) => {
                 notificaciones.push({
                     ReceiverID: admin.ID,
                     SenderID: sesionData.TutorID,
-                    Type: 'MaterialSubido', 
+                    Type: 'MaterialSubido',
                     Title: 'Sesión Completada',
                     Message: `El tutor ${tutorProfile?.Name || ''} cerró la sesión y entregó la bitácora de "${sesionData.Topic}".`,
                     RelatedEntityID: SessionID
@@ -464,6 +470,10 @@ router.put('/completar-sesion', async (req, res) => {
         if (notificaciones.length > 0) {
             await supabaseAdmin.from('Notifications').insert(notificaciones);
         }
+
+        // Avisar al revisor y a los admins que hay bitácora nueva con SSE
+        if (sesionData?.ReviewerID) sendSSEEvent(sesionData.ReviewerID, 'bitacorasList', {});
+        admins?.forEach(admin => sendSSEEvent(admin.ID, 'alertasAdmin', {}));
 
         res.status(200).json({ success: true });
     } catch (error) {
@@ -495,10 +505,10 @@ router.get('/historial-sesiones/:tutorId', async (req, res) => {
         const tzOffset = (new Date()).getTimezoneOffset() * 60000;
         const nowLocal = new Date(Date.now() - tzOffset);
         const hoyLocal = nowLocal.toISOString().split('T')[0];
-        const horaLocal = nowLocal.toISOString().split('T')[1].substring(0, 5); 
+        const horaLocal = nowLocal.toISOString().split('T')[1].substring(0, 5);
 
         const historial = data.filter(s => {
-            if (s.Status !== 'Scheduled') return true; 
+            if (s.Status !== 'Scheduled') return true;
             if (s.Date < hoyLocal) return true;
             if (s.Date === hoyLocal && s.StartTime <= horaLocal) return true;
             return false;
@@ -526,7 +536,7 @@ router.get('/notificaciones/:userId', async (req, res) => {
             .from('UsersProfiles')
             .select('ID')
             .eq('ID', userId)
-            .single(); 
+            .single();
 
         if (perfilError || !perfil) {
             return res.status(404).json({ success: false, message: "Usuario no encontrado" });
@@ -593,7 +603,7 @@ router.get('/estudiante/proxima-sesion/:studentId', async (req, res) => {
             .limit(1);
 
         if (error) throw error;
-        
+
         res.status(200).json({ success: true, proximaSesion: data.length > 0 ? data[0] : null });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -607,9 +617,9 @@ router.put('/guardar-incidencias', async (req, res) => {
             for (let est of estudiantesData) {
                 await supabaseAdmin
                     .from('SessionStudents')
-                    .update({ 
-                        Attendance: est.Attendance, 
-                        IncidentReport: est.IncidentReport 
+                    .update({
+                        Attendance: est.Attendance,
+                        IncidentReport: est.IncidentReport
                     })
                     .eq('SessionID', SessionID)
                     .eq('StudentID', est.StudentID);
@@ -656,7 +666,7 @@ router.put('/cancelar-sesion', async (req, res) => {
             const notifs = Estudiantes.map(est => ({
                 ReceiverID: est.StudentID,
                 SenderID: TutorID,
-                Type: 'ReporteIncidencia', 
+                Type: 'ReporteIncidencia',
                 Title: 'Sesion Cancelada',
                 Message: `Tu tutor ha cancelado la sesion de "${Topic}". Contacta con el para mas informacion.`,
                 RelatedEntityID: SessionID
@@ -679,10 +689,10 @@ router.post('/asignar-tarea', async (req, res) => {
                 const buffer = Buffer.from(file.fileBase64.split(',')[1], 'base64');
                 const cleanFileName = file.fileName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9.\-_]/g, "");
                 const uniqueName = `material_${Date.now()}_${cleanFileName}`;
-                
+
                 await supabaseAdmin.storage.from('material-tareas-tutor').upload(`public/${uniqueName}`, buffer, { contentType: file.fileType });
                 const { data: urlData } = supabaseAdmin.storage.from('material-tareas-tutor').getPublicUrl(`public/${uniqueName}`);
-                
+
                 uploadedFilesArray.push({
                     name: file.fileName,
                     url: urlData.publicUrl
@@ -694,14 +704,14 @@ router.post('/asignar-tarea', async (req, res) => {
         const filesText = uploadedFilesArray.length > 0 ? JSON.stringify(uploadedFilesArray) : null;
 
         const assignmentsPayload = StudentIDs.map(studentId => ({
-            TutorID, 
-            StudentID: studentId, 
-            CourseID, 
-            Title, 
-            Description, 
-            Deadline, 
+            TutorID,
+            StudentID: studentId,
+            CourseID,
+            Title,
+            Description,
+            Deadline,
             HelpMaterialLink: linksText,
-            HelpMaterialFile: filesText, 
+            HelpMaterialFile: filesText,
             Status: 'Pending'
         }));
 
@@ -710,16 +720,19 @@ router.post('/asignar-tarea', async (req, res) => {
         if (assignErr) throw assignErr;
 
         const notificationsPayload = insertedAssignments.map(assignment => ({
-            ReceiverID: assignment.StudentID, SenderID: TutorID, Type: 'AsignacionCurso', 
+            ReceiverID: assignment.StudentID, SenderID: TutorID, Type: 'AsignacionCurso',
             Title: 'Nueva Tarea Asignada', Message: `Tu tutor ha publicado una nueva tarea: "${Title}". Revisa la fecha limite.`,
             RelatedEntityID: assignment.AssignmentID
         }));
         await supabaseAdmin.from('Notifications').insert(notificationsPayload);
 
+        // Avisar a cada estudiante en tiempo real con SSE
+        StudentIDs.forEach(id => sendSSEEvent(id, 'nuevaTarea', {}));
+
         res.status(200).json({ success: true });
-    } catch (error) { 
+    } catch (error) {
         console.error("Error al asignar tarea múltiple:", error);
-        res.status(500).json({ success: false, message: error.message }); 
+        res.status(500).json({ success: false, message: error.message });
     }
 });
 
@@ -729,7 +742,7 @@ router.get('/tareas-calificar/:tutorId', async (req, res) => {
     try {
         const { data: allAssignments, error } = await supabaseAdmin
             .from('Assignments')
-            .select(`*, Courses ( Name, Level, Status )`) 
+            .select(`*, Courses ( Name, Level, Status )`)
             .eq('TutorID', tutorId)
             .order('Deadline', { ascending: false });
 
@@ -739,7 +752,7 @@ router.get('/tareas-calificar/:tutorId', async (req, res) => {
 
         const studentIds = [...new Set(assignments.map(a => a.StudentID).filter(Boolean))];
         let profiles = [];
-        
+
         if (studentIds.length > 0) {
             const { data: profData, error: profErr } = await supabaseAdmin
                 .from('UsersProfiles')
@@ -750,16 +763,16 @@ router.get('/tareas-calificar/:tutorId', async (req, res) => {
 
         const porEstudiante = assignments.reduce((acc, task) => {
             const statusNormal = task.Status?.toLowerCase();
-            if (statusNormal === 'pending') return acc; 
+            if (statusNormal === 'pending') return acc;
 
             const studentId = task.StudentID;
             const studentProfile = profiles.find(p => p.ID === studentId);
 
             if (!acc[studentId]) {
                 acc[studentId] = {
-                    id: studentId, 
+                    id: studentId,
                     name: studentProfile?.Name || 'Alumno',
-                    course: `${task.Courses?.Name || ''} ${task.Courses?.Level || ''}`.trim(), 
+                    course: `${task.Courses?.Name || ''} ${task.Courses?.Level || ''}`.trim(),
                     tasks: []
                 };
             }
@@ -768,15 +781,15 @@ router.get('/tareas-calificar/:tutorId', async (req, res) => {
             if (statusNormal === 'graded') statusText = 'Calificada';
 
             acc[studentId].tasks.push({
-                id: task.AssignmentID, 
-                title: task.Title, 
+                id: task.AssignmentID,
+                title: task.Title,
                 description: task.Description,
-                date: task.Deadline, 
-                status: statusText, 
+                date: task.Deadline,
+                status: statusText,
                 grade: task.Grade ? `${task.Grade}/100` : null,
-                archivoAlumno: task.StudentFile, 
+                archivoAlumno: task.StudentFile,
                 urlAlumno: task.StudentUrl,
-                courseStatus: task.Courses?.Status 
+                courseStatus: task.Courses?.Status
             });
             return acc;
         }, {});
@@ -786,16 +799,16 @@ router.get('/tareas-calificar/:tutorId', async (req, res) => {
             if (!acc[key]) {
                 acc[key] = {
                     CourseID: task.CourseID,
-                    CourseName: task.Courses?.Name || 'Curso', 
-                    CourseStatus: task.Courses?.Status, 
-                    Title: task.Title, 
+                    CourseName: task.Courses?.Name || 'Curso',
+                    CourseStatus: task.Courses?.Status,
+                    Title: task.Title,
                     Description: task.Description,
-                    Deadline: task.Deadline, 
-                    HelpMaterialFile: task.HelpMaterialFile, 
-                    HelpMaterialLink: task.HelpMaterialLink, 
-                    AssignmentIDs: [], 
+                    Deadline: task.Deadline,
+                    HelpMaterialFile: task.HelpMaterialFile,
+                    HelpMaterialLink: task.HelpMaterialLink,
+                    AssignmentIDs: [],
                     StudentIDs: [],
-                    Entregas: [] 
+                    Entregas: []
                 };
             }
             acc[key].AssignmentIDs.push(task.AssignmentID);
@@ -817,9 +830,9 @@ router.get('/tareas-calificar/:tutorId', async (req, res) => {
         }, {});
 
         res.status(200).json({ success: true, estudiantes: Object.values(porEstudiante), publicadas: Object.values(porTarea) });
-    } catch (error) { 
+    } catch (error) {
         console.error("Error en GET /tareas-calificar (Tutor):", error.message);
-        res.status(500).json({ success: false, message: error.message }); 
+        res.status(500).json({ success: false, message: error.message });
     }
 });
 
@@ -831,7 +844,7 @@ router.put('/actualizar-deadline', async (req, res) => {
         const notificaciones = StudentIDs.map(sid => ({
             ReceiverID: sid, SenderID: TutorID, Type: 'AsignacionCurso',
             Title: 'Fecha limite actualizada', Message: `Se ha modificado la fecha limite de la tarea "${Title}". Revisa el nuevo plazo.`,
-            RelatedEntityID: null 
+            RelatedEntityID: null
         }));
         await supabaseAdmin.from('Notifications').insert(notificaciones);
 
@@ -848,7 +861,7 @@ router.put('/cancelar-tarea', async (req, res) => {
         const notificaciones = StudentIDs.map(sid => ({
             ReceiverID: sid, SenderID: TutorID, Type: 'AsignacionCurso',
             Title: 'Tarea Cancelada', Message: `Tu tutor ha cancelado la tarea "${Title}". Ya no es necesario entregarla.`,
-            RelatedEntityID: null 
+            RelatedEntityID: null
         }));
         await supabaseAdmin.from('Notifications').insert(notificaciones);
 
@@ -859,15 +872,15 @@ router.put('/cancelar-tarea', async (req, res) => {
 
 router.put('/calificar-tarea', async (req, res) => {
     const { AssignmentID, Grade, Feedback, AllowResubmit, StudentID, TutorID, Title } = req.body;
-    
+
     try {
         const { error } = await supabaseAdmin
             .from('Assignments')
-            .update({ 
-                Grade, 
-                Feedback, 
-                AllowResubmit, 
-                Status: 'Graded' 
+            .update({
+                Grade,
+                Feedback,
+                AllowResubmit,
+                Status: 'Graded'
             })
             .eq('AssignmentID', AssignmentID);
 
@@ -881,11 +894,14 @@ router.put('/calificar-tarea', async (req, res) => {
         await supabaseAdmin.from('Notifications').insert([{
             ReceiverID: StudentID,
             SenderID: TutorID,
-            Type: 'AsignacionCurso', 
+            Type: 'AsignacionCurso',
             Title: '¡Tarea Calificada!',
             Message: mensajeNotif,
             RelatedEntityID: AssignmentID
         }]);
+
+        // Avisar al estudiante en tiempo real con SSE
+        sendSSEEvent(StudentID, 'calificacion', {});
 
         res.status(200).json({ success: true });
     } catch (error) {
@@ -895,9 +911,9 @@ router.put('/calificar-tarea', async (req, res) => {
 });
 
 router.put('/editar-tarea-completa', async (req, res) => {
-    const { 
-        AssignmentIDs, CurrentStudentIDs, NewStudentIDs, CourseID, TutorID, Title, 
-        Description, Deadline, Links, ExistingFiles, NewFiles 
+    const {
+        AssignmentIDs, CurrentStudentIDs, NewStudentIDs, CourseID, TutorID, Title,
+        Description, Deadline, Links, ExistingFiles, NewFiles
     } = req.body;
 
     try {
@@ -908,10 +924,10 @@ router.put('/editar-tarea-completa', async (req, res) => {
                 const buffer = Buffer.from(file.fileBase64.split(',')[1], 'base64');
                 const cleanFileName = file.fileName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9.\-_]/g, "");
                 const uniqueName = `material_${Date.now()}_${cleanFileName}`;
-                
+
                 await supabaseAdmin.storage.from('material-tareas-tutor').upload(`public/${uniqueName}`, buffer, { contentType: file.fileType });
                 const { data: urlData } = supabaseAdmin.storage.from('material-tareas-tutor').getPublicUrl(`public/${uniqueName}`);
-                
+
                 finalFilesArray.push({
                     name: file.fileName,
                     url: urlData.publicUrl
@@ -923,12 +939,12 @@ router.put('/editar-tarea-completa', async (req, res) => {
         const filesText = finalFilesArray.length > 0 ? JSON.stringify(finalFilesArray) : null;
 
         await supabaseAdmin.from('Assignments')
-            .update({ 
-                Title, 
-                Description, 
-                Deadline, 
-                HelpMaterialLink: linksText, 
-                HelpMaterialFile: filesText 
+            .update({
+                Title,
+                Description,
+                Deadline,
+                HelpMaterialLink: linksText,
+                HelpMaterialFile: filesText
             })
             .in('AssignmentID', AssignmentIDs);
 
@@ -948,10 +964,10 @@ router.put('/editar-tarea-completa', async (req, res) => {
                 Deadline, HelpMaterialLink: linksText, HelpMaterialFile: filesText, Status: 'Pending'
             }));
             const { data: newInserts } = await supabaseAdmin.from('Assignments').insert(newAssignments).select('AssignmentID, StudentID');
-            
+
             if (newInserts) {
                 const notifs = newInserts.map(a => ({
-                    ReceiverID: a.StudentID, SenderID: TutorID, Type: 'AsignacionCurso', 
+                    ReceiverID: a.StudentID, SenderID: TutorID, Type: 'AsignacionCurso',
                     Title: 'Nueva Tarea Asignada', Message: `Se te ha asignado la tarea: "${Title}".`, RelatedEntityID: a.AssignmentID
                 }));
                 await supabaseAdmin.from('Notifications').insert(notifs);
@@ -978,7 +994,7 @@ router.get('/cursos-por-evaluar/:tutorId', async (req, res) => {
     try {
         const { data: cursos, error: cursosErr } = await supabaseAdmin
             .from('Courses')
-            .select('*, AdminComments') 
+            .select('*, AdminComments')
             .eq('TutorID', tutorId)
             .eq('GradingStatus', 'Pending_Grades');
 
@@ -1020,7 +1036,7 @@ router.get('/cursos-por-evaluar/:tutorId', async (req, res) => {
 });
 
 router.put('/enviar-evaluacion-curso', async (req, res) => {
-    const { courseId, tutorId, evaluaciones } = req.body; 
+    const { courseId, tutorId, evaluaciones } = req.body;
     try {
         for (let ev of evaluaciones) {
             const { error: updateEnrErr } = await supabaseAdmin
@@ -1034,7 +1050,7 @@ router.put('/enviar-evaluacion-curso', async (req, res) => {
             .from('Courses')
             .update({ GradingStatus: 'Pending_Admin_Approval', AdminComments: null })
             .eq('CourseID', courseId);
-            
+
         if (updateCourseErr) throw updateCourseErr;
 
         const { data: admins } = await supabaseAdmin.from('UsersProfiles').select('ID').eq('Rol', 'Admin');
@@ -1043,9 +1059,9 @@ router.put('/enviar-evaluacion-curso', async (req, res) => {
 
         if (admins && admins.length > 0) {
             const notifs = admins.map(a => ({
-                ReceiverID: a.ID, 
-                SenderID: tutorId, 
-                Type: 'AlertaAdmin', 
+                ReceiverID: a.ID,
+                SenderID: tutorId,
+                Type: 'AlertaAdmin',
                 Title: 'Evaluación de Curso Lista',
                 Message: `El tutor ${tutor?.Name || ''} ha enviado las calificaciones finales de "${curso?.Name || ''}". Requiere revisión y cierre.`,
                 RelatedEntityID: courseId
@@ -1105,14 +1121,14 @@ router.get('/historial-evaluaciones-tutor/:tutorId', async (req, res) => {
 
 router.post('/compartir-recurso', async (req, res) => {
     const { TutorID, StudentID, Name, Type, fileBase64, fileName, fileType, LinkUrl } = req.body;
-    
+
     try {
         let finalUrl = LinkUrl;
 
         if (Type !== 'link' && fileBase64) {
             const buffer = Buffer.from(fileBase64.split(',')[1], 'base64');
             const uniqueName = `recurso_${StudentID}_${Date.now()}_${fileName.replace(/\s+/g, '_')}`;
-            
+
             await supabaseAdmin.storage.from('recursos-compartidos').upload(`public/${uniqueName}`, buffer, { contentType: fileType });
             const { data } = supabaseAdmin.storage.from('recursos-compartidos').getPublicUrl(`public/${uniqueName}`);
             finalUrl = data.publicUrl;
