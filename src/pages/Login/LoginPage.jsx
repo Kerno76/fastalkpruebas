@@ -30,6 +30,8 @@ export default function LoginPage() {
       if (data.success) {
         // Guardamos la sesión en el navegador
         localStorage.setItem('user', JSON.stringify(data.user));
+
+        window.dispatchEvent(new Event('fastalk:login')); // para SSE y otros listeners globales que necesitan reaccionar al login
         
         toast.success(`¡Bienvenido ${data.user.Name}!`);
         setIsExiting(true);

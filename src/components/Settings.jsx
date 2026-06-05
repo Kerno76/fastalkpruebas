@@ -89,6 +89,9 @@ export function ProfileEditor() {
 
   const handleLogout = () => {
     localStorage.removeItem('user');
+
+    window.dispatchEvent(new Event('fastalk:logout')); // para SSE y otros listeners globales que necesitan reaccionar al logout
+
     navigate('/login', { replace: true });
   };
 

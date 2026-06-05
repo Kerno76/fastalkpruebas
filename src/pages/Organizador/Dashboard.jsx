@@ -7,7 +7,7 @@ import ClassIcon from '@mui/icons-material/Class';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
-import EventAvailableIcon from '@mui/icons-material/EventAvailable'; 
+import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
 import EditCalendarIcon from '@mui/icons-material/EditCalendar';
@@ -23,8 +23,10 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 
+import { useSSE } from '../../hooks/useSSE'; // Hook para suscribirse a eventos SSE
+
 const getNotifStyle = (type) => {
-    switch(type) {
+    switch (type) {
         case 'MaterialSubido': return { icon: <CloudUploadIcon />, bg: '#e0f2fe', color: '#0284c7' };
         case 'SesionRevisada': return { icon: <CheckCircleIcon />, bg: '#dcfce7', color: '#16a34a' };
         case 'SessionAgendada': return { icon: <EventAvailableIcon />, bg: '#f3e8ff', color: '#9333ea' };
@@ -53,12 +55,12 @@ export default function Dashboard() {
     const [openNotifModal, setOpenNotifModal] = useState(false);
     const [selectedNotif, setSelectedNotif] = useState(null);
 
-    const [eventosBD, setEventosBD] = useState([]); 
+    const [eventosBD, setEventosBD] = useState([]);
     const [fechasPuntitos, setFechasPuntitos] = useState([]);
     const [openEventModal, setOpenEventModal] = useState(false);
-    const [modalMode, setModalMode] = useState('list'); 
-    const [eventosDelDia, setEventosDelDia] = useState([]); 
-    
+    const [modalMode, setModalMode] = useState('list');
+    const [eventosDelDia, setEventosDelDia] = useState([]);
+
     const [newEventData, setNewEventData] = useState({ id: null, title: '', date: dayjs(), time: dayjs(), description: '' });
 
     const fetchData = async () => {
@@ -74,29 +76,33 @@ export default function Dashboard() {
 
             const resEvents = await fetch(`http://localhost:8000/api/admin/eventos/${adminId}`);
             const dataEvents = await resEvents.json();
-            
+
             if (dataEvents.success) {
-                const ahora = dayjs(); 
-                
+                const ahora = dayjs();
+
                 const eventosFuturos = dataEvents.eventos.filter(e => {
                     const fechaEvento = dayjs(`${e.Date} ${e.Time}`);
                     return fechaEvento.isAfter(ahora);
                 });
 
-                setEventosBD(eventosFuturos); 
-                
+                setEventosBD(eventosFuturos);
+
                 const unicas = [...new Set(eventosFuturos.map(e => e.Date))];
                 setFechasPuntitos(unicas);
             }
-            
+
         } catch (error) { console.error("Error cargando dashboard:", error); }
     };
 
+    // fetchData se llama inicialmente al montar el componente, y luego cada vez que llega un evento SSE relevante para el admin
     useEffect(() => {
         fetchData();
-        const intervalId = setInterval(fetchData, 30000); 
-        return () => clearInterval(intervalId);
     }, [adminId]);
+
+    // Suscribimos los eventos SSE relevantes para el admin
+    useSSE('estadisticas', () => fetchData());
+    useSSE('alertasAdmin', () => fetchData());
+    useSSE('cursoCerrado', () => fetchData());
 
     const handleOpenNotification = async (notif) => {
         setSelectedNotif(notif);
@@ -115,7 +121,7 @@ export default function Dashboard() {
         setNewEventData({ id: null, title: '', date: newDate, time: dayjs().startOf('hour').add(1, 'hour'), description: '' });
 
         const eventosHoy = eventosBD.filter(e => e.Date === fechaFormateada);
-        
+
         if (eventosHoy.length > 0) {
             setEventosDelDia(eventosHoy);
             setModalMode('list');
@@ -137,8 +143,8 @@ export default function Dashboard() {
     };
 
     const handleDeleteEvent = async (eventId) => {
-        if(!window.confirm("¿Estás seguro de que deseas eliminar este evento?")) return;
-        
+        if (!window.confirm("¿Estás seguro de que deseas eliminar este evento?")) return;
+
         const loadingId = toast.loading("Eliminando...");
         try {
             await fetch(`http://localhost:8000/api/admin/eventos/${eventId}`, { method: 'DELETE' });
@@ -156,9 +162,9 @@ export default function Dashboard() {
         if (!date || !date.isValid()) return toast.error("Falta seleccionar la fecha válida.");
         if (!time || !time.isValid()) return toast.error("Falta seleccionar una hora válida.");
         if (!title || title.trim() === '') return toast.error("Falta agregar el título del evento.");
-        
+
         const loadingId = toast.loading(id ? "Actualizando evento..." : "Agendando evento...");
-        
+
         const dateStr = date.format('YYYY-MM-DD');
         const timeStr = time.format('HH:mm');
         const isEditing = id !== null;
@@ -173,11 +179,11 @@ export default function Dashboard() {
                     Title: title.trim(),
                     Date: dateStr,
                     Time: timeStr,
-                    Description: (description || '').trim() 
+                    Description: (description || '').trim()
                 })
             });
             const data = await response.json();
-            if(!data.success) throw new Error(data.message);
+            if (!data.success) throw new Error(data.message);
 
             fetchData();
             toast.success(isEditing ? `Evento actualizado` : `Evento agendado con éxito`, { id: loadingId });
@@ -188,7 +194,7 @@ export default function Dashboard() {
     };
 
     const savedPrefs = JSON.parse(localStorage.getItem(`notifPrefs_${user?.ID}`)) || {
-        sesiones: true, tareas: true, alertas: true, 
+        sesiones: true, tareas: true, alertas: true,
         revisiones: true, entregas: true, bitacoras: true, cursos: true
     };
     const currentUserRole = user?.Rol || 'Admin';
@@ -211,7 +217,7 @@ export default function Dashboard() {
             if (item.Type === 'AlertaAdmin' && !savedPrefs.cursos) return false;
             if (item.Type === 'MaterialSubido' && !savedPrefs.bitacoras) return false;
         }
-        return true; 
+        return true;
     });
 
     return (
@@ -222,26 +228,26 @@ export default function Dashboard() {
 
                 <div className="dashboard-cards-grid">
                     {stats.map((stat, index) => (
-                    <div key={index} className="dash-card">
-                        <div className="dash-card-header">
-                        <h1>{stat.title}</h1>
-                        <span className="icon-wrapper" style={{ backgroundColor: '#f8fafc', borderRadius: '50%', padding: '8px', display: 'flex' }}>
-                            {getStatIcon(stat.title)}
-                        </span>
+                        <div key={index} className="dash-card">
+                            <div className="dash-card-header">
+                                <h1>{stat.title}</h1>
+                                <span className="icon-wrapper" style={{ backgroundColor: '#f8fafc', borderRadius: '50%', padding: '8px', display: 'flex' }}>
+                                    {getStatIcon(stat.title)}
+                                </span>
+                            </div>
+                            <div className="stat-container">
+                                <span className="stat-number-dash">{stat.amount}</span>
+                                <span className="stat-label-dash">Total en sistema</span>
+                            </div>
+                            <p className="card-footer-text" style={{ color: '#64748b' }}>Cálculo en tiempo real</p>
                         </div>
-                        <div className="stat-container">
-                        <span className="stat-number-dash">{stat.amount}</span>
-                        <span className="stat-label-dash">Total en sistema</span>
-                        </div>
-                        <p className="card-footer-text" style={{ color: '#64748b' }}>Cálculo en tiempo real</p>
-                    </div>
                     ))}
                 </div>
 
                 <div className="bottomSection">
                     <div className="recentActivity">
                         <h2 style={{ marginBottom: '15px' }}>Actividad Reciente</h2>
-                        
+
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '380px', overflowY: 'auto', paddingRight: '10px' }}>
                             {notificacionesFiltradas.length > 0 ? notificacionesFiltradas.map((item) => {
                                 const style = getNotifStyle(item.Type);
@@ -251,12 +257,12 @@ export default function Dashboard() {
                                         const localDate = new Date(item.CreatedAt.replace(' ', 'T') + 'Z');
                                         timeString = localDate.toLocaleString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
                                     }
-                                } catch(e) { console.warn("Fecha inválida"); }
+                                } catch (e) { console.warn("Fecha inválida"); }
 
                                 return (
-                                    <Paper 
-                                        key={item.NotificationID} 
-                                        className={`activity-card ${!item.IsRead ? 'unread' : ''}`} 
+                                    <Paper
+                                        key={item.NotificationID}
+                                        className={`activity-card ${!item.IsRead ? 'unread' : ''}`}
                                         elevation={0}
                                         onClick={() => handleOpenNotification(item)}
                                         style={{ cursor: 'pointer', flexShrink: 0, border: '1px solid #e2e8f0', borderRadius: '12px' }}
@@ -283,8 +289,8 @@ export default function Dashboard() {
                     <div className="calendar">
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
                             <h2 style={{ margin: 0 }}>Agenda General</h2>
-                            <Button 
-                                size="small" variant="contained" startIcon={<AddIcon />} 
+                            <Button
+                                size="small" variant="contained" startIcon={<AddIcon />}
                                 onClick={() => {
                                     setNewEventData({ id: null, title: '', date: dayjs(), time: dayjs().startOf('hour').add(1, 'hour'), description: '' });
                                     setModalMode('create');
@@ -295,7 +301,7 @@ export default function Dashboard() {
                                 Agendar
                             </Button>
                         </div>
-                        <Paper elevation={0} style={{ border: '1px solid #e2e8f0', borderRadius: '16px', padding: '10px', marginRight: '10px'}}>
+                        <Paper elevation={0} style={{ border: '1px solid #e2e8f0', borderRadius: '16px', padding: '10px', marginRight: '10px' }}>
                             <Typography variant="caption" style={{ display: 'block', textAlign: 'center', color: '#94a3b8', marginBottom: '5px' }}>
                                 Haz clic en un día para ver o agregar eventos
                             </Typography>
@@ -326,14 +332,14 @@ export default function Dashboard() {
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '5px' }}>
                                                 <div>
                                                     <Typography variant="subtitle1" style={{ fontWeight: 800, color: '#0f172a' }}>{e.Title}</Typography>
-                                                    <Chip label={e.Time?.substring(0,5)} size="small" style={{ backgroundColor: '#fffbeb', color: '#d97706', fontWeight: 800, marginTop: '4px' }} />
+                                                    <Chip label={e.Time?.substring(0, 5)} size="small" style={{ backgroundColor: '#fffbeb', color: '#d97706', fontWeight: 800, marginTop: '4px' }} />
                                                 </div>
                                                 <div style={{ display: 'flex', gap: '5px' }}>
                                                     <Tooltip title="Editar">
-                                                        <IconButton size="small" onClick={() => handleEditEvent(e)}><EditIcon fontSize="small" style={{ color: '#64748b' }}/></IconButton>
+                                                        <IconButton size="small" onClick={() => handleEditEvent(e)}><EditIcon fontSize="small" style={{ color: '#64748b' }} /></IconButton>
                                                     </Tooltip>
                                                     <Tooltip title="Eliminar">
-                                                        <IconButton size="small" onClick={() => handleDeleteEvent(e.EventID)}><DeleteIcon fontSize="small" style={{ color: '#ef4444' }}/></IconButton>
+                                                        <IconButton size="small" onClick={() => handleDeleteEvent(e.EventID)}><DeleteIcon fontSize="small" style={{ color: '#ef4444' }} /></IconButton>
                                                     </Tooltip>
                                                 </div>
                                             </div>
@@ -344,9 +350,9 @@ export default function Dashboard() {
 
                                 <div style={{ display: 'flex', gap: '10px' }}>
                                     <Button variant="outlined" fullWidth onClick={() => setOpenEventModal(false)} style={{ textTransform: 'none', borderRadius: '10px', color: '#64748b', borderColor: '#e2e8f0' }}>Cerrar</Button>
-                                    <Button variant="contained" fullWidth onClick={() => { 
-                                        setNewEventData({ id: null, title: '', date: newEventData.date, time: dayjs().startOf('hour').add(1, 'hour'), description: '' }); 
-                                        setModalMode('create'); 
+                                    <Button variant="contained" fullWidth onClick={() => {
+                                        setNewEventData({ id: null, title: '', date: newEventData.date, time: dayjs().startOf('hour').add(1, 'hour'), description: '' });
+                                        setModalMode('create');
                                     }} style={{ backgroundColor: '#f59e0b', textTransform: 'none', borderRadius: '10px', boxShadow: 'none', fontWeight: 700 }}>Agendar otro evento</Button>
                                 </div>
                             </>
@@ -360,33 +366,33 @@ export default function Dashboard() {
                                         </Typography>
                                     </div>
                                 </div>
-                                
+
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
                                     <div style={{ display: 'flex', gap: '15px' }}>
-                                        <DatePicker 
-                                            label="Fecha" 
+                                        <DatePicker
+                                            label="Fecha"
                                             value={newEventData.date}
                                             onChange={(newVal) => setNewEventData(prev => ({ ...prev, date: newVal }))}
                                             sx={{ width: '100%', '& .MuiOutlinedInput-root': { borderRadius: '10px', backgroundColor: '#f8fafc' } }}
                                         />
-                                        <TimePicker 
-                                            label="Hora" 
+                                        <TimePicker
+                                            label="Hora"
                                             value={newEventData.time}
                                             onChange={(newVal) => setNewEventData(prev => ({ ...prev, time: newVal }))}
                                             sx={{ width: '100%', '& .MuiOutlinedInput-root': { borderRadius: '10px', backgroundColor: '#f8fafc' } }}
                                         />
                                     </div>
-                                    <TextField 
-                                        name="title" label="Título del Evento" fullWidth placeholder="Ej. Junta de revisión de tutores" 
+                                    <TextField
+                                        name="title" label="Título del Evento" fullWidth placeholder="Ej. Junta de revisión de tutores"
                                         value={newEventData.title} onChange={(e) => setNewEventData(prev => ({ ...prev, title: e.target.value }))}
                                         InputProps={{ style: { borderRadius: '10px', backgroundColor: '#f8fafc' } }}
                                     />
-                                    <TextField 
+                                    <TextField
                                         name="description" label="Descripción / Notas adicionales" fullWidth multiline rows={3}
                                         value={newEventData.description} onChange={(e) => setNewEventData(prev => ({ ...prev, description: e.target.value }))}
                                         InputProps={{ style: { borderRadius: '10px', backgroundColor: '#f8fafc' } }}
                                     />
-                                    
+
                                     <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
                                         {eventosDelDia.length > 0 && !newEventData.id && (
                                             <Button variant="outlined" onClick={() => setModalMode('list')} style={{ textTransform: 'none', borderRadius: '10px', color: '#64748b', borderColor: '#e2e8f0', flex: 1 }}>Volver a la lista</Button>

@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { Box, Typography, Avatar, Paper, Dialog, IconButton, Button, Chip } from '@mui/material';
 import { CalendarWidget } from "../../components/CalendarWidget";
 
-import EventAvailableIcon from '@mui/icons-material/EventAvailable'; 
-import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn'; 
-import CloudUploadIcon from '@mui/icons-material/CloudUpload'; 
-import CheckCircleIcon from '@mui/icons-material/CheckCircle'; 
+import EventAvailableIcon from '@mui/icons-material/EventAvailable';
+import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import PeopleIcon from '@mui/icons-material/People';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
@@ -16,10 +16,11 @@ import EventNoteIcon from '@mui/icons-material/EventNote';
 
 import '../../styles/Tutor/TutorDashboard.css';
 import '../../styles/App.css';
+import { useSSE } from '../../hooks/useSSE'; // Hook para suscribirse a eventos SSE 
 import toast from 'react-hot-toast';
 
 const getNotifStyle = (type) => {
-    switch(type) {
+    switch (type) {
         case 'SessionAgendada': return { icon: <EventAvailableIcon />, bg: '#e0f2fe', color: '#0284c7' };
         case 'ReporteIncidencia': return { icon: <AssignmentTurnedInIcon />, bg: '#fee2e2', color: '#ef4444' };
         case 'SesionRevisada': return { icon: <CheckCircleIcon />, bg: '#dcfce7', color: '#16a34a' };
@@ -35,10 +36,10 @@ export default function TutorDashboard() {
 
     const [dashData, setDashData] = useState({ name: 'Cargando...', totalHours: 0, totalStudents: 0, nivelesAsignados: 'Cargando...', proximaSesion: null });
     const [notificaciones, setNotificaciones] = useState([]);
-    
+
     // Estados para la Agenda Unificada
     const [eventosBD, setEventosBD] = useState([]);
-    const [fechasConEventos, setFechasConEventos] = useState([]); 
+    const [fechasConEventos, setFechasConEventos] = useState([]);
     const [openEventModal, setOpenEventModal] = useState(false);
     const [eventosDelDia, setEventosDelDia] = useState([]);
     const [fechaSeleccionada, setFechaSeleccionada] = useState('');
@@ -51,7 +52,7 @@ export default function TutorDashboard() {
     const horasTotales = dashData.totalHours || 0;
 
     const calcularMetricasHoras = () => {
-        const horasReales = dashData.horasTrabajadas || 0; 
+        const horasReales = dashData.horasTrabajadas || 0;
         const entregables = dashData.entregables || { cartas: false, video: false, extras: 0, bonus: 0 };
 
         const config = dashData.detallesPrograma || {};
@@ -73,10 +74,10 @@ export default function TutorDashboard() {
         let totalAcreditado = horasBitacoras + horasCartas + horasVideo + horasExtras + bonus;
         totalAcreditado = Math.min(totalAcreditado, horasMax);
 
-        return { 
-            nombrePrograma, 
-            horasMax, 
-            horasReq80, 
+        return {
+            nombrePrograma,
+            horasMax,
+            horasReq80,
             horasReales,
             horasBitacoras: horasBitacoras.toFixed(1),
             totalAcreditado: totalAcreditado.toFixed(1)
@@ -85,69 +86,83 @@ export default function TutorDashboard() {
 
     const metricas = calcularMetricasHoras();
 
+    // se saco la funcion fetchData del useEffect para poder reutilizarla en las actualizaciones por SSE
+    const fetchData = async () => {
+        if (!tutorId) return;
+
+        try {
+            const [resDash, resNotif, resSesiones, resTareas] = await Promise.all([
+                fetch(`http://localhost:8000/api/tutor/dashboard/${tutorId}`).then(r => r.json()),
+                fetch(`http://localhost:8000/api/tutor/notificaciones/${tutorId}`).then(r => r.json()),
+                fetch(`http://localhost:8000/api/tutor/sesiones-pendientes/${tutorId}`).then(r => r.json()),
+                fetch(`http://localhost:8000/api/tutor/tareas-calificar/${tutorId}`).then(r => r.json())
+            ]);
+
+            if (resDash.success) setDashData(resDash.data);
+            if (resNotif.success) setNotificaciones(resNotif.notificaciones);
+
+            let allEvents = [];
+
+            if (resSesiones.success && resSesiones.sesiones.length > 0) {
+                resSesiones.sesiones.forEach(s => {
+                    allEvents.push({
+                        id: `ses_${s.SessionID}`,
+                        type: 'Sesión',
+                        title: s.Topic,
+                        date: s.Date,
+                        time: s.StartTime?.substring(0, 5) || '',
+                        course: s.courseName,
+                        description: s.Description || 'Sesión virtual de clase.'
+                    });
+                });
+            }
+
+            if (resTareas.success && resTareas.publicadas.length > 0) {
+                resTareas.publicadas.forEach(t => {
+                    if (t.CourseStatus === 'Active' || t.CourseStatus === 'Upcoming') {
+                        if (t.Deadline) {
+                            const [dDate, dTime] = t.Deadline.split('T');
+
+                            allEvents.push({
+                                id: `tar_${t.CourseID}_${t.Title}`,
+                                type: 'Tarea',
+                                title: t.Title,
+                                date: dDate,
+                                time: dTime ? dTime.substring(0, 5) : '23:59',
+                                course: t.CourseName,
+                                description: t.Description || 'Límite de entrega de tarea.'
+                            });
+                        }
+                    }
+                });
+            }
+
+            setEventosBD(allEvents);
+
+            const fechasUnicas = [...new Set(allEvents.map(e => e.date))];
+            setFechasConEventos(fechasUnicas);
+
+        } catch (err) {
+            console.error("Error cargando dashboard del tutor:", err);
+        }
+    };
+
+    // usamos el useEffect solo para la carga inicial, luego las actualizaciones por SSE llaman a fetchData directamente
     useEffect(() => {
         if (!tutorId) return;
 
-        const fetchData = async () => {
-            try {
-                const [resDash, resNotif, resSesiones, resTareas] = await Promise.all([
-                    fetch(`http://localhost:8000/api/tutor/dashboard/${tutorId}`).then(r => r.json()),
-                    fetch(`http://localhost:8000/api/tutor/notificaciones/${tutorId}`).then(r => r.json()),
-                    fetch(`http://localhost:8000/api/tutor/sesiones-pendientes/${tutorId}`).then(r => r.json()),
-                    fetch(`http://localhost:8000/api/tutor/tareas-calificar/${tutorId}`).then(r => r.json())
-                ]);
-
-                if (resDash.success) setDashData(resDash.data);
-                if (resNotif.success) setNotificaciones(resNotif.notificaciones);
-
-                let allEvents = [];
-
-                if (resSesiones.success && resSesiones.sesiones.length > 0) {
-                    resSesiones.sesiones.forEach(s => {
-                        allEvents.push({
-                            id: `ses_${s.SessionID}`,
-                            type: 'Sesión',
-                            title: s.Topic,
-                            date: s.Date,
-                            time: s.StartTime?.substring(0, 5) || '',
-                            course: s.courseName,
-                            description: s.Description || 'Sesión virtual de clase.'
-                        });
-                    });
-                }
-
-                if (resTareas.success && resTareas.publicadas.length > 0) {
-                    resTareas.publicadas.forEach(t => {
-                        if (t.CourseStatus === 'Active' || t.CourseStatus === 'Upcoming') {
-                            if (t.Deadline) {
-                                const [dDate, dTime] = t.Deadline.split('T');
-                                allEvents.push({
-                                    id: `tar_${t.CourseID}_${t.Title}`,
-                                    type: 'Tarea',
-                                    title: t.Title,
-                                    date: dDate,
-                                    time: dTime ? dTime.substring(0, 5) : '23:59',
-                                    course: t.CourseName,
-                                    description: t.Description || 'Límite de entrega de tarea.'
-                                });
-                            }
-                        }
-                    });
-                }
-
-                setEventosBD(allEvents);
-                const fechasUnicas = [...new Set(allEvents.map(e => e.date))];
-                setFechasConEventos(fechasUnicas);
-
-            } catch (err) {
-                console.error("Error cargando dashboard del tutor:", err);
-            }
-        };
-
         fetchData();
-        const intervalId = setInterval(fetchData, 30000);
-        return () => clearInterval(intervalId);
     }, [tutorId]);
+
+    // Suscribimos los eventos SSE relevantes para el tutor
+    useSSE('tareaEntregada', () => fetchData());
+    useSSE('sessionAgendada', () => fetchData());
+    useSSE('bitacoraRevisada', () => fetchData());
+
+    useSSE('tareaEntregada', () => {
+    console.log('[SSE TutorDash] tareaEntregada → llamando fetchData');
+    fetchData();
+    });
 
     const handleOpenNotification = async (notif) => {
         setSelectedNotif(notif);
@@ -165,7 +180,7 @@ export default function TutorDashboard() {
         setFechaSeleccionada(fechaFormateada);
 
         const eventosHoy = eventosBD.filter(e => e.date === fechaFormateada);
-        
+
         if (eventosHoy.length > 0) {
             setEventosDelDia(eventosHoy);
             setOpenEventModal(true);
@@ -176,9 +191,9 @@ export default function TutorDashboard() {
 
     const progressRatio = Math.min(metricas.horasReales / metricas.horasMax, 1);
     const strokeDashoffset = 251.2 - (progressRatio * 251.2);
-    
+
     const savedPrefs = JSON.parse(localStorage.getItem(`notifPrefs_${user?.ID}`)) || {
-        sesiones: true, tareas: true, alertas: true, 
+        sesiones: true, tareas: true, alertas: true,
         revisiones: true, entregas: true, bitacoras: true, cursos: true
     };
     const currentUserRole = user?.Rol || 'Admin';
@@ -201,7 +216,7 @@ export default function TutorDashboard() {
             if (item.Type === 'AlertaAdmin' && !savedPrefs.cursos) return false;
             if (item.Type === 'MaterialSubido' && !savedPrefs.bitacoras) return false;
         }
-        return true; 
+        return true;
     });
 
     return (
@@ -250,7 +265,7 @@ export default function TutorDashboard() {
                     </div>
                     {dashData.proximaSesion ? (
                         <div className="session-details">
-                            <p className="session-date" style={{ fontWeight: 'bold' }}>{dashData.proximaSesion.date} a las {dashData.proximaSesion.time.substring(0,5)}</p>
+                            <p className="session-date" style={{ fontWeight: 'bold' }}>{dashData.proximaSesion.date} a las {dashData.proximaSesion.time.substring(0, 5)}</p>
                             <p className="session-student">Con: {dashData.proximaSesion.student}</p>
                             <button className="start-session-btn" onClick={() => window.open(dashData.proximaSesion.url, '_blank')}>Unirse a Sesión</button>
                         </div>
@@ -273,7 +288,7 @@ export default function TutorDashboard() {
                             const timeString = localDate.toLocaleString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 
                             return (
-                                <Paper 
+                                <Paper
                                     key={item.NotificationID} className={`activity-card ${!item.IsRead ? 'unread' : ''}`}
                                     elevation={0} onClick={() => handleOpenNotification(item)} style={{ cursor: 'pointer' }}
                                 >
@@ -323,29 +338,29 @@ export default function TutorDashboard() {
                         {eventosDelDia.map(e => (
                             <Paper key={e.id} elevation={0} style={{ padding: '15px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                                    
+
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        {e.type === 'Sesión' ? <ClassIcon style={{ color: '#3b82f6', fontSize: '1.2rem' }}/> : <AssignmentIcon style={{ color: '#8b5cf6', fontSize: '1.2rem' }}/>}
-                                        
+                                        {e.type === 'Sesión' ? <ClassIcon style={{ color: '#3b82f6', fontSize: '1.2rem' }} /> : <AssignmentIcon style={{ color: '#8b5cf6', fontSize: '1.2rem' }} />}
+
                                         <Typography variant="subtitle1" style={{ fontWeight: 800, color: '#0f172a' }}>{e.title}</Typography>
-                                        
-                                        <Chip 
-                                            label={e.type === 'Sesión' ? 'Reunión' : 'Tarea'} 
-                                            size="small" 
-                                            style={{ 
-                                                height: '20px', 
-                                                fontSize: '0.7rem', 
-                                                backgroundColor: e.type === 'Sesión' ? '#dbeafe' : '#f3e8ff', 
+
+                                        <Chip
+                                            label={e.type === 'Sesión' ? 'Reunión' : 'Tarea'}
+                                            size="small"
+                                            style={{
+                                                height: '20px',
+                                                fontSize: '0.7rem',
+                                                backgroundColor: e.type === 'Sesión' ? '#dbeafe' : '#f3e8ff',
                                                 color: e.type === 'Sesión' ? '#2563eb' : '#9333ea',
                                                 fontWeight: 800,
                                                 marginLeft: '4px'
-                                            }} 
+                                            }}
                                         />
                                     </div>
 
                                     <Chip label={e.time} size="small" style={{ backgroundColor: '#fffbeb', color: '#d97706', fontWeight: 800 }} />
                                 </div>
-                                
+
                                 <Typography variant="body2" style={{ color: '#0369a1', fontWeight: 700, marginBottom: '4px' }}>Curso: {e.course}</Typography>
                                 <Typography variant="body2" style={{ color: '#475569' }}>{e.description}</Typography>
                             </Paper>
@@ -396,7 +411,7 @@ export default function TutorDashboard() {
                     </Typography>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '25px' }}>
-                        
+
                         <Paper elevation={0} style={{ padding: '15px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <Typography variant="body1" style={{ fontWeight: 700, color: '#475569' }}>Horas Reales Dadas:</Typography>
                             <Typography variant="h6" style={{ fontWeight: 800, color: '#0369a1' }}>
