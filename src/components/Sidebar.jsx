@@ -37,12 +37,131 @@ export default function Sidebar() {
     checkAccountStatus(); // solo una vez
   }, [userId, userRol]);
 
-  // el servidor envía eventos SSE del logout 
+  // ✅ EVENTO GLOBAL: logout (aplica a todos)
+  // El servidor envía eventos SSE del logout 
   useSSE('logout', () => {
     localStorage.removeItem('user');
     window.dispatchEvent(new Event('fastalk:logout'));
     window.location.replace('/login');
   });
+
+  // ✅ EVENTOS PARA TUTOR: Mantener suscriptores activos permanentemente
+  // Aunque TutorDashboard se desmonte, estos eventos seguirán activos en el Sidebar
+  if (userRol === 'Tutor') {
+    useSSE('tareaEntregada', () => {
+      console.log('[SSE Sidebar] tareaEntregada recibida → disparar evento global');
+      window.dispatchEvent(new CustomEvent('tutorDataUpdated', {
+        detail: { event: 'tareaEntregada' }
+      }));
+    });
+
+    useSSE('sessionAgendada', () => {
+      console.log('[SSE Sidebar] sessionAgendada recibida → disparar evento global');
+      window.dispatchEvent(new CustomEvent('tutorDataUpdated', {
+        detail: { event: 'sessionAgendada' }
+      }));
+    });
+
+    useSSE('bitacoraRevisada', () => {
+      console.log('[SSE Sidebar] bitacoraRevisada recibida → disparar evento global');
+      window.dispatchEvent(new CustomEvent('tutorDataUpdated', {
+        detail: { event: 'bitacoraRevisada' }
+      }));
+    });
+  }
+
+  // ✅ EVENTOS PARA ESTUDIANTE: Mantener suscriptores activos permanentemente
+  if (userRol === 'Student') {
+    useSSE('notificaciones', () => {
+      console.log('[SSE Sidebar] notificaciones recibida → disparar evento global');
+      window.dispatchEvent(new CustomEvent('studentDataUpdated', {
+        detail: { event: 'notificaciones' }
+      }));
+    });
+
+    useSSE('nuevaTarea', () => {
+      console.log('[SSE Sidebar] nuevaTarea recibida → disparar evento global');
+      window.dispatchEvent(new CustomEvent('studentDataUpdated', {
+        detail: { event: 'nuevaTarea' }
+      }));
+    });
+
+    useSSE('calificacion', () => {
+      console.log('[SSE Sidebar] calificacion recibida → disparar evento global');
+      window.dispatchEvent(new CustomEvent('studentDataUpdated', {
+        detail: { event: 'calificacion' }
+      }));
+    });
+
+    useSSE('proximaSesion', () => {
+      console.log('[SSE Sidebar] proximaSesion recibida → disparar evento global');
+      window.dispatchEvent(new CustomEvent('studentDataUpdated', {
+        detail: { event: 'proximaSesion' }
+      }));
+    });
+  }
+
+  // ✅ EVENTOS PARA REVISOR: Mantener suscriptores activos permanentemente
+  if (userRol === 'Reviewer') {
+    useSSE('bitacorasList', () => {
+      console.log('[SSE Sidebar] bitacorasList recibida → disparar evento global');
+      window.dispatchEvent(new CustomEvent('reviewerDataUpdated', {
+        detail: { event: 'bitacorasList' }
+      }));
+    });
+
+    useSSE('visitasAgendadas', () => {
+      console.log('[SSE Sidebar] visitasAgendadas recibida → disparar evento global');
+      window.dispatchEvent(new CustomEvent('reviewerDataUpdated', {
+        detail: { event: 'visitasAgendadas' }
+      }));
+    });
+
+    useSSE('alertasAdmin', () => {
+      console.log('[SSE Sidebar] alertasAdmin recibida → disparar evento global');
+      window.dispatchEvent(new CustomEvent('reviewerDataUpdated', {
+        detail: { event: 'alertasAdmin' }
+      }));
+    });
+  }
+
+  // ✅ EVENTOS PARA ADMIN: Mantener suscriptores activos permanentemente
+  if (userRol === 'Admin') {
+    useSSE('estadisticas', () => {
+      console.log('[SSE Sidebar] estadisticas recibida → disparar evento global');
+      window.dispatchEvent(new CustomEvent('adminDataUpdated', {
+        detail: { event: 'estadisticas' }
+      }));
+    });
+
+    useSSE('alertasAdmin', () => {
+      console.log('[SSE Sidebar] alertasAdmin recibida → disparar evento global');
+      window.dispatchEvent(new CustomEvent('adminDataUpdated', {
+        detail: { event: 'alertasAdmin' }
+      }));
+    });
+
+    useSSE('cursoCerrado', () => {
+      console.log('[SSE Sidebar] cursoCerrado recibida → disparar evento global');
+      window.dispatchEvent(new CustomEvent('adminDataUpdated', {
+        detail: { event: 'cursoCerrado' }
+      }));
+    });
+
+    useSSE('bitacorasList', () => {
+      console.log('[SSE Sidebar] bitacorasList recibida → disparar evento global');
+      window.dispatchEvent(new CustomEvent('adminDataUpdated', {
+        detail: { event: 'bitacorasList' }
+      }));
+    });
+
+    useSSE('visitasAgendadas', () => {
+      console.log('[SSE Sidebar] visitasAgendadas recibida → disparar evento global');
+      window.dispatchEvent(new CustomEvent('adminDataUpdated', {
+        detail: { event: 'visitasAgendadas' }
+      }));
+    });
+  }
 
   const allowedItems = navItems.filter(item => item.roles.includes(userRol));
 
